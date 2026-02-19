@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pulguitas — Analizador de Pedidos y Etiquetas</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
+
+:root {
+  --bg:      #0f0e11;
+  --surface: #18161c;
+  --card:    #1d1b23;
+  --border:  #2a2733;
+  --accent:  #b57bee;
+  --accent2: #7c6ff7;
+  --green:   #4ade80;
+  --yellow:  #fbbf24;
+  --red:     #f87171;
+  --text:    #ede9f8;
+  --muted:   #7a768e;
+  --r:       13px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'DM Sans',sans-serif;font-weight:400;
+  min-height:100vh;padding:40px 20px 80px;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 0%,  #2d0b5a44 0%,transparent 65%),
+    radial-gradient(ellipse 55% 40% at 85% 90%, #1a154488 0%,transparent 60%);
+}
+
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto}
+
+/* ── Header ── */
+header{text-align:center;margin-bottom:44px}
+.tag{
+  display:inline-block;
+  background:linear-gradient(135deg,#6d28d9,#4338ca);
+  color:#fff;font-size:10px;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;
+  padding:4px 16px;border-radius:20px;margin-bottom:18px;
+}
+h1{
+  font-family:'DM Serif Display',serif;font-size:clamp(30px,6vw,50px);font-weight:400;
+  background:linear-gradient(135deg,#ede9f8 0%,#b57bee 45%,#7c6ff7 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  line-height:1.1;margin-bottom:10px;
+}
+.sub{color:var(--muted);font-size:14px;font-weight:300;letter-spacing:.3px}
+
+/* ── Layout: 3 panels in grid ── */
+.panels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.panels{grid-template-columns:1fr 1fr}}
+@media(max-width:660px){.panels{grid-template-columns:1fr}}
+
+/* ── Cards ── */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:22px;
+}
+.card-title{
+  font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:7px;
+}
+.card-title span{font-size:14px}
+
+/* ── Drop zone ── */
+.drop{
+  border:2px dashed var(--border);border-radius:10px;
+  padding:32px 16px;text-align:center;cursor:pointer;
+  transition:all .22s;position:relative;
+}
+.drop:hover,.drop.over{border-color:var(--accent);background:rgba(181,123,238,.06)}
+.drop.ok{border-color:var(--green);background:rgba(74,222,128,.05)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.drop-icon{font-size:32px;margin-bottom:8px}
+.drop-hint{font-size:13px;color:var(--muted)}
+.drop-hint strong{color:var(--accent)}
+.drop-name{display:none;margin-top:8px;font-size:12px;font-weight:600;color:var(--green)}
+.drop.ok .drop-name{display:block}
+
+/* ── Output name ── */
+.field-row{display:flex;align-items:center;gap:10px;margin-top:14px}
+.field-lbl{font-size:12px;color:var(--muted);white-space:nowrap}
+.field-in{
+  flex:1;background:#13111a;border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:inherit;font-size:13px;
+  padding:9px 12px;outline:none;transition:border-color .2s;
+}
+.field-in:focus{border-color:var(--accent)}
+
+/* ── Notepad ── */
+.notepad-card{margin-bottom:16px}
+textarea{
+  width:100%;height:310px;
+  background:#110f18;border:1px solid var(--border);border-radius:9px;
+  color:#c4b5fd;font-family:'Courier New',monospace;font-size:12.5px;line-height:1.8;
+  padding:14px 16px;resize:vertical;outline:none;tab-size:2;
+  transition:border-color .2s;
+}
+textarea:focus{border-color:var(--accent)}
+.note-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.btn-xs{
+  font-size:11px;font-weight:700;letter-spacing:.4px;
+  padding:6px 14px;border-radius:7px;border:none;cursor:pointer;transition:all .15s;
+}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-save{background:linear-gradient(135deg,#6d28d9,#4338ca);color:#fff}
+.btn-save:hover{opacity:.85;transform:translateY(-1px)}
+
+/* ── Action buttons ── */
+.actions{display:flex;gap:12px;margin-bottom:16px}
+.action-btn{
+  flex:1;padding:15px;border:none;border-radius:var(--r);
+  background:linear-gradient(135deg,#6d28d9 0%,#4338ca 60%,#5b52f0 100%);
+  color:#fff;font-family:inherit;font-size:15px;font-weight:600;
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 4px 28px rgba(109,40,217,.4);
+}
+.action-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 36px rgba(109,40,217,.6)}
+.action-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.action-btn.secondary{background:linear-gradient(135deg,#2d3748,#1e2937);box-shadow:none}
+.spinner{
+  width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;
+  border-radius:50%;animation:spin .7s linear infinite;display:none;
+}
+.action-btn.loading .spinner{display:block}
+.action-btn.loading .btn-txt{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Log ── */
+.log{
+  display:none;background:#0b0a10;border:1px solid var(--border);border-radius:9px;
+  padding:14px 16px;margin-bottom:16px;max-height:200px;overflow-y:auto;
+  font-family:'Courier New',monospace;font-size:12px;
+}
+.log.show{display:block}
+.ll{margin-bottom:2px}
+.ll.i{color:#9b8ee0}
+.ll.ok{color:var(--green)}
+.ll.warn{color:var(--yellow)}
+.ll.err{color:var(--red)}
+
+/* ── Stats ── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;display:none}
+.stats.show{display:grid}
+.stat{
+  background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:16px;text-align:center;
+}
+.stat-n{
+  font-family:'DM Serif Display',serif;font-size:30px;
+  background:linear-gradient(135deg,#ede9f8,#7c6ff7);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-top:3px}
+
+/* ── Table ── */
+.tbl-wrap{display:none;border-radius:10px;border:1px solid var(--border);overflow:hidden;margin-bottom:14px}
+.tbl-wrap.show{display:block}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{
+  background:var(--surface);color:var(--muted);
+  font-size:9.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  padding:9px 12px;text-align:left;border-bottom:1px solid var(--border);
+}
+td{padding:8px 12px;border-bottom:1px solid #17151f;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.018)}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.cant{background:rgba(181,123,238,.2);color:#b57bee;font-family:monospace;font-size:12px}
+.talle{background:rgba(124,111,247,.15);color:#8b82f8;font-size:10px;padding:1px 7px;border-radius:10px}
+
+.cat-VERANO    {background:rgba(41,182,246,.18); color:#29b6f6}
+.cat-ANTIESTRES{background:rgba(102,187,106,.18);color:#66bb6a}
+.cat-INVIERNO  {background:rgba(255,167,38,.18); color:#ffa726}
+.cat-DECO      {background:rgba(171,71,188,.18); color:#ab47bc}
+.cat-ESCALERA  {background:rgba(120,144,156,.18);color:#78909c}
+.cat-NORDICA   {background:rgba(38,166,154,.18); color:#26a69a}
+.cat-ROPITA    {background:rgba(236,64,122,.18); color:#ec407a}
+.cat-MANTA     {background:rgba(255,202,40,.18); color:#ffca28}
+.cat-unknown   {background:rgba(248,113,113,.18);color:#f87171}
+
+/* ── Download ── */
+.dl{
+  display:none;width:100%;padding:13px;
+  border:1px solid var(--green);border-radius:var(--r);
+  background:transparent;color:var(--green);
+  font-family:inherit;font-size:14px;font-weight:600;
+  cursor:pointer;transition:all .2s;
+  align-items:center;justify-content:center;gap:10px;text-decoration:none;
+}
+.dl.show{display:flex}
+.dl:hover{background:rgba(74,222,128,.08);transform:translateY(-1px);box-shadow:0 4px 20px rgba(74,222,128,.18)}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--card);border:1px solid var(--border);
+  color:var(--text);padding:10px 18px;border-radius:10px;
+  font-size:13px;z-index:999;
+  opacity:0;transform:translateY(8px);
+  transition:all .25s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:#2e2b38;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="tag">🐾 Pulguitas</div>
+    <h1>Analizador de Pedidos y Etiquetas</h1>
+    <p class="sub">Generá Excel + Anotá etiquetas de Andreani con los productos</p>
+  </header>
+
+  <!-- Top panels: 3 -->
+  <div class="panels">
+    <!-- Panel 1: PDF Pedidos (para analizar) -->
+    <div class="card">
+      <div class="card-title"><span>📄</span> 1. Pedidos (PDF)</div>
+      <div class="drop" id="dzPedidos">
+        <input type="file" id="pedidosIn" accept=".pdf">
+        <div class="drop-icon">📦</div>
+        <div class="drop-hint">PDF con órdenes <strong>(para análisis)</strong></div>
+        <div class="drop-name" id="dzPedidosName"></div>
+      </div>
+      <div class="field-row">
+        <span class="field-lbl">Excel:</span>
+        <input class="field-in" id="outName" type="text" value="resumen_pedidos.xlsx">
+      </div>
+    </div>
+
+    <!-- Panel 2: PDF Etiquetas (para anotar) -->
+    <div class="card">
+      <div class="card-title"><span>🏷️</span> 2. Etiquetas (PDF)</div>
+      <div class="drop" id="dzEtiquetas">
+        <input type="file" id="etiquetasIn" accept=".pdf">
+        <div class="drop-icon">📬</div>
+        <div class="drop-hint">PDF con etiquetas <strong>(para anotar)</strong></div>
+        <div class="drop-name" id="dzEtiquetasName"></div>
+      </div>
+      <div class="field-row">
+        <span class="field-lbl">Se anotará:</span>
+        <input class="field-in" id="outputName" type="text" value="etiquetas_anotadas.pdf" readonly style="background:#1a1722">
+      </div>
+    </div>
+
+    <!-- Panel 3: Info rápida -->
+    <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;">
+      <div>
+        <div class="card-title"><span>ℹ️</span> Cómo usar</div>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.9">
+          <b style="color:var(--text)">1.</b> Subí el PDF de pedidos (panel 1)<br>
+          <b style="color:var(--text)">2.</b> Subí el PDF de etiquetas (panel 2)<br>
+          <b style="color:var(--text)">3.</b> Usá los botones de abajo<br><br>
+          <span style="color:#6d5ea0;font-size:11px">
+            💡 El catálogo se edita abajo. <br>
+            Formato: <code style="color:#b57bee">CAT | Modelo | Color | T1,T2</code>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notepad (catálogo) -->
+  <div class="card notepad-card">
+    <div class="card-title"><span>📝</span> Catálogo de productos (editable)</div>
+    <textarea id="notepad" spellcheck="false"></textarea>
+    <div class="note-actions">
+      <button class="btn-xs btn-ghost" onclick="resetNotepad()">↺ Restaurar original</button>
+      <button class="btn-xs btn-save" onclick="saveNotepad()">💾 Guardar cambios</button>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="actions">
+    <button class="action-btn" id="runBtn" onclick="runAnalizar()" disabled>
+      <div class="spinner"></div>
+      <span class="btn-txt">📊 Generar Excel (análisis)</span>
+    </button>
+    <button class="action-btn secondary" id="anotarBtn" onclick="runAnotar()" disabled>
+      <div class="spinner"></div>
+      <span class="btn-txt">🏷️ Anotar etiquetas con productos</span>
+    </button>
+  </div>
+
+  <!-- Log (compartido) -->
+  <div class="log" id="log"></div>
+
+  <!-- Stats (solo para análisis) -->
+  <div class="stats" id="stats">
+    <div class="stat"><div class="stat-n" id="sTipos">—</div><div class="stat-l">Tipos distintos</div></div>
+    <div class="stat"><div class="stat-n" id="sUnid">—</div><div class="stat-l">Unidades totales</div></div>
+    <div class="stat"><div class="stat-n" id="sSin">—</div><div class="stat-l">Sin mapear</div></div>
+  </div>
+
+  <!-- Table (solo para análisis) -->
+  <div class="tbl-wrap" id="tblWrap">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Producto (texto del PDF)</th><th>Cant.</th>
+        <th>Categoría</th><th>Modelo / Color</th><th>Talle</th>
+      </tr></thead>
+      <tbody id="tbl"></tbody>
+    </table>
+  </div>
+
+  <!-- Download Excel -->
+  <a class="dl" id="dlBtn" href="/descargar" download>⬇️ Descargar Excel generado</a>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = '';  // same origin
+let pdfPedidos = null;
+let pdfEtiquetas = null;
+let defaultContent = '';
+
+// ── Load notepad from server ──────────────────────────────────────────────────
+async function loadNotepad() {
+  try {
+    const r = await fetch(API + '/productos');
+    const d = await r.json();
+    defaultContent = d.content;
+    document.getElementById('notepad').value = d.content;
+  } catch(e) {
+    document.getElementById('notepad').value = '# No se pudo cargar productos.txt\n# Asegurate de que el servidor esté corriendo.';
+  }
+}
+loadNotepad();
+
+// ── Save notepad to server ────────────────────────────────────────────────────
+async function saveNotepad() {
+  const content = document.getElementById('notepad').value;
+  try {
+    await fetch(API + '/productos', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({content})
+    });
+    toast('✅ Catálogo guardado en productos.txt');
+  } catch(e) {
+    toast('❌ Error guardando: ' + e.message);
+  }
+}
+
+function resetNotepad() {
+  if (confirm('¿Restaurar el catálogo original? Se perderán los cambios no guardados.')) {
+    document.getElementById('notepad').value = defaultContent;
+    toast('↺ Catálogo restaurado');
+  }
+}
+
+// ── File drop handlers ─────────────────────────────────────────────────────
+function setupDropZone(dzId, inputId, nameId, callback) {
+  const dz = document.getElementById(dzId);
+  const input = document.getElementById(inputId);
+  input.addEventListener('change', e => {
+    if (e.target.files[0]) callback(e.target.files[0]);
+  });
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('over');
+    const f = e.dataTransfer.files[0];
+    if (f?.name.endsWith('.pdf')) callback(f);
+    else toast('⚠️ El archivo debe ser un PDF');
+  });
+}
+
+setupDropZone('dzPedidos', 'pedidosIn', 'dzPedidosName', (f) => {
+  pdfPedidos = f;
+  document.getElementById('dzPedidos').classList.add('ok');
+  document.getElementById('dzPedidosName').textContent = `✓ ${f.name} (${(f.size/1024).toFixed(1)} KB)`;
+  checkButtons();
+});
+
+setupDropZone('dzEtiquetas', 'etiquetasIn', 'dzEtiquetasName', (f) => {
+  pdfEtiquetas = f;
+  document.getElementById('dzEtiquetas').classList.add('ok');
+  document.getElementById('dzEtiquetasName').textContent = `✓ ${f.name} (${(f.size/1024).toFixed(1)} KB)`;
+  checkButtons();
+});
+
+function checkButtons() {
+  document.getElementById('runBtn').disabled = !pdfPedidos;
+  document.getElementById('anotarBtn').disabled = !(pdfPedidos && pdfEtiquetas);
+}
+
+// ── Log helpers ───────────────────────────────────────────────────────────────
+const logEl = document.getElementById('log');
+function clearLog() { logEl.innerHTML = ''; logEl.classList.add('show'); }
+function addLog(msg, cls='i') {
+  const d = document.createElement('div');
+  if (msg.includes('✅')||msg.includes('✓')) cls='ok';
+  else if (msg.includes('⚠')) cls='warn';
+  else if (msg.includes('❌')) cls='err';
+  d.className=`ll ${cls}`; d.textContent=`> ${msg}`;
+  logEl.appendChild(d); logEl.scrollTop=logEl.scrollHeight;
+}
+
+// ── Run ANALIZAR (generar Excel) ─────────────────────────────────────────────
+async function runAnalizar() {
+  if (!pdfPedidos) return;
+  const btn = document.getElementById('runBtn');
+  btn.classList.add('loading'); btn.disabled=true;
+  clearLog();
+  document.getElementById('stats').classList.remove('show');
+  document.getElementById('tblWrap').classList.remove('show');
+  document.getElementById('dlBtn').classList.remove('show');
+
+  addLog('📦 Enviando PDF de pedidos para análisis...');
+
+  const fd = new FormData();
+  fd.append('pdf', pdfPedidos);
+  fd.append('productos', document.getElementById('notepad').value);
+  fd.append('output', document.getElementById('outName').value || 'resumen_pedidos.xlsx');
+
+  try {
+    addLog('🔍 Analizando pedidos...');
+    const resp = await fetch(API + '/analizar', { method:'POST', body:fd });
+    const data = await resp.json();
+
+    if (data.error) { addLog(`❌ ${data.error}`, 'err'); return; }
+
+    addLog(`✅ ${data.total_tipos} tipos · ${data.total_unidades} unidades totales`);
+    if (data.sin_mapear > 0) {
+      addLog(`⚠️  ${data.sin_mapear} producto(s) sin mapear en el catálogo`);
+      data.sin_mapear_list?.forEach(x => addLog(`   [${x.cant}] ${x.nombre}`, 'warn'));
+    }
+    addLog('✅ Excel generado y listo para descargar');
+
+    document.getElementById('sTipos').textContent = data.total_tipos;
+    document.getElementById('sUnid').textContent  = data.total_unidades;
+    document.getElementById('sSin').textContent   = data.sin_mapear === 0 ? '✓ 0' : data.sin_mapear;
+    document.getElementById('stats').classList.add('show');
+
+    const tb = document.getElementById('tbl');
+    tb.innerHTML = '';
+    data.rows.forEach((row, i) => {
+      const catClass = `cat-${row.categoria}`;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="color:var(--muted);font-size:11px">${i+1}</td>
+        <td style="color:#c4b5fd;max-width:260px;font-size:12px">${row.producto}</td>
+        <td><span class="pill cant">${row.cantidad}</span></td>
+        <td><span class="pill ${catClass}">${row.categoria}</span></td>
+        <td style="font-size:12px">${row.modelo}${row.color ? ' <span style="color:var(--muted)">/ '+row.color+'</span>' : ''}</td>
+        <td><span class="talle">${row.talle}</span></td>`;
+      tb.appendChild(tr);
+    });
+    document.getElementById('tblWrap').classList.add('show');
+    document.getElementById('dlBtn').classList.add('show');
+  } catch(e) {
+    addLog(`❌ Error de conexión: ${e.message}. ¿Está corriendo app.py?`, 'err');
+  } finally {
+    btn.classList.remove('loading'); btn.disabled=false;
+    checkButtons();
+  }
+}
+
+// ── Run ANOTAR (etiquetas) ───────────────────────────────────────────────────
+async function runAnotar() {
+  if (!pdfPedidos || !pdfEtiquetas) return;
+  const btn = document.getElementById('anotarBtn');
+  btn.classList.add('loading'); btn.disabled=true;
+  clearLog();
+  addLog('📦 Enviando PDF de pedidos y etiquetas para anotar...');
+
+  const fd = new FormData();
+  fd.append('pedidos', pdfPedidos);
+  fd.append('etiquetas', pdfEtiquetas);
+
+  try {
+    addLog('🏷️ Agregando productos a las etiquetas...');
+    const resp = await fetch(API + '/anotar', { method:'POST', body:fd });
+    
+    if (!resp.ok) {
+      const err = await resp.json();
+      addLog(`❌ ${err.error || 'Error desconocido'}`, 'err');
+      return;
+    }
+
+    // Descargar el PDF anotado
+    const blob = await resp.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = pdfEtiquetas.name;  // mismo nombre, sobreescribe
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    addLog(`✅ PDF anotado listo. Se descargará como "${pdfEtiquetas.name}"`, 'ok');
+  } catch(e) {
+    addLog(`❌ Error de conexión: ${e.message}`, 'err');
+  } finally {
+    btn.classList.remove('loading'); btn.disabled=false;
+    checkButtons();
+  }
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2400);
+}
+</script>
+</body>
+</html>

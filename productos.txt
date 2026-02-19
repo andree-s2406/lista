@@ -1,0 +1,85 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# PULGUITAS — Catálogo de Productos
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# INSTRUCCIONES:
+#   • Cada línea define una fila del catálogo Excel
+#   • Formato: CATEGORÍA | Modelo | Color | Talle1,Talle2,Talle3
+#   • Las líneas que empiezan con # son comentarios y se ignoran
+#   • Líneas en blanco también se ignoran
+#
+# CATEGORÍAS DISPONIBLES:
+#   VERANO, ANTIESTRES, INVIERNO, DECO, ESCALERA, NORDICA, ROPITA, MANTA
+#
+# TALLES POR CATEGORÍA (en orden de columna):
+#   VERANO    → S, M, L
+#   ANTIESTRES→ M, L
+#   INVIERNO  → S, M, L
+#   DECO      → S, M, L   (Bahía/MiniSofá/SofáCama/Timoteo)
+#   ESCALERA  → M, L
+#   NORDICA   → M, L, XL
+#   ROPITA    → XS, SM, LXL
+#   MANTA     → U
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── VERANO ───────────────────────────────────────────────────────────────────
+VERANO | Huella      | Rosa  | S,M,L
+VERANO | Corona      |       | S,M,L
+VERANO | Hamburguesa |       | S,M,L
+VERANO | Gatito      | Beige | S,M,L
+VERANO | Ballena     |       | S,M,L
+
+# ── ANTIESTRES ───────────────────────────────────────────────────────────────
+ANTIESTRES | Garra  | Gris  | M,L
+ANTIESTRES | Huella | Beige | M,L
+ANTIESTRES | Pancho |       | M,L
+
+# ── INVIERNO ─────────────────────────────────────────────────────────────────
+INVIERNO | Huella           | Rosa | S,M,L
+INVIERNO | Corona           |      | S,M,L
+INVIERNO | Hamburguesa      |      | S,M,L
+INVIERNO | Gato             | Gris | S,M,L
+INVIERNO | Ballena          |      | S,M,L
+INVIERNO | Cactus           |      | S,M,L
+INVIERNO | Panda            |      | S,M,L
+INVIERNO | Negro pelo corto |      | S,M,L
+INVIERNO | Argentina        |      | S,M,L
+INVIERNO | Palta            |      | S,M,L
+
+# ── DECO ─────────────────────────────────────────────────────────────────────
+DECO | Bahía     | Rosa        | S,M,L
+DECO | Bahía     | Salmón      | S,M,L
+DECO | Bahía     | Mostaza     | S,M,L
+DECO | Bahía     | Gris        | S,M,L
+DECO | Mini Sofá | Rosa        | S,M,L
+DECO | Mini Sofá | Gris Oscuro | S,M,L
+DECO | Mini Sofá | Gris Claro  | S,M,L
+DECO | Mini Sofá | Mostaza     | S,M,L
+DECO | Sofá Cama | Mostaza     | S,M,L
+DECO | Sofá Cama | Gris        | S,M,L
+DECO | Sofá Cama | Salmón      | S,M,L
+DECO | Timoteo   | Mostaza     | S,M,L
+DECO | Timoteo   | Rosa        | S,M,L
+DECO | Timoteo   | Gris        | S,M,L
+
+# ── ESCALERA ─────────────────────────────────────────────────────────────────
+ESCALERA | Escalera | Gris               | M,L
+ESCALERA | Escalera | Rosa (próximamente)| M,L
+
+# ── NORDICA ──────────────────────────────────────────────────────────────────
+NORDICA | Nórdica | Gris  | M,L,XL
+NORDICA | Nórdica | Beige | M,L,XL
+NORDICA | Nórdica | Negro | M,L,XL
+
+# ── ROPITA ───────────────────────────────────────────────────────────────────
+ROPITA | Ropita | Panda     | XS,SM,LXL
+ROPITA | Ropita | Argentina | XS,SM,LXL
+ROPITA | Ropita | Boca      | XS,SM,LXL
+ROPITA | Ropita | River     | XS,SM,LXL
+ROPITA | Ropita | Inter     | XS,SM,LXL
+ROPITA | Ropita | Mami      | XS,SM,LXL
+
+# ── MANTA ────────────────────────────────────────────────────────────────────
+MANTA | Manta Doble Faz | Beige/Blanco | U
+MANTA | Manta Doble Faz | Gris/Blanco  | U
