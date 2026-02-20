@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Pulguitas — Servidor local
 Ejecutá: python app.py
@@ -799,6 +799,10 @@ def descargar():
     return send_file(str(OUTPUT_XLSX), as_attachment=True,
                      download_name="resumen_pedidos.xlsx",
                      mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+@app.route("/admin_productos.html")
+def admin_productos():
+    return send_from_directory(BASE_DIR, "admin_productos.html")
 
 if __name__ == "__main__":
     port = 5173

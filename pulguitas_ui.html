@@ -54,6 +54,25 @@ h1{
 }
 .sub{color:var(--muted);font-size:14px;font-weight:300;letter-spacing:.3px}
 
+/* Enlace a administración */
+.admin-link {
+  display: inline-block;
+  margin-top: 15px;
+  padding: 8px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+.admin-link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-2px);
+}
+
 /* ── Layout: 3 panels in grid ── */
 .panels{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
 @media(max-width:900px){.panels{grid-template-columns:1fr 1fr}}
@@ -193,103 +212,6 @@ tr:hover td{background:rgba(255,255,255,.018)}
 
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-thumb{background:#2e2b38;border-radius:3px}
-
-/* ── Botón flotante mejorado ── */
-.btn-flotante {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  z-index: 1000;
-  padding: 15px 25px;
-  font-size: 16px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  background: linear-gradient(135deg, #6d28d9, #4338ca);
-  color: white;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(109, 40, 217, 0.5);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.btn-flotante:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(109, 40, 217, 0.7);
-  background: linear-gradient(135deg, #7c3aed, #4f46e5);
-}
-
-.btn-flotante:active {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(109, 40, 217, 0.6);
-}
-
-/* Efecto de pulso suave */
-@keyframes pulse {
-  0% { box-shadow: 0 8px 20px rgba(109, 40, 217, 0.5); }
-  50% { box-shadow: 0 8px 30px rgba(109, 40, 217, 0.9); }
-  100% { box-shadow: 0 8px 20px rgba(109, 40, 217, 0.5); }
-}
-
-.btn-flotante {
-  animation: pulse 2s infinite;
-}
-
-/* Responsive para móviles */
-@media (max-width: 768px) {
-  .btn-flotante {
-    bottom: 20px;
-    right: 20px;
-    padding: 12px 20px;
-    font-size: 14px;
-  }
-}
-
-/* ── Botones del modal ── */
-.modal-btn-cancelar {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--muted);
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.modal-btn-cancelar:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(181, 123, 238, 0.1);
-}
-
-.modal-btn-guardar {
-  background: linear-gradient(135deg, #6d28d9, #4338ca);
-  border: none;
-  color: white;
-  padding: 10px 25px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 4px 15px rgba(109, 40, 217, 0.3);
-}
-
-.modal-btn-guardar:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(109, 40, 217, 0.5);
-  background: linear-gradient(135deg, #7c3aed, #4f46e5);
-}
-
-.modal-btn-guardar:active {
-  transform: translateY(0);
-}
 </style>
 </head>
 <body>
@@ -299,6 +221,9 @@ tr:hover td{background:rgba(255,255,255,.018)}
     <div class="tag">🐾 Pulguitas</div>
     <h1>Analizador de Pedidos y Etiquetas</h1>
     <p class="sub">Generá Excel + Anotá etiquetas de Andreani con los productos</p>
+    <a href="/admin_productos.html" class="admin-link">
+      ⚙️ Administrar Productos
+    </a>
   </header>
 
   <!-- Top panels: 3 -->
@@ -342,7 +267,7 @@ tr:hover td{background:rgba(255,255,255,.018)}
           <b style="color:var(--text)">2.</b> Subí el PDF de etiquetas (panel 2)<br>
           <b style="color:var(--text)">3.</b> Usá los botones de abajo<br><br>
           <span style="color:#6d5ea0;font-size:11px">
-            💡 Para agregar productos usá el botón <b>➕ Agregar Producto</b> abajo a la derecha
+            💡 Para agregar o editar productos usá el enlace <b>⚙️ Administrar Productos</b> arriba
           </span>
         </div>
       </div>
@@ -387,83 +312,6 @@ tr:hover td{background:rgba(255,255,255,.018)}
 
 </div>
 <div class="toast" id="toast"></div>
-
-<!-- Botón flotante para agregar productos -->
-<button class="btn-flotante" onclick="abrirAgregarProducto()">
-  <span style="font-size:20px;">➕</span> Agregar Producto
-</button>
-
-<!-- Modal simple para agregar productos -->
-<div id="modalAgregar" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center;">
-  <div style="background:var(--card); width:90%; max-width:500px; border-radius:10px; padding:25px; border:1px solid var(--border);">
-    
-    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-      <h3 style="color:var(--text);">➕ Agregar Nuevo Producto</h3>
-      <button onclick="cerrarAgregarProducto()" style="background:none; border:none; color:var(--muted); font-size:24px; cursor:pointer;">✖</button>
-    </div>
-
-    <div style="margin-bottom:15px;">
-      <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Categoría:</label>
-      <select id="campoCategoria" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
-        <option value="VERANO">VERANO</option>
-        <option value="INVIERNO">INVIERNO</option>
-        <option value="ANTIESTRES">ANTIESTRES</option>
-        <option value="DECO">DECO</option>
-        <option value="ESCALERA">ESCALERA</option>
-        <option value="NORDICA">NORDICA</option>
-        <option value="MANTA">MANTA</option>
-        <option value="ROPITA">ROPITA</option>
-      </select>
-    </div>
-
-    <div style="margin-bottom:15px;">
-      <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Modelo:</label>
-      <input id="campoModelo" type="text" placeholder="Ej: Gatito, Huella, Garra..." style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
-    </div>
-
-    <div style="margin-bottom:15px;">
-      <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Color(es):</label>
-      <input id="campoColor" type="text" placeholder="Ej: Gris, Rosa, Beige (separados por coma)" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
-      <small style="color:var(--muted);">Si tiene varios colores, separalos por coma</small>
-    </div>
-
-    <div style="margin-bottom:15px;">
-      <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Talle(s):</label>
-      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:5px;">
-        <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
-          <input type="checkbox" class="talle-checkbox" value="XS"> XS
-        </label>
-        <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
-          <input type="checkbox" class="talle-checkbox" value="S"> S
-        </label>
-        <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
-          <input type="checkbox" class="talle-checkbox" value="M"> M
-        </label>
-        <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
-          <input type="checkbox" class="talle-checkbox" value="L"> L
-        </label>
-        <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
-          <input type="checkbox" class="talle-checkbox" value="XL"> XL
-        </label>
-        <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
-          <input type="checkbox" class="talle-checkbox" value="U"> Único
-        </label>
-      </div>
-      <small style="color:var(--muted);">Seleccioná uno o más talles</small>
-    </div>
-
-    <div style="margin-bottom:20px;">
-      <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Texto base que aparece en el PDF:</label>
-      <input id="campoTexto" type="text" placeholder="Ej: gatito verano o gatito verano (talla" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
-      <small style="color:var(--muted);">Podés incluir "talla" o no, el sistema lo agrega automáticamente</small>
-    </div>
-
-    <div style="display:flex; gap:10px; justify-content:flex-end;">
-      <button class="modal-btn-cancelar" onclick="cerrarAgregarProducto()">Cancelar</button>
-      <button class="modal-btn-guardar" onclick="guardarNuevoProducto()">✅ Guardar Producto(s)</button>
-    </div>
-  </div>
-</div>
 
 <script>
 const API = '';  // same origin
@@ -626,131 +474,6 @@ async function runAnotar() {
   } finally {
     btn.classList.remove('loading'); btn.disabled=false;
     checkButtons();
-  }
-}
-
-// ── Funciones para agregar productos ────────────────────────────────────────
-async function abrirAgregarProducto() {
-  document.getElementById('modalAgregar').style.display = 'flex';
-}
-
-function cerrarAgregarProducto() {
-  document.getElementById('modalAgregar').style.display = 'none';
-  // Limpiar campos
-  document.getElementById('campoModelo').value = '';
-  document.getElementById('campoColor').value = '';
-  document.getElementById('campoTexto').value = '';
-  
-  // Limpiar checkboxes
-  const checkboxes = document.querySelectorAll('.talle-checkbox');
-  checkboxes.forEach(cb => cb.checked = false);
-}
-
-async function guardarNuevoProducto() {
-  // Obtener valores
-  const categoria = document.getElementById('campoCategoria').value;
-  const modelo = document.getElementById('campoModelo').value.trim();
-  const coloresInput = document.getElementById('campoColor').value.trim();
-  const textoBase = document.getElementById('campoTexto').value.trim().toLowerCase();
-
-  // Obtener talles seleccionados
-  const checkboxes = document.querySelectorAll('.talle-checkbox');
-  const tallesSeleccionados = [];
-  checkboxes.forEach(cb => {
-    if (cb.checked) tallesSeleccionados.push(cb.value);
-  });
-
-  // Procesar colores (separados por coma)
-  const colores = coloresInput ? coloresInput.split(',').map(c => c.trim()) : [''];
-
-  // Validar
-  if (!modelo || !textoBase) {
-    toast('❌ Modelo y texto son obligatorios');
-    return;
-  }
-
-  if (tallesSeleccionados.length === 0) {
-    toast('❌ Seleccioná al menos un talle');
-    return;
-  }
-
-  try {
-    // ===== PASO 1: Guardar en JSON (mapeo) =====
-    const respMapeo = await fetch('/mapeo');
-    const dataMapeo = await respMapeo.json();
-    let mapeo = JSON.parse(dataMapeo.contenido || '{}');
-
-    if (!mapeo[categoria]) mapeo[categoria] = {};
-    if (!mapeo[categoria][modelo]) mapeo[categoria][modelo] = [];
-
-    let productosAgregados = 0;
-    for (const talle of tallesSeleccionados) {
-      for (const color of colores) {
-        // Construir texto según el talle
-        let textoCompleto;
-        
-        if (talle === 'U') {
-          textoCompleto = textoBase;
-        } else {
-          if (textoBase.includes('talla')) {
-            textoCompleto = `${textoBase} ${talle.toLowerCase()}`;
-          } else {
-            textoCompleto = `${textoBase} (talla ${talle.toLowerCase()}`;
-          }
-        }
-
-        mapeo[categoria][modelo].push({
-          "texto": textoCompleto,
-          "color": color,
-          "talle": talle
-        });
-        productosAgregados++;
-      }
-    }
-
-    const guardarMapeo = await fetch('/mapeo', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({contenido: JSON.stringify(mapeo, null, 2)})
-    });
-
-    if (!guardarMapeo.ok) {
-      toast('❌ Error al guardar en mapeo');
-      return;
-    }
-
-    // ===== PASO 2: Guardar en productos.txt (catálogo Excel) =====
-    const respCatalogo = await fetch('/productos');
-    const dataCatalogo = await respCatalogo.json();
-    let catalogoActual = dataCatalogo.content || '';
-
-    // Crear las líneas para agregar al catálogo
-    const lineasNuevas = [];
-    
-    for (const color of colores) {
-      const tallesStr = tallesSeleccionados.join(',');
-      const lineaCatalogo = `${categoria} | ${modelo} | ${color} | ${tallesStr}`;
-      
-      if (!catalogoActual.includes(lineaCatalogo)) {
-        lineasNuevas.push(lineaCatalogo);
-      }
-    }
-
-    if (lineasNuevas.length > 0) {
-      const catalogoActualizado = catalogoActual.trim() + '\n' + lineasNuevas.join('\n');
-      
-      await fetch('/productos', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({content: catalogoActualizado})
-      });
-    }
-
-    toast(`✅ ${productosAgregados} producto(s) agregado(s) correctamente`);
-    cerrarAgregarProducto();
-
-  } catch(e) {
-    toast('❌ Error: ' + e.message);
   }
 }
 

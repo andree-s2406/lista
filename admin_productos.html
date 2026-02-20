@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pulguitas — Administrar Productos</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap');
+
+:root {
+  --bg:      #0f0e11;
+  --surface: #18161c;
+  --card:    #1d1b23;
+  --border:  #2a2733;
+  --accent:  #b57bee;
+  --accent2: #7c6ff7;
+  --green:   #4ade80;
+  --yellow:  #fbbf24;
+  --red:     #f87171;
+  --text:    #ede9f8;
+  --muted:   #7a768e;
+  --r:       13px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'DM Sans',sans-serif;font-weight:400;
+  min-height:100vh;padding:40px 20px;
+}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 0%,  #2d0b5a44 0%,transparent 65%),
+    radial-gradient(ellipse 55% 40% at 85% 90%, #1a154488 0%,transparent 60%);
+}
+
+.wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto}
+
+/* ── Header ── */
+header{text-align:center;margin-bottom:44px}
+.tag{
+  display:inline-block;
+  background:linear-gradient(135deg,#6d28d9,#4338ca);
+  color:#fff;font-size:10px;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;
+  padding:4px 16px;border-radius:20px;margin-bottom:18px;
+}
+h1{
+  font-family:'DM Serif Display',serif;font-size:clamp(30px,6vw,50px);font-weight:400;
+  background:linear-gradient(135deg,#ede9f8 0%,#b57bee 45%,#7c6ff7 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  line-height:1.1;margin-bottom:10px;
+}
+.sub{color:var(--muted);font-size:14px;font-weight:300;letter-spacing:.3px}
+
+.btn-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.2s;
+  margin-bottom: 20px;
+}
+
+.btn-volver:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Cards ── */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);padding:22px;
+  margin-bottom: 20px;
+}
+.card-title{
+  font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:7px;
+}
+.card-title span{font-size:14px}
+
+/* ── Tabla ── */
+.tbl-wrap{
+  border-radius:10px;
+  border:1px solid var(--border);
+  overflow:auto;
+  margin-bottom:14px;
+  max-height: 500px;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+th{
+  background:var(--surface);
+  color:var(--muted);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  padding:12px;
+  text-align:left;
+  border-bottom:1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+td{
+  padding:10px 12px;
+  border-bottom:1px solid #17151f;
+  vertical-align:middle;
+}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.018)}
+
+.categoria-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.cat-VERANO { background: rgba(41,182,246,.18); color: #29b6f6; }
+.cat-INVIERNO { background: rgba(255,167,38,.18); color: #ffa726; }
+.cat-ANTIESTRES { background: rgba(102,187,106,.18); color: #66bb6a; }
+.cat-DECO { background: rgba(171,71,188,.18); color: #ab47bc; }
+.cat-ESCALERA { background: rgba(120,144,156,.18); color: #78909c; }
+.cat-NORDICA { background: rgba(38,166,154,.18); color: #26a69a; }
+.cat-MANTA { background: rgba(255,202,40,.18); color: #ffca28; }
+.cat-ROPITA { background: rgba(236,64,122,.18); color: #ec407a; }
+
+.btn-eliminar {
+  background: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+  padding: 5px 12px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-eliminar:hover {
+  background: rgba(248,113,113,.1);
+  transform: scale(1.05);
+}
+
+.btn-editar {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 5px 12px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 5px;
+}
+.btn-editar:hover {
+  background: rgba(181,123,238,.1);
+  transform: scale(1.05);
+}
+
+.acciones {
+  display: flex;
+  gap: 5px;
+}
+
+.filtros {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filtro-select {
+  background: #0b0a10;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 15px;
+  border-radius: 8px;
+  font-size: 13px;
+  min-width: 150px;
+}
+
+.search-box {
+  flex: 1;
+  background: #0b0a10;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 15px;
+  border-radius: 8px;
+  font-size: 13px;
+  min-width: 250px;
+}
+
+.btn-agregar {
+  background: linear-gradient(135deg, #6d28d9, #4338ca);
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-agregar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(109,40,217,.4);
+}
+
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--card);border:1px solid var(--border);
+  color:var(--text);padding:10px 18px;border-radius:10px;
+  font-size:13px;z-index:999;
+  opacity:0;transform:translateY(8px);
+  transition:all .25s;pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="tag">🐾 Pulguitas</div>
+    <h1>Administrar Productos</h1>
+    <p class="sub">Editá o eliminá los productos existentes</p>
+    <a href="/" class="btn-volver">← Volver al inicio</a>
+  </header>
+
+  <!-- Filtros -->
+  <div class="filtros">
+    <select id="filtroCategoria" class="filtro-select">
+      <option value="">Todas las categorías</option>
+      <option value="VERANO">VERANO</option>
+      <option value="INVIERNO">INVIERNO</option>
+      <option value="ANTIESTRES">ANTIESTRES</option>
+      <option value="DECO">DECO</option>
+      <option value="ESCALERA">ESCALERA</option>
+      <option value="NORDICA">NORDICA</option>
+      <option value="MANTA">MANTA</option>
+      <option value="ROPITA">ROPITA</option>
+    </select>
+    <input type="text" id="buscarProducto" class="search-box" placeholder="🔍 Buscar producto...">
+    <button class="btn-agregar" onclick="abrirAgregarProducto()">
+      <span>➕</span> Agregar Producto
+    </button>
+  </div>
+
+  <!-- Tabla de productos -->
+  <div class="tbl-wrap">
+    <table id="tablaProductos">
+      <thead>
+        <tr>
+          <th>Categoría</th>
+          <th>Modelo</th>
+          <th>Color</th>
+          <th>Talle</th>
+          <th>Texto PDF</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyProductos">
+        <tr><td colspan="6" style="text-align:center; padding:40px;">Cargando productos...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal para editar/agregar (mismo que antes) -->
+  <div id="modalProducto" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center;">
+    <div style="background:var(--card); width:90%; max-width:500px; border-radius:10px; padding:25px; border:1px solid var(--border);">
+      
+      <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+        <h3 id="modalTitulo" style="color:var(--text);">➕ Agregar Nuevo Producto</h3>
+        <button onclick="cerrarModal()" style="background:none; border:none; color:var(--muted); font-size:24px; cursor:pointer;">✖</button>
+      </div>
+
+      <input type="hidden" id="editIndex" value="">
+      <input type="hidden" id="editCategoriaOriginal" value="">
+      <input type="hidden" id="editModeloOriginal" value="">
+      <input type="hidden" id="editColorOriginal" value="">
+      <input type="hidden" id="editTalleOriginal" value="">
+
+      <div style="margin-bottom:15px;">
+        <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Categoría:</label>
+        <select id="campoCategoria" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
+          <option value="VERANO">VERANO</option>
+          <option value="INVIERNO">INVIERNO</option>
+          <option value="ANTIESTRES">ANTIESTRES</option>
+          <option value="DECO">DECO</option>
+          <option value="ESCALERA">ESCALERA</option>
+          <option value="NORDICA">NORDICA</option>
+          <option value="MANTA">MANTA</option>
+          <option value="ROPITA">ROPITA</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom:15px;">
+        <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Modelo:</label>
+        <input id="campoModelo" type="text" placeholder="Ej: Gatito, Huella, Garra..." style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
+      </div>
+
+      <div style="margin-bottom:15px;">
+        <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Color:</label>
+        <input id="campoColor" type="text" placeholder="Ej: Gris, Rosa, Beige" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
+      </div>
+
+      <div style="margin-bottom:15px;">
+        <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Talle:</label>
+        <select id="campoTalle" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
+          <option value="XS">XS</option>
+          <option value="S">S</option>
+          <option value="M">M</option>
+          <option value="L">L</option>
+          <option value="XL">XL</option>
+          <option value="U">Único</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Texto que aparece en el PDF:</label>
+        <input id="campoTexto" type="text" placeholder="Ej: gatito verano (talla" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
+      </div>
+
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button class="btn-volver" onclick="cerrarModal()" style="padding:10px 20px;">Cancelar</button>
+        <button class="btn-agregar" onclick="guardarProducto()" style="padding:10px 25px;">✅ Guardar</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let productosData = []; // Todos los productos planos
+let filteredData = [];
+
+// Cargar productos al inicio
+async function cargarProductos() {
+  try {
+    const resp = await fetch('/mapeo');
+    const data = await resp.json();
+    const mapeo = JSON.parse(data.contenido || '{}');
+    
+    // Convertir a lista plana
+    productosData = [];
+    for (const categoria in mapeo) {
+      for (const modelo in mapeo[categoria]) {
+        for (const item of mapeo[categoria][modelo]) {
+          productosData.push({
+            categoria,
+            modelo,
+            color: item.color || '',
+            talle: item.talle || '',
+            texto: item.texto || ''
+          });
+        }
+      }
+    }
+    
+    filteredData = [...productosData];
+    renderTabla();
+  } catch(e) {
+    toast('❌ Error cargando productos');
+  }
+}
+
+// Renderizar tabla
+function renderTabla() {
+  const tbody = document.getElementById('tbodyProductos');
+  const filtroCat = document.getElementById('filtroCategoria').value;
+  const busqueda = document.getElementById('buscarProducto').value.toLowerCase();
+  
+  filteredData = productosData.filter(p => {
+    if (filtroCat && p.categoria !== filtroCat) return false;
+    if (busqueda) {
+      return p.modelo.toLowerCase().includes(busqueda) ||
+             p.color.toLowerCase().includes(busqueda) ||
+             p.texto.toLowerCase().includes(busqueda);
+    }
+    return true;
+  });
+  
+  if (filteredData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px;">No hay productos</td></tr>';
+    return;
+  }
+  
+  let html = '';
+  filteredData.forEach((p, index) => {
+    const catClass = `cat-${p.categoria}`;
+    html += `<tr>
+      <td><span class="categoria-badge ${catClass}">${p.categoria}</span></td>
+      <td>${p.modelo}</td>
+      <td>${p.color || '-'}</td>
+      <td>${p.talle || '-'}</td>
+      <td style="max-width:300px; font-size:12px; color:#c4b5fd;">${p.texto}</td>
+      <td class="acciones">
+        <button class="btn-editar" onclick="editarProducto(${index})">✏️ Editar</button>
+        <button class="btn-eliminar" onclick="eliminarProducto(${index})">🗑️ Eliminar</button>
+      </td>
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+// Abrir modal para nuevo producto
+function abrirAgregarProducto() {
+  document.getElementById('modalTitulo').innerText = '➕ Agregar Nuevo Producto';
+  document.getElementById('editIndex').value = '';
+  document.getElementById('campoCategoria').value = 'VERANO';
+  document.getElementById('campoModelo').value = '';
+  document.getElementById('campoColor').value = '';
+  document.getElementById('campoTalle').value = 'S';
+  document.getElementById('campoTexto').value = '';
+  document.getElementById('modalProducto').style.display = 'flex';
+}
+
+// Editar producto
+function editarProducto(index) {
+  const p = filteredData[index];
+  // Encontrar el índice real en productosData
+  const realIndex = productosData.findIndex(x => 
+    x.categoria === p.categoria && 
+    x.modelo === p.modelo && 
+    x.color === p.color && 
+    x.talle === p.talle && 
+    x.texto === p.texto
+  );
+  
+  document.getElementById('modalTitulo').innerText = '✏️ Editar Producto';
+  document.getElementById('editIndex').value = realIndex;
+  document.getElementById('editCategoriaOriginal').value = p.categoria;
+  document.getElementById('editModeloOriginal').value = p.modelo;
+  document.getElementById('editColorOriginal').value = p.color;
+  document.getElementById('editTalleOriginal').value = p.talle;
+  
+  document.getElementById('campoCategoria').value = p.categoria;
+  document.getElementById('campoModelo').value = p.modelo;
+  document.getElementById('campoColor').value = p.color;
+  document.getElementById('campoTalle').value = p.talle;
+  document.getElementById('campoTexto').value = p.texto;
+  
+  document.getElementById('modalProducto').style.display = 'flex';
+}
+
+// Eliminar producto
+async function eliminarProducto(index) {
+  if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+  
+  const p = filteredData[index];
+  const realIndex = productosData.findIndex(x => 
+    x.categoria === p.categoria && 
+    x.modelo === p.modelo && 
+    x.color === p.color && 
+    x.talle === p.talle && 
+    x.texto === p.texto
+  );
+  
+  try {
+    // Cargar JSON actual
+    const resp = await fetch('/mapeo');
+    const data = await resp.json();
+    let mapeo = JSON.parse(data.contenido || '{}');
+    
+    // Eliminar el item específico
+    if (mapeo[p.categoria] && mapeo[p.categoria][p.modelo]) {
+      const items = mapeo[p.categoria][p.modelo];
+      const itemIndex = items.findIndex(item => 
+        item.texto === p.texto && 
+        item.color === p.color && 
+        item.talle === p.talle
+      );
+      
+      if (itemIndex !== -1) {
+        items.splice(itemIndex, 1);
+        
+        // Si no quedan items en ese modelo, eliminar el modelo
+        if (items.length === 0) {
+          delete mapeo[p.categoria][p.modelo];
+        }
+        
+        // Guardar cambios
+        await fetch('/mapeo', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({contenido: JSON.stringify(mapeo, null, 2)})
+        });
+        
+        toast('✅ Producto eliminado');
+        cargarProductos(); // Recargar tabla
+      }
+    }
+  } catch(e) {
+    toast('❌ Error: ' + e.message);
+  }
+}
+
+// Guardar producto (nuevo o editado)
+async function guardarProducto() {
+  const categoria = document.getElementById('campoCategoria').value;
+  const modelo = document.getElementById('campoModelo').value.trim();
+  const color = document.getElementById('campoColor').value.trim();
+  const talle = document.getElementById('campoTalle').value;
+  const texto = document.getElementById('campoTexto').value.trim().toLowerCase();
+  const editIndex = document.getElementById('editIndex').value;
+  
+  if (!modelo || !texto) {
+    toast('❌ Modelo y texto son obligatorios');
+    return;
+  }
+  
+  try {
+    const resp = await fetch('/mapeo');
+    const data = await resp.json();
+    let mapeo = JSON.parse(data.contenido || '{}');
+    
+    if (!mapeo[categoria]) mapeo[categoria] = {};
+    if (!mapeo[categoria][modelo]) mapeo[categoria][modelo] = [];
+    
+    if (editIndex !== '') {
+      // Editando: eliminar el viejo y agregar el nuevo
+      const oldCat = document.getElementById('editCategoriaOriginal').value;
+      const oldModelo = document.getElementById('editModeloOriginal').value;
+      const oldColor = document.getElementById('editColorOriginal').value;
+      const oldTalle = document.getElementById('editTalleOriginal').value;
+      const oldTexto = productosData[editIndex].texto;
+      
+      if (mapeo[oldCat] && mapeo[oldCat][oldModelo]) {
+        const items = mapeo[oldCat][oldModelo];
+        const itemIndex = items.findIndex(item => 
+          item.texto === oldTexto && 
+          item.color === oldColor && 
+          item.talle === oldTalle
+        );
+        if (itemIndex !== -1) items.splice(itemIndex, 1);
+        
+        if (mapeo[oldCat][oldModelo].length === 0) {
+          delete mapeo[oldCat][oldModelo];
+        }
+      }
+    }
+    
+    // Agregar nuevo
+    mapeo[categoria][modelo].push({
+      texto: texto,
+      color: color,
+      talle: talle
+    });
+    
+    await fetch('/mapeo', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({contenido: JSON.stringify(mapeo, null, 2)})
+    });
+    
+    toast(`✅ Producto ${editIndex === '' ? 'agregado' : 'actualizado'}`);
+    cerrarModal();
+    cargarProductos();
+    
+  } catch(e) {
+    toast('❌ Error: ' + e.message);
+  }
+}
+
+function cerrarModal() {
+  document.getElementById('modalProducto').style.display = 'none';
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// Event listeners
+document.getElementById('filtroCategoria').addEventListener('change', renderTabla);
+document.getElementById('buscarProducto').addEventListener('input', renderTabla);
+
+// Cargar al inicio
+cargarProductos();
+</script>
+</body>
+</html>

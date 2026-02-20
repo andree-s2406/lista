@@ -73,14 +73,13 @@ NORDICA | Nórdica | Beige | M,L,XL
 NORDICA | Nórdica | Negro | M,L,XL
 
 # ── ROPITA ───────────────────────────────────────────────────────────────────
-ROPITA | Ropita | Panda     | XS,SM,LXL
-ROPITA | Ropita | Argentina | XS,SM,LXL
-ROPITA | Ropita | Boca      | XS,SM,LXL
-ROPITA | Ropita | River     | XS,SM,LXL
-ROPITA | Ropita | Inter     | XS,SM,LXL
-ROPITA | Ropita | Mami      | XS,SM,LXL
+ROPITA | Ropita | Panda     | XS,S,M,L,XL
+ROPITA | Ropita | Argentina | XS,S,M,L,XL
+ROPITA | Ropita | Boca      | XS,S,M,L,XL
+ROPITA | Ropita | River     | XS,S,M,L,XL
+ROPITA | Ropita | Inter Miami    | XS,S,M,L,XL
 
 # ── MANTA ────────────────────────────────────────────────────────────────────
 MANTA | Manta Doble Faz | Beige/Blanco | U
 MANTA | Manta Doble Faz | Gris/Blanco  | U
-
+VERANO | Cactus | verde | U
