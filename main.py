@@ -28,6 +28,39 @@ app = Flask(__name__, static_folder=".")
 BASE_DIR      = Path(__file__).parent
 PRODUCTOS_TXT = BASE_DIR / "productos.txt"
 OUTPUT_XLSX   = BASE_DIR / "resumen_pedidos.xlsx"
+MAPEO_JSON    = BASE_DIR / "mapeo_productos.json"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CARGA DE MAPEO DESDE JSON
+# ══════════════════════════════════════════════════════════════════════════════
+def cargar_mapeo_desde_json():
+    """Carga el mapeo de productos desde el archivo JSON"""
+    if not MAPEO_JSON.exists():
+        print("⚠️ Archivo mapeo_productos.json no encontrado. Usando mapeo vacío.")
+        return {}
+    
+    try:
+        with open(MAPEO_JSON, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        # Convertir el formato JSON al formato plano del MAPA_PRODUCTOS
+        mapa_plano = {}
+        for categoria, modelos in data.items():
+            for modelo, variantes in modelos.items():
+                for variante in variantes:
+                    texto = variante["texto"].lower()
+                    color = variante.get("color", "")
+                    talle = variante.get("talle", "")
+                    mapa_plano[texto] = (categoria, modelo, color, talle)
+        
+        print(f"✅ Mapeo cargado: {len(mapa_plano)} entradas")
+        return mapa_plano
+    except Exception as e:
+        print(f"❌ Error cargando mapeo: {e}")
+        return {}
+
+# Cargar el mapa al inicio
+MAPA_PRODUCTOS = cargar_mapeo_desde_json()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CATÁLOGO
@@ -81,207 +114,11 @@ def cargar_catalogo(texto):
     return catalogo
 
 # ══════════════════════════════════════════════════════════════════════════════
-# MAPA PDF → (cat, modelo, color, talle)
+# RESOLVER (usa el mapa cargado desde JSON)
 # ══════════════════════════════════════════════════════════════════════════════
-MAPA_PRODUCTOS = {
-    # ============================================================
-    # VERANO
-    # ============================================================
-    # Gatito Verano
-    "gatito verano (talla s": ("VERANO", "Gatito", "Beige", "S"),
-    "gatito verano (talla m": ("VERANO", "Gatito", "Beige", "M"),
-    "gatito verano (talla l": ("VERANO", "Gatito", "Beige", "L"),
-    "gatito verano": ("VERANO", "Gatito", "Beige", "S"),
-    
-    # Huella Verano
-    "huella verano (talla s": ("VERANO", "Huella", "Rosa", "S"),
-    "huella verano (talla m": ("VERANO", "Huella", "Rosa", "M"),
-    "huella verano (talla l": ("VERANO", "Huella", "Rosa", "L"),
-    "huella verano (talla s 50x50": ("VERANO", "Huella", "Rosa", "S"),
-    "huella verano (talla m 70x70": ("VERANO", "Huella", "Rosa", "M"),
-    "huella verano (talla l 90x90": ("VERANO", "Huella", "Rosa", "L"),
-    
-    # Garra Verano
-    "garra verano (talla m": ("VERANO", "Garra", "Gris", "M"),
-    "garra verano (talla l": ("VERANO", "Garra", "Gris", "L"),
-    "garra verano (talla m 70x70": ("VERANO", "Garra", "Gris", "M"),
-    "garra verano (talla l 90x90": ("VERANO", "Garra", "Gris", "L"),
-    
-    # ============================================================
-    # INVIERNO
-    # ============================================================
-    # Gatito Invierno
-    "gatito invierno (talla s": ("INVIERNO", "Gatito", "Beige", "S"),
-    "gatito invierno (talla m": ("INVIERNO", "Gatito", "Beige", "M"),
-    "gatito invierno (talla l": ("INVIERNO", "Gatito", "Beige", "L"),
-    "gatito invierno (talla s 50x50": ("INVIERNO", "Gatito", "Beige", "S"),
-    "gatito invierno (talla m 70x70": ("INVIERNO", "Gatito", "Beige", "M"),
-    "gatito invierno (talla l 90x90": ("INVIERNO", "Gatito", "Beige", "L"),
-    
-    # Huella Invierno
-    "huella invierno (talla s": ("INVIERNO", "Huella", "Rosa", "S"),
-    "huella invierno (talla m": ("INVIERNO", "Huella", "Rosa", "M"),
-    "huella invierno (talla l": ("INVIERNO", "Huella", "Rosa", "L"),
-    "huella invierno (talla s 50x50": ("INVIERNO", "Huella", "Rosa", "S"),
-    "huella invierno (talla m 70x70": ("INVIERNO", "Huella", "Rosa", "M"),
-    "huella invierno (talla l 90x90": ("INVIERNO", "Huella", "Rosa", "L"),
-    
-    # Garra Invierno
-    "garra invierno (talla m": ("INVIERNO", "Garra", "Gris", "M"),
-    "garra invierno (talla l": ("INVIERNO", "Garra", "Gris", "L"),
-    "garra invierno (talla m 70x70": ("INVIERNO", "Garra", "Gris", "M"),
-    "garra invierno (talla l 90x90": ("INVIERNO", "Garra", "Gris", "L"),
-    "garra invierno (talla m 70x70 cm hasta 15 kilos, gris/negro": ("INVIERNO", "Garra", "Gris", "M"),
-    "garra invierno (talla l 90x90 cm hasta 38 kilos, gris/negro": ("INVIERNO", "Garra", "Gris", "L"),
-    
-    # ============================================================
-    # ANTIESTRES
-    # ============================================================
-    # Pancho Antiestrés
-    "cama pancho antiestrés - ergonomica (talla m": ("ANTIESTRES", "Pancho", "", "M"),
-    "cama pancho antiestrés - ergonomica (talla l": ("ANTIESTRES", "Pancho", "", "L"),
-    "cama pancho antiestres - ergonomica (talla m": ("ANTIESTRES", "Pancho", "", "M"),
-    "cama pancho antiestres - ergonomica (talla l": ("ANTIESTRES", "Pancho", "", "L"),
-    "cama pancho antiestrés - ergonomica": ("ANTIESTRES", "Pancho", "", "M"),
-    "cama pancho antiestres - ergonomica": ("ANTIESTRES", "Pancho", "", "M"),
-    
-    # Garra Antiestrés (GRIS)
-    "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, gris": ("ANTIESTRES", "Garra", "Gris", "M"),
-    "cama garra - antiestres, ergonomica (talla l 90x90 cm hasta38 kilos, gris": ("ANTIESTRES", "Garra", "Gris", "L"),
-    "cama garra - antiestres, ergonomica (talla m": ("ANTIESTRES", "Garra", "Gris", "M"),
-    "cama garra - antiestres, ergonomica (talla l": ("ANTIESTRES", "Garra", "Gris", "L"),
-    "garra antiestres (talla m": ("ANTIESTRES", "Garra", "Gris", "M"),
-    "garra antiestres (talla l": ("ANTIESTRES", "Garra", "Gris", "L"),
-    
-    # Garra Antiestrés (BEIGE/ROSA) - Mapear a Huella
-    "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, beige/rosa": ("ANTIESTRES", "Huella", "Beige/Rosa", "M"),
-    "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, beige": ("ANTIESTRES", "Huella", "Beige", "M"),
-    "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, rosa": ("ANTIESTRES", "Huella", "Rosa", "M"),
-    "cama garra - antiestres, ergonomica (talla l 90x90 cm hasta38 kilos, beige/rosa": ("ANTIESTRES", "Huella", "Beige/Rosa", "L"),
-    "cama garra - antiestres, ergonomica (talla l 90x90 cm hasta38 kilos, beige": ("ANTIESTRES", "Huella", "Beige", "L"),
-    "cama garra - antiestres, ergonomica (talla l 90x90 cm hasta38 kilos, rosa": ("ANTIESTRES", "Huella", "Rosa", "L"),
-    
-    # Huella Antiestrés (BEIGE)
-    "huella antiestres (talla m": ("ANTIESTRES", "Huella", "Beige", "M"),
-    "huella antiestres (talla l": ("ANTIESTRES", "Huella", "Beige", "L"),
-    "huella antiestres - ergonomica (talla m": ("ANTIESTRES", "Huella", "Beige", "M"),
-    "huella antiestres - ergonomica (talla l": ("ANTIESTRES", "Huella", "Beige", "L"),
-    "cama huella antiestres (talla m": ("ANTIESTRES", "Huella", "Beige", "M"),
-    "cama huella antiestres (talla l": ("ANTIESTRES", "Huella", "Beige", "L"),
-    
-    # ============================================================
-    # DECO
-    # ============================================================
-    # Bahía
-    "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, gris": ("DECO", "Bahía", "Gris", "L"),
-    "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, rosa": ("DECO", "Bahía", "Rosa", "L"),
-    "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, salmon": ("DECO", "Bahía", "Salmón", "L"),
-    "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, mostaza": ("DECO", "Bahía", "Mostaza", "L"),
-    "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, gris": ("DECO", "Bahía", "Gris", "M"),
-    "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, mostaza": ("DECO", "Bahía", "Mostaza", "M"),
-    "cama bahia - ortopedico (talla l 70x95 cm hasta 50": ("DECO", "Bahía", "Gris", "L"),
-    "cama bahia - ortopedico (talla m 45x60 cm hasta 20": ("DECO", "Bahía", "Mostaza", "M"),
-    
-    # Mini Sofá
-    "mini sofa - ortopedico (gris/oscuro, talla l": ("DECO", "Mini Sofá", "Gris Oscuro", "L"),
-    "mini sofa - ortopedico (gris/oscuro, talla m": ("DECO", "Mini Sofá", "Gris Oscuro", "M"),
-    "mini sofa - ortopedico (gris/claro, talla m": ("DECO", "Mini Sofá", "Gris Claro", "M"),
-    "mini sofa - ortopedico (gris/claro, talla l": ("DECO", "Mini Sofá", "Gris Claro", "L"),
-    "mini sofa - ortopedico (mostaza, talla m": ("DECO", "Mini Sofá", "Mostaza", "M"),
-    "mini sofa - ortopedico (mostaza, talla l": ("DECO", "Mini Sofá", "Mostaza", "L"),
-    "mini sofa - ortopedico (rosa, talla m": ("DECO", "Mini Sofá", "Rosa", "M"),
-    "mini sofa - ortopedico (rosa, talla l": ("DECO", "Mini Sofá", "Rosa", "L"),
-    "mini sofa - ortopedico (gris/oscuro": ("DECO", "Mini Sofá", "Gris Oscuro", "M"),
-    "mini sofa - ortopedico (gris/claro": ("DECO", "Mini Sofá", "Gris Claro", "M"),
-    "mini sofa - ortopedico (mostaza": ("DECO", "Mini Sofá", "Mostaza", "M"),
-    "mini sofa - ortopedico (rosa": ("DECO", "Mini Sofá", "Rosa", "M"),
-    
-    # Sofá Cama
-    "sofa cama - ortopedico (gris/oscuro, talla l": ("DECO", "Sofá Cama", "Gris", "L"),
-    "sofa cama - ortopedico (gris/oscuro, talla m": ("DECO", "Sofá Cama", "Gris", "M"),
-    "sofa cama - ortopedico (salmon, talla l": ("DECO", "Sofá Cama", "Salmón", "L"),
-    "sofa cama - ortopedico (salmon, talla m": ("DECO", "Sofá Cama", "Salmón", "M"),
-    "sofa cama - ortopedico (mostaza, talla l": ("DECO", "Sofá Cama", "Mostaza", "L"),
-    "sofa cama - ortopedico (mostaza, talla m": ("DECO", "Sofá Cama", "Mostaza", "M"),
-    
-    # Timoteo
-    "timoteo (talla s 40x60 cm hasta 6 kilos, mostaza": ("DECO", "Timoteo", "Mostaza", "S"),
-    "timoteo (talla s 40x60 cm hasta 6 kilos, gris": ("DECO", "Timoteo", "Gris", "S"),
-    "timoteo (talla s 40x60 cm hasta 6 kilos, rosa": ("DECO", "Timoteo", "Rosa", "S"),
-    "timoteo (talla m 60x80 cm hasta 15 kilos, mostaza": ("DECO", "Timoteo", "Mostaza", "M"),
-    "timoteo (talla m 60x80 cm hasta 15 kilos, gris": ("DECO", "Timoteo", "Gris", "M"),
-    "timoteo (talla m 60x80 cm hasta 15 kilos, rosa": ("DECO", "Timoteo", "Rosa", "M"),
-    
-    # ============================================================
-    # ESCALERA
-    # ============================================================
-    "escaleras ortopedica (talla l": ("ESCALERA", "Escalera", "Gris", "L"),
-    "escaleras ortopedica (talla m": ("ESCALERA", "Escalera", "Gris", "M"),
-    
-    # ============================================================
-    # NORDICA
-    # ============================================================
-    "cama nordica lavable (talla m": ("NORDICA", "Nórdica", "Gris", "M"),
-    "cama nordica lavable (talla l": ("NORDICA", "Nórdica", "Gris", "L"),
-    "cama nordica lavable (talla xl": ("NORDICA", "Nórdica", "Gris", "XL"),
-    "cama nordica lavable": ("NORDICA", "Nórdica", "Gris", "M"),
-    
-    # ============================================================
-    # MANTA
-    # ============================================================
-    "mantitas doble faz (beige": ("MANTA", "Manta Doble Faz", "Beige/Blanco", "U"),
-    "mantitas doble faz (gris": ("MANTA", "Manta Doble Faz", "Gris/Blanco", "U"),
-    "mantitas doble faz (beige/blanco": ("MANTA", "Manta Doble Faz", "Beige/Blanco", "U"),
-    "mantitas doble faz (gris/blanco": ("MANTA", "Manta Doble Faz", "Gris/Blanco", "U"),
-    
-    # ============================================================
-    # ROPITA
-    # ============================================================
-        # ============================================================
-    # ROPITA
-    # ============================================================
-    # Argentina
-    "remeras deportivas (argentina, xs": ("ROPITA", "Ropita", "Argentina", "XS"),
-    "remeras deportivas (argentina, s": ("ROPITA", "Ropita", "Argentina", "S"),
-    "remeras deportivas (argentina, m": ("ROPITA", "Ropita", "Argentina", "M"),
-    "remeras deportivas (argentina, l": ("ROPITA", "Ropita", "Argentina", "L"),
-    "remeras deportivas (argentina, xl": ("ROPITA", "Ropita", "Argentina", "XL"),
-    "remeras deportivas (argentina": ("ROPITA", "Ropita", "Argentina", "U"),
-    
-    # Boca
-    "remeras deportivas (boca, xs": ("ROPITA", "Ropita", "Boca", "XS"),
-    "remeras deportivas (boca, s": ("ROPITA", "Ropita", "Boca", "S"),
-    "remeras deportivas (boca, m": ("ROPITA", "Ropita", "Boca", "M"),
-    "remeras deportivas (boca, l": ("ROPITA", "Ropita", "Boca", "L"),
-    "remeras deportivas (boca, xl": ("ROPITA", "Ropita", "Boca", "XL"),
-    "remeras deportivas (boca": ("ROPITA", "Ropita", "Boca", "U"),
-    
-    # River
-    "remeras deportivas (river, xs": ("ROPITA", "Ropita", "River", "XS"),
-    "remeras deportivas (river, s": ("ROPITA", "Ropita", "River", "S"),
-    "remeras deportivas (river, m": ("ROPITA", "Ropita", "River", "M"),
-    "remeras deportivas (river, l": ("ROPITA", "Ropita", "River", "L"),
-    "remeras deportivas (river, xl": ("ROPITA", "Ropita", "River", "XL"),
-    "remeras deportivas (river": ("ROPITA", "Ropita", "River", "U"),
-    
-    # Inter Miami
-    "remeras deportivas (inter miami, xs": ("ROPITA", "Ropita", "Inter Miami", "XS"),
-    "remeras deportivas (inter miami, s": ("ROPITA", "Ropita", "Inter Miami", "S"),
-    "remeras deportivas (inter miami, m": ("ROPITA", "Ropita", "Inter Miami", "M"),
-    "remeras deportivas (inter miami, l": ("ROPITA", "Ropita", "Inter Miami", "L"),
-    "remeras deportivas (inter miami, xl": ("ROPITA", "Ropita", "Inter Miami", "XL"),
-    "remeras deportivas (inter miami": ("ROPITA", "Ropita", "Inter Miami", "U"),
-    
-    # Buzo Panda
-    "buzo panda": ("ROPITA", "Ropita", "Panda", "S"),
-    "buzo panda": ("ROPITA", "Ropita", "Panda", "M"),
-    "buzo panda": ("ROPITA", "Ropita", "Panda", "L"),
-
-}
-
 def resolver(nombre):
     """
-    Resuelve un nombre de producto buscando en MAPA_PRODUCTOS
+    Resuelve un nombre de producto buscando en MAPA_PRODUCTOS (cargado desde JSON)
     Prioriza entradas que contienen color específico
     """
     key = nombre.lower().strip()
@@ -444,6 +281,7 @@ def extraer_ordenes_con_fitz(pdf_path):
             print(f"     → {info[1]} {info[3]} {info[2]} x{cant}")
     
     return ordenes_agrupadas
+
 # ══════════════════════════════════════════════════════════════════════════════
 # EXCEL
 # ══════════════════════════════════════════════════════════════════════════════
@@ -554,72 +392,59 @@ def build_excel(ordenes, catalogo, out_path):
         cell.border = bd()
     
     # Ancho de columnas
-    ws_resumen.column_dimensions['A'].width = 40  # Producto
-    ws_resumen.column_dimensions['B'].width = 20  # Modelo
-    ws_resumen.column_dimensions['C'].width = 20  # Color
-    ws_resumen.column_dimensions['D'].width = 15  # Talle
-    ws_resumen.column_dimensions['E'].width = 15  # Cantidad
+    ws_resumen.column_dimensions['A'].width = 40
+    ws_resumen.column_dimensions['B'].width = 20
+    ws_resumen.column_dimensions['C'].width = 20
+    ws_resumen.column_dimensions['D'].width = 15
+    ws_resumen.column_dimensions['E'].width = 15
     
     # Agrupar todos los productos de todas las órdenes
     resumen = defaultdict(int)
-    productos_detalle = []  # Guardar detalle para mostrarlo en la tabla
+    productos_detalle = []
     
     for num_orden, productos in ordenes.items():
         for info, cant in productos:
             cat, modelo, color, talle = info
-            # Crear una clave única para el producto
             clave = (modelo, color, talle)
             resumen[clave] += cant
-            # Guardar detalle (usamos el primer producto como referencia)
             if clave not in [p[0] for p in productos_detalle]:
-                # Crear nombre del producto
                 nombre_producto = f"{modelo} {color} {talle}".strip()
                 productos_detalle.append((clave, modelo, color, talle, nombre_producto))
     
-    # Ordenar por cantidad (de mayor a menor)
+    # Ordenar por cantidad
     productos_ordenados = sorted(
         [(clave, modelo, color, talle, nombre, resumen[clave]) 
          for (clave, modelo, color, talle, nombre) in productos_detalle],
-        key=lambda x: -x[5]  # Ordenar por cantidad descendente
+        key=lambda x: -x[5]
     )
     
     # Escribir datos
     for row, (clave, modelo, color, talle, nombre, cantidad) in enumerate(productos_ordenados, 2):
-        # Columna A: Nombre del producto
         cell_a = ws_resumen.cell(row=row, column=1, value=nombre)
         cell_a.font = Font(name='Arial', size=10)
         cell_a.alignment = Alignment(horizontal='left', vertical='center')
         cell_a.border = bd()
         
-        # Columna B: Modelo
         cell_b = ws_resumen.cell(row=row, column=2, value=modelo)
         cell_b.font = Font(name='Arial', size=10)
         cell_b.alignment = Alignment(horizontal='left', vertical='center')
         cell_b.border = bd()
         
-        # Columna C: Color
         cell_c = ws_resumen.cell(row=row, column=3, value=color)
         cell_c.font = Font(name='Arial', size=10)
         cell_c.alignment = Alignment(horizontal='left', vertical='center')
         cell_c.border = bd()
         
-        # Columna D: Talle
         cell_d = ws_resumen.cell(row=row, column=4, value=talle)
         cell_d.font = Font(name='Arial', size=10)
         cell_d.alignment = Alignment(horizontal='center', vertical='center')
         cell_d.border = bd()
         
-        # Columna E: Cantidad (con color de fondo)
         cell_e = ws_resumen.cell(row=row, column=5, value=cantidad)
         cell_e.font = Font(name='Arial', bold=True, size=11)
         cell_e.fill = PatternFill("solid", fgColor="E9F0FA")
         cell_e.alignment = Alignment(horizontal='center', vertical='center')
         cell_e.border = bd()
-        
-        # Color de fondo alternado para mejor legibilidad
-        if row % 2 == 0:
-            for col in range(1, 6):
-                ws_resumen.cell(row=row, column=col).fill = PatternFill("solid", fgColor="F9F9F9")
     
     # Fila de total
     total_row = len(productos_ordenados) + 2
@@ -634,108 +459,9 @@ def build_excel(ordenes, catalogo, out_path):
     cell_total_num.alignment = Alignment(horizontal='center', vertical='center')
     cell_total_num.border = bd()
     
-    # =========================================================
-    # Guardar Excel
-    # =========================================================
     wb.save(out_path)
     return {}
-def agregar_hoja_resumen(wb, ordenes):
-    """
-    Agrega una hoja con el resumen de todos los productos extraídos
-    """
-    ws = wb.create_sheet("Resumen Productos")
-    
-    # Encabezados
-    headers = ["Producto", "Modelo", "Color", "Talle", "Cantidad Total"]
-    for i, header in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=i, value=header)
-        cell.font = Font(name='Arial', bold=True, size=11, color='FFFFFF')
-        cell.fill = PatternFill("solid", fgColor="4A5568")
-        cell.alignment = Alignment(horizontal='center', vertical='center')
-        cell.border = bd()
-    
-    # Ancho de columnas
-    ws.column_dimensions['A'].width = 40  # Producto
-    ws.column_dimensions['B'].width = 20  # Modelo
-    ws.column_dimensions['C'].width = 20  # Color
-    ws.column_dimensions['D'].width = 15  # Talle
-    ws.column_dimensions['E'].width = 15  # Cantidad
-    
-    # Agrupar todos los productos de todas las órdenes
-    resumen = defaultdict(int)
-    productos_detalle = []  # Guardar detalle para mostrarlo en la tabla
-    
-    for num_orden, productos in ordenes.items():
-        for info, cant in productos:
-            cat, modelo, color, talle = info
-            # Crear una clave única para el producto
-            clave = (modelo, color, talle)
-            resumen[clave] += cant
-            # Guardar detalle (usamos el primer producto como referencia)
-            if clave not in [p[0] for p in productos_detalle]:
-                # Buscar un nombre de producto de ejemplo (opcional)
-                nombre_producto = f"{modelo} {color} {talle}".strip()
-                productos_detalle.append((clave, modelo, color, talle, nombre_producto))
-    
-    # Ordenar por cantidad (de mayor a menor)
-    productos_ordenados = sorted(
-        [(clave, modelo, color, talle, nombre, resumen[clave]) 
-         for (clave, modelo, color, talle, nombre) in productos_detalle],
-        key=lambda x: -x[5]  # Ordenar por cantidad descendente
-    )
-    
-    # Escribir datos
-    for row, (clave, modelo, color, talle, nombre, cantidad) in enumerate(productos_ordenados, 2):
-        # Columna A: Nombre del producto
-        cell_a = ws.cell(row=row, column=1, value=nombre)
-        cell_a.font = Font(name='Arial', size=10)
-        cell_a.alignment = Alignment(horizontal='left', vertical='center')
-        cell_a.border = bd()
-        
-        # Columna B: Modelo
-        cell_b = ws.cell(row=row, column=2, value=modelo)
-        cell_b.font = Font(name='Arial', size=10)
-        cell_b.alignment = Alignment(horizontal='left', vertical='center')
-        cell_b.border = bd()
-        
-        # Columna C: Color
-        cell_c = ws.cell(row=row, column=3, value=color)
-        cell_c.font = Font(name='Arial', size=10)
-        cell_c.alignment = Alignment(horizontal='left', vertical='center')
-        cell_c.border = bd()
-        
-        # Columna D: Talle
-        cell_d = ws.cell(row=row, column=4, value=talle)
-        cell_d.font = Font(name='Arial', size=10)
-        cell_d.alignment = Alignment(horizontal='center', vertical='center')
-        cell_d.border = bd()
-        
-        # Columna E: Cantidad (con color de fondo)
-        cell_e = ws.cell(row=row, column=5, value=cantidad)
-        cell_e.font = Font(name='Arial', bold=True, size=11)
-        cell_e.fill = PatternFill("solid", fgColor="E9F0FA")
-        cell_e.alignment = Alignment(horizontal='center', vertical='center')
-        cell_e.border = bd()
-        
-        # Color de fondo alternado para mejor legibilidad
-        if row % 2 == 0:
-            for col in range(1, 6):
-                ws.cell(row=row, column=col).fill = PatternFill("solid", fgColor="F9F9F9")
-    
-    # Fila de total
-    total_row = len(productos_ordenados) + 2
-    cell_total = ws.cell(row=total_row, column=4, value="TOTAL:")
-    cell_total.font = Font(name='Arial', bold=True, size=11)
-    cell_total.alignment = Alignment(horizontal='right', vertical='center')
-    cell_total.border = bd()
-    
-    cell_total_num = ws.cell(row=total_row, column=5, value=f"=SUM(E2:E{total_row-1})")
-    cell_total_num.font = Font(name='Arial', bold=True, size=11)
-    cell_total_num.fill = PatternFill("solid", fgColor="E2E8F0")
-    cell_total_num.alignment = Alignment(horizontal='center', vertical='center')
-    cell_total_num.border = bd()
-    
-    return ws
+
 # ══════════════════════════════════════════════════════════════════════════════
 # FUNCIONES PARA ANOTAR PDF DE ETIQUETAS
 # ══════════════════════════════════════════════════════════════════════════════
@@ -763,7 +489,7 @@ def formatear_productos_orden(productos, resolver_func):
             else:
                 linea = f"Gatito {talle} x{cant}"
         
-        # Caso especial: HUELLA (para todas las categorías)
+        # Caso especial: HUELLA
         elif modelo == "Huella":
             if cat == "INVIERNO":
                 linea = f"Huella invierno {talle} x{cant}"
@@ -774,7 +500,7 @@ def formatear_productos_orden(productos, resolver_func):
             else:
                 linea = f"Huella {talle} x{cant}"
         
-        # Caso especial: GARRA (solo cuando es realmente Garra, no la que mapeamos a Huella)
+        # Caso especial: GARRA (solo cuando es realmente Garra)
         elif modelo == "Garra" and color == "Gris":
             if cat == "INVIERNO":
                 linea = f"Garra invierno {talle} x{cant}"
@@ -784,6 +510,17 @@ def formatear_productos_orden(productos, resolver_func):
                 linea = f"Garra antiestrés {talle} x{cant}"
             else:
                 linea = f"Garra {talle} x{cant}"
+        
+        # Caso especial: ROPITA
+        elif cat == "ROPITA" and modelo == "Ropita":
+            talle_num = {
+                "XS": "N°1", "S": "N°2", "M": "N°3", "L": "N°4", "XL": "N°5", "U": ""
+            }.get(talle, talle)
+            
+            if talle_num:
+                linea = f"{color} {talle_num} x{cant}"
+            else:
+                linea = f"{color} x{cant}"
         
         # Formato normal para el resto
         else:
@@ -797,19 +534,18 @@ def formatear_productos_orden(productos, resolver_func):
     return lineas
 
 def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_path, output_path):
-    """Añade texto con productos justo debajo del segundo número de seguimiento o del texto IMPORTANTE"""
+    """Añade texto con productos justo debajo del último número de seguimiento"""
     # Extraer órdenes del PDF de pedidos
     ordenes = extraer_ordenes_con_fitz(pdf_pedidos_path)
     
     # Abrir PDF de etiquetas
     doc = fitz.open(pdf_etiquetas_path)
     
-    # 1 cm en puntos (1 cm = 28.35 puntos)
+    # 1 cm en puntos
     UN_CM = 28.35
     
     for pagina in doc:
         text = pagina.get_text()
-        # Buscar número de orden en la página
         match = re.search(r"#(\d+)", text)
         if match:
             orden = match.group(1)
@@ -817,73 +553,36 @@ def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_path, output_path):
                 productos = ordenes[orden]
                 lineas = formatear_productos_orden(productos, resolver)
                 
-                # Buscar todas las palabras
+                # Buscar el ÚLTIMO número de seguimiento
                 palabras = pagina.get_text("words")
-                
-                # Encontrar TODAS las ocurrencias de "seguimiento"
-                seguimientos = []
-                for w in palabras:
-                    if "seguimiento" in w[4].lower():
-                        seguimientos.append(w)
-                
-                # Ordenar por posición Y (de arriba a abajo)
+                seguimientos = [w for w in palabras if "seguimiento" in w[4].lower()]
                 seguimientos.sort(key=lambda w: w[3])
                 
                 y_pos = None
                 
-                # CASO 1: HAY 2 O MÁS SEGUIMIENTOS - usar el segundo
                 if len(seguimientos) >= 2:
-                    segundo_seguimiento = seguimientos[1]  # el segundo en orden vertical
+                    segundo_seguimiento = seguimientos[1]
                     y_pos = segundo_seguimiento[3] + UN_CM
-                    print(f"Orden #{orden}: usando SEGUNDO seguimiento en Y={segundo_seguimiento[3]}")
-                
-                # CASO 2: HAY 1 SOLO SEGUIMIENTO - usar IMPORTANTE
                 elif len(seguimientos) == 1:
-                    # Buscar "IMPORTANTE:"
-                    importantes = []
-                    for w in palabras:
-                        if "importante" in w[4].lower():
-                            importantes.append(w)
-                    
+                    importantes = [w for w in palabras if "importante" in w[4].lower()]
                     if importantes:
-                        # Tomar el último "IMPORTANTE" (el de más abajo)
                         importantes.sort(key=lambda w: w[3])
-                        ultimo_importante = importantes[-1]
-                        y_pos = ultimo_importante[3] + UN_CM + 50  # 50 puntos extra para quedar debajo del texto
-                        print(f"Orden #{orden}: usando IMPORTANTE en Y={ultimo_importante[3]}")
+                        y_pos = importantes[-1][3] + UN_CM + 50
                 
-                # CASO 3: NO HAY SEGUIMIENTOS - fallback a números largos
-                if y_pos is None:
-                    numeros = []
-                    for w in palabras:
-                        if re.search(r'\d{10,}', w[4]):  # números largos (10+ dígitos)
-                            numeros.append(w)
-                    
-                    if numeros:
-                        numeros.sort(key=lambda w: w[3])
-                        ultimo_numero = numeros[-1]
-                        y_pos = ultimo_numero[3] + UN_CM
-                        print(f"Orden #{orden}: usando último número en Y={ultimo_numero[3]}")
-                
-                # CASO 4: FALLBACK FINAL
                 if y_pos is None:
                     y_pos = pagina.rect.height - 80
-                    print(f"Orden #{orden}: usando fallback")
                 
-                # Configurar texto
-                tam_fuente = 20
-                
-                # Escribir cada línea
+                # Escribir texto
+                tam_fuente = 16
                 for i, linea in enumerate(lineas):
-                    x_pos = 20
-                    punto = fitz.Point(x_pos, y_pos + (i * 18))
-                    pagina.insert_text(punto, linea, fontsize=tam_fuente, 
-                                      fontname="helv", color=(0,0,0))
+                    punto = fitz.Point(20, y_pos + (i * 18))
+                    pagina.insert_text(punto, linea, fontsize=tam_fuente,
+                                     fontname="helv", color=(0,0,0))
     
-    # Guardar sobreescribiendo el original
     doc.save(output_path)
     doc.close()
-    return True
+    return ordenes
+
 def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3):
     """
     Reorganiza un PDF anotado para poner múltiples etiquetas por página horizontal
@@ -897,11 +596,11 @@ def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3)
     page_width_pt = page_width_mm * 2.83465
     page_height_pt = page_height_mm * 2.83465
     
-    # Separación entre etiquetas (10mm)
-    spacing_mm = 10
+    # Separación entre etiquetas
+    spacing_mm = 5
     spacing_pt = spacing_mm * 2.83465
     
-    # Margen superior (bajar las etiquetas)
+    # Margen superior
     margin_top_mm = 30
     margin_top_pt = margin_top_mm * 2.83465
     
@@ -911,7 +610,6 @@ def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3)
     print(f"\n📄 Reorganizando {total_paginas} etiquetas en {paginas_necesarias} páginas...")
     
     for out_page_idx in range(paginas_necesarias):
-        # Crear página horizontal
         page = output.new_page(width=page_width_pt, height=page_height_pt)
         
         start_idx = out_page_idx * etiquetas_por_pagina
@@ -923,7 +621,7 @@ def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3)
             src_page = doc[i]
             src_rect = src_page.rect
             
-            # Obtener el contenido real (sin márgenes blancos)
+            # Obtener el contenido real
             text_dict = src_page.get_text("dict")
             blocks = text_dict.get("blocks", [])
             
@@ -939,12 +637,10 @@ def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3)
             if content_rect is None or content_rect.is_empty:
                 content_rect = src_rect
             
-            # Escala 1:1 (tamaño original)
-            scale_factor = 1.0
-            scaled_width_pt = content_rect.width * scale_factor
-            scaled_height_pt = content_rect.height * scale_factor
+            # Escala 1:1
+            scaled_width_pt = content_rect.width
+            scaled_height_pt = content_rect.height
             
-            # Rectángulo destino
             target_rect = fitz.Rect(
                 current_x_pt,
                 margin_top_pt,
@@ -952,23 +648,14 @@ def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3)
                 margin_top_pt + scaled_height_pt
             )
             
-            # Insertar la página recortando márgenes
-            page.show_pdf_page(
-                target_rect,
-                doc,
-                i,
-                clip=content_rect
-            )
-            
+            page.show_pdf_page(target_rect, doc, i, clip=content_rect)
             current_x_pt += scaled_width_pt + spacing_pt
     
-    # Guardar
     output.save(output_path)
     output.close()
     doc.close()
-    
-    print(f"✅ PDF reorganizado guardado en: {output_path}")
     return output_path
+
 # ══════════════════════════════════════════════════════════════════════════════
 # FLASK ROUTES
 # ══════════════════════════════════════════════════════════════════════════════
@@ -986,6 +673,38 @@ def save_productos():
     data = request.get_json()
     PRODUCTOS_TXT.write_text(data["content"], encoding="utf-8")
     return jsonify({"ok": True})
+
+@app.route("/mapeo", methods=["GET"])
+def get_mapeo():
+    """Devuelve el contenido del archivo de mapeo"""
+    if MAPEO_JSON.exists():
+        with open(MAPEO_JSON, 'r', encoding='utf-8') as f:
+            contenido = f.read()
+        return jsonify({"contenido": contenido})
+    return jsonify({"contenido": "{}"})
+
+@app.route("/mapeo", methods=["POST"])
+def save_mapeo():
+    """Guarda el archivo de mapeo"""
+    data = request.get_json()
+    contenido = data.get("contenido", "{}")
+    
+    try:
+        # Validar que sea JSON válido
+        json.loads(contenido)
+        
+        with open(MAPEO_JSON, 'w', encoding='utf-8') as f:
+            f.write(contenido)
+        
+        # Recargar el mapa en memoria
+        global MAPA_PRODUCTOS
+        MAPA_PRODUCTOS = cargar_mapeo_desde_json()
+        
+        return jsonify({"ok": True})
+    except json.JSONDecodeError:
+        return jsonify({"error": "JSON inválido"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/analizar", methods=["POST"])
 def analizar():
@@ -1040,7 +759,6 @@ def anotar():
     pedidos_file = request.files["pedidos"]
     etiquetas_file = request.files["etiquetas"]
     
-    # Crear archivos temporales
     with tempfile.NamedTemporaryFile(suffix="_pedidos.pdf", delete=False) as tmp_pedidos:
         pedidos_file.save(tmp_pedidos.name)
         tmp_pedidos_path = tmp_pedidos.name
@@ -1049,21 +767,17 @@ def anotar():
         etiquetas_file.save(tmp_etiquetas.name)
         tmp_etiquetas_path = tmp_etiquetas.name
     
-    # Archivos temporales para el proceso
     anotado_path = tmp_etiquetas_path.replace("_etiquetas", "_anotado")
     final_path = tmp_etiquetas_path.replace("_etiquetas", "_final")
     
     try:
         print("📝 PASO 1: Anotando PDF con productos...")
-        # 1. Anotar el PDF con los productos
         anotar_pdf_con_productos(tmp_etiquetas_path, tmp_pedidos_path, anotado_path)
         
         print("📐 PASO 2: Reorganizando PDF (3 etiquetas por página)...")
-        # 2. Reorganizar para poner 3 etiquetas por página
         reorganizar_etiquetas(anotado_path, final_path, etiquetas_por_pagina=3)
         
         print("✅ Proceso completado. Enviando PDF final...")
-        # 3. Enviar el PDF final
         return send_file(final_path, as_attachment=True, 
                         download_name=f"final_{etiquetas_file.filename}",
                         mimetype="application/pdf")
@@ -1071,14 +785,12 @@ def anotar():
         print(f"❌ Error: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
-        # Limpiar TODOS los archivos temporales
         for p in [tmp_pedidos_path, tmp_etiquetas_path, anotado_path, final_path]:
             try:
                 if os.path.exists(p):
                     os.unlink(p)
-                    print(f"🧹 Eliminado: {p}")
-            except Exception as e:
-                print(f"⚠️ No se pudo eliminar {p}: {e}")
+            except:
+                pass
 
 @app.route("/descargar")
 def descargar():
