@@ -1,0 +1,684 @@
+{
+  "VERANO": {
+    "Gatito": [
+      {
+        "texto": "gatito verano (talla s",
+        "color": "Beige",
+        "talle": "S"
+      },
+      {
+        "texto": "gatito verano (talla m",
+        "color": "Beige",
+        "talle": "M"
+      },
+      {
+        "texto": "gatito verano (talla l",
+        "color": "Beige",
+        "talle": "L"
+      },
+      {
+        "texto": "gatito verano",
+        "color": "Beige",
+        "talle": "S"
+      }
+    ],
+    "Huella": [
+      {
+        "texto": "huella verano (talla s",
+        "color": "Rosa",
+        "talle": "S"
+      },
+      {
+        "texto": "huella verano (talla m",
+        "color": "Rosa",
+        "talle": "M"
+      },
+      {
+        "texto": "huella verano (talla l",
+        "color": "Rosa",
+        "talle": "L"
+      },
+      {
+        "texto": "huella verano (talla s 50x50",
+        "color": "Rosa",
+        "talle": "S"
+      },
+      {
+        "texto": "huella verano (talla m 70x70",
+        "color": "Rosa",
+        "talle": "M"
+      },
+      {
+        "texto": "huella verano (talla l 90x90",
+        "color": "Rosa",
+        "talle": "L"
+      }
+    ],
+    "Garra": [
+      {
+        "texto": "garra verano (talla m",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "garra verano (talla l",
+        "color": "Gris",
+        "talle": "L"
+      },
+      {
+        "texto": "garra verano (talla m 70x70",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "garra verano (talla l 90x90",
+        "color": "Gris",
+        "talle": "L"
+      }
+    ],
+    "Cactus": [
+      {
+        "texto": "cactus",
+        "color": "verde",
+        "talle": "U"
+      }
+    ]
+  },
+  "INVIERNO": {
+    "Gatito": [
+      {
+        "texto": "gatito invierno (talla s",
+        "color": "Beige",
+        "talle": "S"
+      },
+      {
+        "texto": "gatito invierno (talla m",
+        "color": "Beige",
+        "talle": "M"
+      },
+      {
+        "texto": "gatito invierno (talla l",
+        "color": "Beige",
+        "talle": "L"
+      },
+      {
+        "texto": "gatito invierno (talla s 50x50",
+        "color": "Beige",
+        "talle": "S"
+      },
+      {
+        "texto": "gatito invierno (talla m 70x70",
+        "color": "Beige",
+        "talle": "M"
+      },
+      {
+        "texto": "gatito invierno (talla l 90x90",
+        "color": "Beige",
+        "talle": "L"
+      }
+    ],
+    "Huella": [
+      {
+        "texto": "huella invierno (talla s",
+        "color": "Rosa",
+        "talle": "S"
+      },
+      {
+        "texto": "huella invierno (talla m",
+        "color": "Rosa",
+        "talle": "M"
+      },
+      {
+        "texto": "huella invierno (talla l",
+        "color": "Rosa",
+        "talle": "L"
+      },
+      {
+        "texto": "huella invierno (talla s 50x50",
+        "color": "Rosa",
+        "talle": "S"
+      },
+      {
+        "texto": "huella invierno (talla m 70x70",
+        "color": "Rosa",
+        "talle": "M"
+      },
+      {
+        "texto": "huella invierno (talla l 90x90",
+        "color": "Rosa",
+        "talle": "L"
+      }
+    ],
+    "Garra": [
+      {
+        "texto": "garra invierno (talla m",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "garra invierno (talla l",
+        "color": "Gris",
+        "talle": "L"
+      },
+      {
+        "texto": "garra invierno (talla m 70x70",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "garra invierno (talla l 90x90",
+        "color": "Gris",
+        "talle": "L"
+      },
+      {
+        "texto": "garra invierno (talla m 70x70 cm hasta 15 kilos, gris/negro",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "garra invierno (talla l 90x90 cm hasta 38 kilos, gris/negro",
+        "color": "Gris",
+        "talle": "L"
+      }
+    ]
+  },
+  "ANTIESTRES": {
+    "Pancho": [
+      {
+        "texto": "cama pancho antiestrés - ergonomica (talla m",
+        "color": "",
+        "talle": "M"
+      },
+      {
+        "texto": "cama pancho antiestrés - ergonomica (talla l",
+        "color": "",
+        "talle": "L"
+      },
+      {
+        "texto": "cama pancho antiestres - ergonomica (talla m",
+        "color": "",
+        "talle": "M"
+      },
+      {
+        "texto": "cama pancho antiestres - ergonomica (talla l",
+        "color": "",
+        "talle": "L"
+      },
+      {
+        "texto": "cama pancho antiestrés - ergonomica",
+        "color": "",
+        "talle": "M"
+      },
+      {
+        "texto": "cama pancho antiestres - ergonomica",
+        "color": "",
+        "talle": "M"
+      }
+    ],
+    "Garra": [
+      {
+        "texto": "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, gris",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "cama garra - antiestres, ergonomica (talla l 90x90 cm hasta38 kilos, gris",
+        "color": "Gris",
+        "talle": "L"
+      },
+      {
+        "texto": "cama garra - antiestres, ergonomica (talla m",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "cama garra - antiestres, ergonomica (talla l",
+        "color": "Gris",
+        "talle": "L"
+      },
+      {
+        "texto": "garra antiestres (talla m",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "garra antiestres (talla l",
+        "color": "Gris",
+        "talle": "L"
+      }
+    ],
+    "Huella": [
+      {
+        "texto": "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, beige/rosa",
+        "color": "Beige/Rosa",
+        "talle": "M"
+      },
+      {
+        "texto": "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, beige",
+        "color": "Beige",
+        "talle": "M"
+      },
+      {
+        "texto": "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, rosa",
+        "color": "Rosa",
+        "talle": "M"
+      },
+      {
+        "texto": "cama garra - antiestres, ergonomica (talla l 90x90 cm hasta38 kilos, beige/rosa",
+        "color": "Beige/Rosa",
+        "talle": "L"
+      },
+      {
+        "texto": "cama garra - antiestres, ergonomica (talla l 90x90 cm hasta38 kilos, beige",
+        "color": "Beige",
+        "talle": "L"
+      },
+      {
+        "texto": "cama garra - antiestres, ergonomica (talla l 90x90 cm hasta38 kilos, rosa",
+        "color": "Rosa",
+        "talle": "L"
+      },
+      {
+        "texto": "huella antiestres (talla m",
+        "color": "Beige",
+        "talle": "M"
+      },
+      {
+        "texto": "huella antiestres (talla l",
+        "color": "Beige",
+        "talle": "L"
+      },
+      {
+        "texto": "huella antiestres - ergonomica (talla m",
+        "color": "Beige",
+        "talle": "M"
+      },
+      {
+        "texto": "huella antiestres - ergonomica (talla l",
+        "color": "Beige",
+        "talle": "L"
+      },
+      {
+        "texto": "cama huella antiestres (talla m",
+        "color": "Beige",
+        "talle": "M"
+      },
+      {
+        "texto": "cama huella antiestres (talla l",
+        "color": "Beige",
+        "talle": "L"
+      }
+    ]
+  },
+  "DECO": {
+    "Bahía": [
+      {
+        "texto": "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, gris",
+        "color": "Gris",
+        "talle": "L"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, rosa",
+        "color": "Rosa",
+        "talle": "L"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, salmon",
+        "color": "Salmón",
+        "talle": "L"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, mostaza",
+        "color": "Mostaza",
+        "talle": "L"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, gris",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, mostaza",
+        "color": "Mostaza",
+        "talle": "M"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla l 70x95 cm hasta 50",
+        "color": "Gris",
+        "talle": "L"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20",
+        "color": "Mostaza",
+        "talle": "M"
+      }
+    ],
+    "Mini Sofá": [
+      {
+        "texto": "mini sofa - ortopedico (gris/oscuro, talla l",
+        "color": "Gris Oscuro",
+        "talle": "L"
+      },
+      {
+        "texto": "mini sofa - ortopedico (gris/oscuro, talla m",
+        "color": "Gris Oscuro",
+        "talle": "M"
+      },
+      {
+        "texto": "mini sofa - ortopedico (gris/claro, talla m",
+        "color": "Gris Claro",
+        "talle": "M"
+      },
+      {
+        "texto": "mini sofa - ortopedico (gris/claro, talla l",
+        "color": "Gris Claro",
+        "talle": "L"
+      },
+      {
+        "texto": "mini sofa - ortopedico (mostaza, talla m",
+        "color": "Mostaza",
+        "talle": "M"
+      },
+      {
+        "texto": "mini sofa - ortopedico (mostaza, talla l",
+        "color": "Mostaza",
+        "talle": "L"
+      },
+      {
+        "texto": "mini sofa - ortopedico (rosa, talla m",
+        "color": "Rosa",
+        "talle": "M"
+      },
+      {
+        "texto": "mini sofa - ortopedico (rosa, talla l",
+        "color": "Rosa",
+        "talle": "L"
+      },
+      {
+        "texto": "mini sofa - ortopedico (gris/oscuro",
+        "color": "Gris Oscuro",
+        "talle": "M"
+      },
+      {
+        "texto": "mini sofa - ortopedico (gris/claro",
+        "color": "Gris Claro",
+        "talle": "M"
+      },
+      {
+        "texto": "mini sofa - ortopedico (mostaza",
+        "color": "Mostaza",
+        "talle": "M"
+      },
+      {
+        "texto": "mini sofa - ortopedico (rosa",
+        "color": "Rosa",
+        "talle": "M"
+      }
+    ],
+    "Sofá Cama": [
+      {
+        "texto": "sofa cama - ortopedico (gris/oscuro, talla l",
+        "color": "Gris",
+        "talle": "L"
+      },
+      {
+        "texto": "sofa cama - ortopedico (gris/oscuro, talla m",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "sofa cama - ortopedico (salmon, talla l",
+        "color": "Salmón",
+        "talle": "L"
+      },
+      {
+        "texto": "sofa cama - ortopedico (salmon, talla m",
+        "color": "Salmón",
+        "talle": "M"
+      },
+      {
+        "texto": "sofa cama - ortopedico (mostaza, talla l",
+        "color": "Mostaza",
+        "talle": "L"
+      },
+      {
+        "texto": "sofa cama - ortopedico (mostaza, talla m",
+        "color": "Mostaza",
+        "talle": "M"
+      }
+    ],
+    "Timoteo": [
+      {
+        "texto": "timoteo (talla s 40x60 cm hasta 6 kilos, mostaza",
+        "color": "Mostaza",
+        "talle": "S"
+      },
+      {
+        "texto": "timoteo (talla s 40x60 cm hasta 6 kilos, gris",
+        "color": "Gris",
+        "talle": "S"
+      },
+      {
+        "texto": "timoteo (talla s 40x60 cm hasta 6 kilos, rosa",
+        "color": "Rosa",
+        "talle": "S"
+      },
+      {
+        "texto": "timoteo (talla m 60x80 cm hasta 15 kilos, mostaza",
+        "color": "Mostaza",
+        "talle": "M"
+      },
+      {
+        "texto": "timoteo (talla m 60x80 cm hasta 15 kilos, gris",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "timoteo (talla m 60x80 cm hasta 15 kilos, rosa",
+        "color": "Rosa",
+        "talle": "M"
+      }
+    ]
+  },
+  "ESCALERA": {
+    "Escalera": [
+      {
+        "texto": "escaleras ortopedica (talla l",
+        "color": "Gris",
+        "talle": "L"
+      },
+      {
+        "texto": "escaleras ortopedica (talla m",
+        "color": "Gris",
+        "talle": "M"
+      }
+    ]
+  },
+  "NORDICA": {
+    "Nórdica": [
+      {
+        "texto": "cama nordica lavable (talla m",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "cama nordica lavable (talla l",
+        "color": "Gris",
+        "talle": "L"
+      },
+      {
+        "texto": "cama nordica lavable (talla xl",
+        "color": "Gris",
+        "talle": "XL"
+      },
+      {
+        "texto": "cama nordica lavable",
+        "color": "Gris",
+        "talle": "M"
+      }
+    ]
+  },
+  "MANTA": {
+    "Manta Doble Faz": [
+      {
+        "texto": "mantitas doble faz (beige",
+        "color": "Beige/Blanco",
+        "talle": "U"
+      },
+      {
+        "texto": "mantitas doble faz (gris",
+        "color": "Gris/Blanco",
+        "talle": "U"
+      },
+      {
+        "texto": "mantitas doble faz (beige/blanco",
+        "color": "Beige/Blanco",
+        "talle": "U"
+      },
+      {
+        "texto": "mantitas doble faz (gris/blanco",
+        "color": "Gris/Blanco",
+        "talle": "U"
+      }
+    ]
+  },
+  "ROPITA": {
+    "Ropita": [
+      {
+        "texto": "remeras deportivas (argentina, xs",
+        "color": "Argentina",
+        "talle": "XS"
+      },
+      {
+        "texto": "remeras deportivas (argentina, s",
+        "color": "Argentina",
+        "talle": "S"
+      },
+      {
+        "texto": "remeras deportivas (argentina, m",
+        "color": "Argentina",
+        "talle": "M"
+      },
+      {
+        "texto": "remeras deportivas (argentina, l",
+        "color": "Argentina",
+        "talle": "L"
+      },
+      {
+        "texto": "remeras deportivas (argentina, xl",
+        "color": "Argentina",
+        "talle": "XL"
+      },
+      {
+        "texto": "remeras deportivas (argentina",
+        "color": "Argentina",
+        "talle": "U"
+      },
+      {
+        "texto": "remeras deportivas (boca, xs",
+        "color": "Boca",
+        "talle": "XS"
+      },
+      {
+        "texto": "remeras deportivas (boca, s",
+        "color": "Boca",
+        "talle": "S"
+      },
+      {
+        "texto": "remeras deportivas (boca, m",
+        "color": "Boca",
+        "talle": "M"
+      },
+      {
+        "texto": "remeras deportivas (boca, l",
+        "color": "Boca",
+        "talle": "L"
+      },
+      {
+        "texto": "remeras deportivas (boca, xl",
+        "color": "Boca",
+        "talle": "XL"
+      },
+      {
+        "texto": "remeras deportivas (boca",
+        "color": "Boca",
+        "talle": "U"
+      },
+      {
+        "texto": "remeras deportivas (river, xs",
+        "color": "River",
+        "talle": "XS"
+      },
+      {
+        "texto": "remeras deportivas (river, s",
+        "color": "River",
+        "talle": "S"
+      },
+      {
+        "texto": "remeras deportivas (river, m",
+        "color": "River",
+        "talle": "M"
+      },
+      {
+        "texto": "remeras deportivas (river, l",
+        "color": "River",
+        "talle": "L"
+      },
+      {
+        "texto": "remeras deportivas (river, xl",
+        "color": "River",
+        "talle": "XL"
+      },
+      {
+        "texto": "remeras deportivas (river",
+        "color": "River",
+        "talle": "U"
+      },
+      {
+        "texto": "remeras deportivas (inter miami, xs",
+        "color": "Inter Miami",
+        "talle": "XS"
+      },
+      {
+        "texto": "remeras deportivas (inter miami, s",
+        "color": "Inter Miami",
+        "talle": "S"
+      },
+      {
+        "texto": "remeras deportivas (inter miami, m",
+        "color": "Inter Miami",
+        "talle": "M"
+      },
+      {
+        "texto": "remeras deportivas (inter miami, l",
+        "color": "Inter Miami",
+        "talle": "L"
+      },
+      {
+        "texto": "remeras deportivas (inter miami, xl",
+        "color": "Inter Miami",
+        "talle": "XL"
+      },
+      {
+        "texto": "remeras deportivas (inter miami",
+        "color": "Inter Miami",
+        "talle": "U"
+      },
+      {
+        "texto": "buzo panda",
+        "color": "Panda",
+        "talle": "S"
+      },
+      {
+        "texto": "buzo panda",
+        "color": "Panda",
+        "talle": "M"
+      },
+      {
+        "texto": "buzo panda",
+        "color": "Panda",
+        "talle": "L"
+      }
+    ]
+  }
+}
