@@ -39,7 +39,7 @@ ANTIESTRES | Pancho |       | M,L
 INVIERNO | Huella           | Rosa | S,M,L
 INVIERNO | Corona           |      | S,M,L
 INVIERNO | Hamburguesa      |      | S,M,L
-INVIERNO | Gato             | Gris | S,M,L
+INVIERNO | Gatito | Beige/Marrón | S,M,L
 INVIERNO | Ballena          |      | S,M,L
 INVIERNO | Cactus           |      | S,M,L
 INVIERNO | Panda            |      | S,M,L
