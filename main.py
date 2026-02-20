@@ -884,7 +884,91 @@ def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_path, output_path):
     doc.save(output_path)
     doc.close()
     return True
-
+def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3):
+    """
+    Reorganiza un PDF anotado para poner múltiples etiquetas por página horizontal
+    """
+    doc = fitz.open(pdf_anotado_path)
+    output = fitz.open()
+    
+    # Configuración de página horizontal (A4 landscape)
+    page_width_mm = 297
+    page_height_mm = 210
+    page_width_pt = page_width_mm * 2.83465
+    page_height_pt = page_height_mm * 2.83465
+    
+    # Separación entre etiquetas (10mm)
+    spacing_mm = 10
+    spacing_pt = spacing_mm * 2.83465
+    
+    # Margen superior (bajar las etiquetas)
+    margin_top_mm = 30
+    margin_top_pt = margin_top_mm * 2.83465
+    
+    total_paginas = len(doc)
+    paginas_necesarias = (total_paginas + etiquetas_por_pagina - 1) // etiquetas_por_pagina
+    
+    print(f"\n📄 Reorganizando {total_paginas} etiquetas en {paginas_necesarias} páginas...")
+    
+    for out_page_idx in range(paginas_necesarias):
+        # Crear página horizontal
+        page = output.new_page(width=page_width_pt, height=page_height_pt)
+        
+        start_idx = out_page_idx * etiquetas_por_pagina
+        end_idx = min(start_idx + etiquetas_por_pagina, total_paginas)
+        
+        current_x_pt = 0
+        
+        for i in range(start_idx, end_idx):
+            src_page = doc[i]
+            src_rect = src_page.rect
+            
+            # Obtener el contenido real (sin márgenes blancos)
+            text_dict = src_page.get_text("dict")
+            blocks = text_dict.get("blocks", [])
+            
+            content_rect = None
+            for block in blocks:
+                if "bbox" in block:
+                    bbox = fitz.Rect(block["bbox"])
+                    if content_rect is None:
+                        content_rect = bbox
+                    else:
+                        content_rect.include_rect(bbox)
+            
+            if content_rect is None or content_rect.is_empty:
+                content_rect = src_rect
+            
+            # Escala 1:1 (tamaño original)
+            scale_factor = 1.0
+            scaled_width_pt = content_rect.width * scale_factor
+            scaled_height_pt = content_rect.height * scale_factor
+            
+            # Rectángulo destino
+            target_rect = fitz.Rect(
+                current_x_pt,
+                margin_top_pt,
+                current_x_pt + scaled_width_pt,
+                margin_top_pt + scaled_height_pt
+            )
+            
+            # Insertar la página recortando márgenes
+            page.show_pdf_page(
+                target_rect,
+                doc,
+                i,
+                clip=content_rect
+            )
+            
+            current_x_pt += scaled_width_pt + spacing_pt
+    
+    # Guardar
+    output.save(output_path)
+    output.close()
+    doc.close()
+    
+    print(f"✅ PDF reorganizado guardado en: {output_path}")
+    return output_path
 # ══════════════════════════════════════════════════════════════════════════════
 # FLASK ROUTES
 # ══════════════════════════════════════════════════════════════════════════════
@@ -949,13 +1033,14 @@ def analizar():
 
 @app.route("/anotar", methods=["POST"])
 def anotar():
-    """Recibe PDF de pedidos y PDF de etiquetas, devuelve PDF anotado"""
+    """Recibe PDF de pedidos y PDF de etiquetas, anota y reorganiza automáticamente"""
     if "pedidos" not in request.files or "etiquetas" not in request.files:
         return jsonify({"error": "Se requieren dos archivos: pedidos PDF y etiquetas PDF"}), 400
     
     pedidos_file = request.files["pedidos"]
     etiquetas_file = request.files["etiquetas"]
     
+    # Crear archivos temporales
     with tempfile.NamedTemporaryFile(suffix="_pedidos.pdf", delete=False) as tmp_pedidos:
         pedidos_file.save(tmp_pedidos.name)
         tmp_pedidos_path = tmp_pedidos.name
@@ -964,23 +1049,36 @@ def anotar():
         etiquetas_file.save(tmp_etiquetas.name)
         tmp_etiquetas_path = tmp_etiquetas.name
     
-    output_path = tmp_etiquetas_path.replace("_etiquetas", "_anotado")
+    # Archivos temporales para el proceso
+    anotado_path = tmp_etiquetas_path.replace("_etiquetas", "_anotado")
+    final_path = tmp_etiquetas_path.replace("_etiquetas", "_final")
     
     try:
-        anotar_pdf_con_productos(tmp_etiquetas_path, tmp_pedidos_path, output_path)
-        return send_file(output_path, as_attachment=True, 
-                        download_name=etiquetas_file.filename,
+        print("📝 PASO 1: Anotando PDF con productos...")
+        # 1. Anotar el PDF con los productos
+        anotar_pdf_con_productos(tmp_etiquetas_path, tmp_pedidos_path, anotado_path)
+        
+        print("📐 PASO 2: Reorganizando PDF (3 etiquetas por página)...")
+        # 2. Reorganizar para poner 3 etiquetas por página
+        reorganizar_etiquetas(anotado_path, final_path, etiquetas_por_pagina=3)
+        
+        print("✅ Proceso completado. Enviando PDF final...")
+        # 3. Enviar el PDF final
+        return send_file(final_path, as_attachment=True, 
+                        download_name=f"final_{etiquetas_file.filename}",
                         mimetype="application/pdf")
     except Exception as e:
+        print(f"❌ Error: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
-        # Limpiar archivos temporales
-        for p in [tmp_pedidos_path, tmp_etiquetas_path, output_path]:
+        # Limpiar TODOS los archivos temporales
+        for p in [tmp_pedidos_path, tmp_etiquetas_path, anotado_path, final_path]:
             try:
                 if os.path.exists(p):
                     os.unlink(p)
-            except:
-                pass
+                    print(f"🧹 Eliminado: {p}")
+            except Exception as e:
+                print(f"⚠️ No se pudo eliminar {p}: {e}")
 
 @app.route("/descargar")
 def descargar():
