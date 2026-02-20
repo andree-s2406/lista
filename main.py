@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Pulguitas — Servidor local
 Ejecutá: python app.py
@@ -135,8 +135,17 @@ MAPA_PRODUCTOS = {
     "timoteo (talla m 60x80 cm hasta 15 kilos, rosa":("DECO","Timoteo","Rosa","M"),
     "escaleras ortopedica (talla l":("ESCALERA","Escalera","Gris","L"),
     "escaleras ortopedica (talla m":("ESCALERA","Escalera","Gris","M"),
-    "mantitas doble faz (beige":("MANTA","Manta Doble Faz","Beige/Blanco","U"),
-    "mantitas doble faz (gris":("MANTA","Manta Doble Faz","Gris/Blanco","U"),
+        # Productos de invierno
+    "gatito invierno (talla s": ("INVIERNO", "Gatito", "Beige/Marrón", "S"),
+    "gatito invierno (talla m": ("INVIERNO", "Gatito", "Beige/Marrón", "M"),
+    "gatito invierno (talla l": ("INVIERNO", "Gatito", "Beige/Marrón", "L"),
+    
+    
+    # Mantitas
+    "mantitas doble faz (gris/blanco": ("MANTA", "Manta Doble Faz", "Gris/Blanco", "U"),
+    "mantitas doble faz (beige/blanco": ("MANTA", "Manta Doble Faz", "Beige/Blanco", "U"),
+    "mantitas doble faz (gris": ("MANTA", "Manta Doble Faz", "Gris/Blanco", "U"),
+    "mantitas doble faz (beige": ("MANTA", "Manta Doble Faz", "Beige/Blanco", "U"),
     "remeras deportivas (argentina":("ROPITA","Ropita","Argentina","U"),
     "buzo panda":("ROPITA","Ropita","Panda","U"),
 }
@@ -177,7 +186,6 @@ def resolver(nombre):
 def extraer_ordenes_con_fitz(pdf_path):
     """
     Extrae órdenes y productos usando pymupdf
-    Captura productos que pueden estar en múltiples líneas
     """
     doc = fitz.open(pdf_path)
     texto_completo = ""
@@ -197,65 +205,97 @@ def extraer_ordenes_con_fitz(pdf_path):
     while i < len(lineas):
         linea = lineas[i].strip()
         
+        # Detectar inicio de orden
         if linea.startswith('Orden #'):
             match = re.search(r'Orden #(\d+)', linea)
             if match:
                 num_orden = match.group(1)
-                print(f"\n🔍 Encontrada Orden #{num_orden}")
+                print(f"\n🔍 Procesando Orden #{num_orden}")
                 
-                # Buscar la línea de producto
+                # Recolectar SOLO las líneas de esta orden hasta la próxima "Orden #"
+                lineas_orden = []
                 j = i + 1
-                producto_encontrado = False
+                while j < len(lineas):
+                    siguiente_linea = lineas[j].strip()
+                    # Si encontramos otra orden, terminamos
+                    if siguiente_linea.startswith('Orden #'):
+                        break
+                    lineas_orden.append(lineas[j])
+                    j += 1
                 
-                while j < len(lineas) and j < i + 30:
-                    linea_j = lineas[j].strip()
+                # Procesar SOLO las líneas de esta orden
+                k = 0
+                productos_en_orden = 0
+                
+                while k < len(lineas_orden):
+                    linea_actual = lineas_orden[k].strip()
                     
-                    if any(p in linea_j.lower() for p in ["cama", "sofa", "mini", "escalera"]):
-                        # Comenzar a capturar el producto
-                        nombre_producto = linea_j
-                        print(f"  Producto (inicio): {nombre_producto}")
+                    # Detectar inicio de producto
+                    palabras_clave = ["cama", "sofa", "mini", "escalera", "manta", "gatito", 
+                                    "nordica", "pancho", "garra", "timoteo", "mantitas", 
+                                    "remeras", "buzo", "mantita", "huella", "corona", 
+                                    "hamburguesa", "ballena", "cactus", "panda", "palta",
+                                    "argentina", "boca", "river", "inter", "mami"]
+                    
+                    if any(linea_actual.lower().startswith(p) for p in palabras_clave):
+                        productos_en_orden += 1
+                        print(f"\n  Producto #{productos_en_orden}:")
+                        print(f"    L{k+1}: {linea_actual[:60]}...")
                         
-                        # Seguir capturando líneas mientras sean continuación del producto
-                        k = j + 1
-                        while k < len(lineas) and k < j + 10:
-                            linea_k = lineas[k].strip()
+                        # Capturar nombre del producto
+                        nombre_producto = linea_actual
+                        
+                        m = k + 1
+                        lineas_capturadas = 1
+                        
+                        # Seguir capturando hasta encontrar la cantidad
+                        while m < len(lineas_orden):
+                            linea_m = lineas_orden[m].strip()
                             
-                            # Si la línea contiene palabras clave de producto o continúa la descripción
-                            if (any(p in linea_k.lower() for p in ["kilos", "gris", "mostaza", "rosa", "salmon", "oscuro", "claro", "relleno", "funda", "espuma", "completa"]) or
-                                (linea_k and not linea_k[0].isdigit() and not linea_k.startswith('Subtotal') and not linea_k.startswith('Medio'))):
-                                nombre_producto += " " + linea_k
-                                print(f"    + {linea_k}")
-                                k += 1
-                            else:
+                            # Si encontramos un número solo, es la cantidad
+                            if linea_m.isdigit():
+                                cantidad = int(linea_m)
+                                print(f"    Cantidad encontrada: {cantidad}")
+                                m += 1
                                 break
-                        
-                        # Buscar cantidad en líneas siguientes
-                        cantidad = 1
-                        while k < len(lineas) and k < j + 15:
-                            if lineas[k].strip().isdigit():
-                                cantidad = int(lineas[k].strip())
-                                print(f"  Cantidad: {cantidad}")
+                            
+                            # Si encontramos "Subtotal", significa que no hay número antes
+                            if "Subtotal" in linea_m:
+                                cantidad = 1
+                                print(f"    Cantidad: {cantidad} (por defecto)")
                                 break
-                            k += 1
+                            
+                            # Si encontramos otra palabra clave, es un NUEVO producto
+                            if any(linea_m.lower().startswith(p) for p in palabras_clave):
+                                print(f"    → Siguiente producto detectado")
+                                cantidad = 1
+                                break
+                            
+                            # Si no, es parte del mismo producto
+                            nombre_producto += " " + linea_m
+                            lineas_capturadas += 1
+                            print(f"    L{lineas_capturadas}: {linea_m[:60]}...")
+                            m += 1
                         
-                        # Resolver producto con el nombre completo
-                        print(f"  Nombre completo: {nombre_producto[:100]}...")
+                        # Si salimos sin cantidad, establecer 1
+                        if 'cantidad' not in locals():
+                            cantidad = 1
+                        
+                        # Resolver producto
+                        print(f"    Nombre completo: {nombre_producto[:100]}...")
                         info = resolver(nombre_producto)
                         if info:
                             cat, modelo, color, talle = info
-                            print(f"  → {modelo} {talle} {color} x{cantidad}")
+                            print(f"    → {modelo} {talle} {color} x{cantidad}")
                             ordenes[num_orden].append((info, cantidad))
                         else:
-                            print(f"  ⚠ No resuelto")
+                            print(f"    ⚠ No resuelto: {nombre_producto[:80]}...")
                         
-                        producto_encontrado = True
-                        j = k
-                        break
-                    j += 1
+                        k = m
+                    else:
+                        k += 1
                 
-                if not producto_encontrado:
-                    print("  ⚠ No se encontró producto")
-                
+                print(f"  Total productos en orden #{num_orden}: {productos_en_orden}")
                 i = j
             else:
                 i += 1
@@ -265,13 +305,16 @@ def extraer_ordenes_con_fitz(pdf_path):
     # Agrupar productos por orden
     ordenes_agrupadas = {}
     for num_orden, productos in ordenes.items():
+        print(f"\n📊 Orden #{num_orden} - productos sin agrupar: {len(productos)}")
         grupos = defaultdict(int)
         for info, cant in productos:
             grupos[info] += cant
         ordenes_agrupadas[num_orden] = [(info, cant) for info, cant in grupos.items()]
+        print(f"   Productos agrupados: {len(ordenes_agrupadas[num_orden])}")
+        for info, cant in ordenes_agrupadas[num_orden]:
+            print(f"     → {info[1]} {info[3]} {info[2]} x{cant}")
     
     return ordenes_agrupadas
-
 # ══════════════════════════════════════════════════════════════════════════════
 # EXCEL
 # ══════════════════════════════════════════════════════════════════════════════
@@ -282,70 +325,320 @@ C=Alignment(horizontal='center',vertical='center',wrap_text=True)
 L=Alignment(horizontal='left',  vertical='center',wrap_text=True)
 
 def build_excel(ordenes, catalogo, out_path):
+    """
+    Genera el Excel con catálogo y pedidos
+    """
+    print("\n📊 DEBUG - Productos recibidos para Excel:")
+    print("-" * 50)
+    
     det = defaultdict(int)
+    
+    for num_orden, productos in ordenes.items():
+        print(f"\nOrden #{num_orden}:")
+        for info, cant in productos:
+            cat, modelo, color, talle = info
+            print(f"  → {cat} | {modelo} | {color} | {talle} x{cant}")
+            det[(cat, modelo, color, talle)] += cant
+    
+    # Crear workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Catálogo + Pedidos"
+    
+    # Hoja principal: Catálogo + Pedidos
+    r = 1
+    for sec in catalogo:
+        cat = sec["cat"]
+        hc, bc = CAT_COLORS.get(cat, ("607D8B", "ECEFF1"))
+        
+        # Título de categoría
+        ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=NC)
+        c = ws.cell(row=r, column=1, value=cat)
+        c.font = Font(name='Arial', bold=True, size=12, color='FFFFFF')
+        c.fill = fc(hc)
+        c.alignment = C
+        c.border = bd('888888', 'medium')
+        for col in range(2, NC+1):
+            ws.cell(row=r, column=col).border = bd('888888', 'medium')
+        ws.row_dimensions[r].height = 22
+        r += 1
+        
+        # Encabezados
+        for i, h in enumerate(sec["headers"]):
+            c = ws.cell(row=r, column=1+i, value=h)
+            c.font = Font(name='Arial', bold=True, size=9, color='333333')
+            c.fill = fc(bc)
+            c.alignment = C
+            c.border = bd()
+        ws.row_dimensions[r].height = 30
+        r += 1
+        
+        # Filas de productos
+        for i, (modelo, color) in enumerate(sec["filas"]):
+            bg = 'F9F9F9' if i % 2 else 'FFFFFF'
+            cm = {}
+            for ti, tk in enumerate(sec["talle_cols"]):
+                v = det.get((cat, modelo, color, tk), 0)
+                if v:
+                    cm[2+ti] = v
+            
+            # Escribir modelo y color
+            for j in range(NC):
+                v = [modelo, color, '', '', ''][j]
+                c = ws.cell(row=r, column=1+j, value=v)
+                c.font = Font(name='Arial', size=9, bold=(j == 0))
+                c.fill = fc(bg)
+                c.alignment = L if j <= 1 else C
+                c.border = bd()
+            
+            # Escribir cantidades
+            for ci, val in cm.items():
+                if val:
+                    c = ws.cell(row=r, column=1+ci, value=val)
+                    c.font = Font(name='Arial', bold=True, size=9, color='FFFFFF')
+                    c.fill = fc(hc)
+                    c.alignment = C
+                    c.border = bd()
+            
+            ws.row_dimensions[r].height = 16
+            r += 1
+        
+        ws.row_dimensions[r].height = 8
+        r += 1
+    
+    # Ancho de columnas
+    for col, w in zip('ABCDE', [22, 18, 17, 17, 17]):
+        ws.column_dimensions[col].width = w
+    
+    # =========================================================
+    # Hoja de Resumen Productos
+    # =========================================================
+    ws_resumen = wb.create_sheet("Resumen Productos")
+    
+    # Encabezados
+    headers_resumen = ["Producto", "Modelo", "Color", "Talle", "Cantidad Total"]
+    for i, header in enumerate(headers_resumen, 1):
+        cell = ws_resumen.cell(row=1, column=i, value=header)
+        cell.font = Font(name='Arial', bold=True, size=11, color='FFFFFF')
+        cell.fill = PatternFill("solid", fgColor="4A5568")
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = bd()
+    
+    # Ancho de columnas
+    ws_resumen.column_dimensions['A'].width = 40  # Producto
+    ws_resumen.column_dimensions['B'].width = 20  # Modelo
+    ws_resumen.column_dimensions['C'].width = 20  # Color
+    ws_resumen.column_dimensions['D'].width = 15  # Talle
+    ws_resumen.column_dimensions['E'].width = 15  # Cantidad
+    
+    # Agrupar todos los productos de todas las órdenes
+    resumen = defaultdict(int)
+    productos_detalle = []  # Guardar detalle para mostrarlo en la tabla
     
     for num_orden, productos in ordenes.items():
         for info, cant in productos:
             cat, modelo, color, talle = info
-            det[(cat, modelo, color, talle)] += cant
-
-    wb=openpyxl.Workbook(); ws=wb.active; ws.title="Catálogo + Pedidos"; r=1
-    for sec in catalogo:
-        cat=sec["cat"]; hc,bc=CAT_COLORS.get(cat,("607D8B","ECEFF1"))
-        ws.merge_cells(start_row=r,start_column=1,end_row=r,end_column=NC)
-        c=ws.cell(row=r,column=1,value=cat)
-        c.font=Font(name='Arial',bold=True,size=12,color='FFFFFF')
-        c.fill=fc(hc); c.alignment=C; c.border=bd('888888','medium')
-        for col in range(2,NC+1): ws.cell(row=r,column=col).border=bd('888888','medium')
-        ws.row_dimensions[r].height=22; r+=1
-        for i,h in enumerate(sec["headers"]):
-            c=ws.cell(row=r,column=1+i,value=h)
-            c.font=Font(name='Arial',bold=True,size=9,color='333333')
-            c.fill=fc(bc); c.alignment=C; c.border=bd()
-        ws.row_dimensions[r].height=30; r+=1
-        for i,(modelo,color) in enumerate(sec["filas"]):
-            bg='F9F9F9' if i%2 else 'FFFFFF'
-            cm={}
-            for ti,tk in enumerate(sec["talle_cols"]):
-                v=det.get((cat,modelo,color,tk),0)
-                if v: cm[2+ti]=v
-            for j in range(NC):
-                v=[modelo,color,'','',''][j]
-                c=ws.cell(row=r,column=1+j,value=v)
-                c.font=Font(name='Arial',size=9,bold=(j==0))
-                c.fill=fc(bg); c.alignment=L if j<=1 else C; c.border=bd()
-            for ci,val in cm.items():
-                if val:
-                    c=ws.cell(row=r,column=1+ci,value=val)
-                    c.font=Font(name='Arial',bold=True,size=9,color='FFFFFF')
-                    c.fill=fc(hc); c.alignment=C; c.border=bd()
-            ws.row_dimensions[r].height=16; r+=1
-        ws.row_dimensions[r].height=8; r+=1
-    for col,w in zip('ABCDE',[22,18,17,17,17]): ws.column_dimensions[col].width=w
-
+            # Crear una clave única para el producto
+            clave = (modelo, color, talle)
+            resumen[clave] += cant
+            # Guardar detalle (usamos el primer producto como referencia)
+            if clave not in [p[0] for p in productos_detalle]:
+                # Crear nombre del producto
+                nombre_producto = f"{modelo} {color} {talle}".strip()
+                productos_detalle.append((clave, modelo, color, talle, nombre_producto))
+    
+    # Ordenar por cantidad (de mayor a menor)
+    productos_ordenados = sorted(
+        [(clave, modelo, color, talle, nombre, resumen[clave]) 
+         for (clave, modelo, color, talle, nombre) in productos_detalle],
+        key=lambda x: -x[5]  # Ordenar por cantidad descendente
+    )
+    
+    # Escribir datos
+    for row, (clave, modelo, color, talle, nombre, cantidad) in enumerate(productos_ordenados, 2):
+        # Columna A: Nombre del producto
+        cell_a = ws_resumen.cell(row=row, column=1, value=nombre)
+        cell_a.font = Font(name='Arial', size=10)
+        cell_a.alignment = Alignment(horizontal='left', vertical='center')
+        cell_a.border = bd()
+        
+        # Columna B: Modelo
+        cell_b = ws_resumen.cell(row=row, column=2, value=modelo)
+        cell_b.font = Font(name='Arial', size=10)
+        cell_b.alignment = Alignment(horizontal='left', vertical='center')
+        cell_b.border = bd()
+        
+        # Columna C: Color
+        cell_c = ws_resumen.cell(row=row, column=3, value=color)
+        cell_c.font = Font(name='Arial', size=10)
+        cell_c.alignment = Alignment(horizontal='left', vertical='center')
+        cell_c.border = bd()
+        
+        # Columna D: Talle
+        cell_d = ws_resumen.cell(row=row, column=4, value=talle)
+        cell_d.font = Font(name='Arial', size=10)
+        cell_d.alignment = Alignment(horizontal='center', vertical='center')
+        cell_d.border = bd()
+        
+        # Columna E: Cantidad (con color de fondo)
+        cell_e = ws_resumen.cell(row=row, column=5, value=cantidad)
+        cell_e.font = Font(name='Arial', bold=True, size=11)
+        cell_e.fill = PatternFill("solid", fgColor="E9F0FA")
+        cell_e.alignment = Alignment(horizontal='center', vertical='center')
+        cell_e.border = bd()
+        
+        # Color de fondo alternado para mejor legibilidad
+        if row % 2 == 0:
+            for col in range(1, 6):
+                ws_resumen.cell(row=row, column=col).fill = PatternFill("solid", fgColor="F9F9F9")
+    
+    # Fila de total
+    total_row = len(productos_ordenados) + 2
+    cell_total = ws_resumen.cell(row=total_row, column=4, value="TOTAL:")
+    cell_total.font = Font(name='Arial', bold=True, size=11)
+    cell_total.alignment = Alignment(horizontal='right', vertical='center')
+    cell_total.border = bd()
+    
+    cell_total_num = ws_resumen.cell(row=total_row, column=5, value=f"=SUM(E2:E{total_row-1})")
+    cell_total_num.font = Font(name='Arial', bold=True, size=11)
+    cell_total_num.fill = PatternFill("solid", fgColor="E2E8F0")
+    cell_total_num.alignment = Alignment(horizontal='center', vertical='center')
+    cell_total_num.border = bd()
+    
+    # =========================================================
+    # Guardar Excel
+    # =========================================================
     wb.save(out_path)
     return {}
-
+def agregar_hoja_resumen(wb, ordenes):
+    """
+    Agrega una hoja con el resumen de todos los productos extraídos
+    """
+    ws = wb.create_sheet("Resumen Productos")
+    
+    # Encabezados
+    headers = ["Producto", "Modelo", "Color", "Talle", "Cantidad Total"]
+    for i, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=i, value=header)
+        cell.font = Font(name='Arial', bold=True, size=11, color='FFFFFF')
+        cell.fill = PatternFill("solid", fgColor="4A5568")
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = bd()
+    
+    # Ancho de columnas
+    ws.column_dimensions['A'].width = 40  # Producto
+    ws.column_dimensions['B'].width = 20  # Modelo
+    ws.column_dimensions['C'].width = 20  # Color
+    ws.column_dimensions['D'].width = 15  # Talle
+    ws.column_dimensions['E'].width = 15  # Cantidad
+    
+    # Agrupar todos los productos de todas las órdenes
+    resumen = defaultdict(int)
+    productos_detalle = []  # Guardar detalle para mostrarlo en la tabla
+    
+    for num_orden, productos in ordenes.items():
+        for info, cant in productos:
+            cat, modelo, color, talle = info
+            # Crear una clave única para el producto
+            clave = (modelo, color, talle)
+            resumen[clave] += cant
+            # Guardar detalle (usamos el primer producto como referencia)
+            if clave not in [p[0] for p in productos_detalle]:
+                # Buscar un nombre de producto de ejemplo (opcional)
+                nombre_producto = f"{modelo} {color} {talle}".strip()
+                productos_detalle.append((clave, modelo, color, talle, nombre_producto))
+    
+    # Ordenar por cantidad (de mayor a menor)
+    productos_ordenados = sorted(
+        [(clave, modelo, color, talle, nombre, resumen[clave]) 
+         for (clave, modelo, color, talle, nombre) in productos_detalle],
+        key=lambda x: -x[5]  # Ordenar por cantidad descendente
+    )
+    
+    # Escribir datos
+    for row, (clave, modelo, color, talle, nombre, cantidad) in enumerate(productos_ordenados, 2):
+        # Columna A: Nombre del producto
+        cell_a = ws.cell(row=row, column=1, value=nombre)
+        cell_a.font = Font(name='Arial', size=10)
+        cell_a.alignment = Alignment(horizontal='left', vertical='center')
+        cell_a.border = bd()
+        
+        # Columna B: Modelo
+        cell_b = ws.cell(row=row, column=2, value=modelo)
+        cell_b.font = Font(name='Arial', size=10)
+        cell_b.alignment = Alignment(horizontal='left', vertical='center')
+        cell_b.border = bd()
+        
+        # Columna C: Color
+        cell_c = ws.cell(row=row, column=3, value=color)
+        cell_c.font = Font(name='Arial', size=10)
+        cell_c.alignment = Alignment(horizontal='left', vertical='center')
+        cell_c.border = bd()
+        
+        # Columna D: Talle
+        cell_d = ws.cell(row=row, column=4, value=talle)
+        cell_d.font = Font(name='Arial', size=10)
+        cell_d.alignment = Alignment(horizontal='center', vertical='center')
+        cell_d.border = bd()
+        
+        # Columna E: Cantidad (con color de fondo)
+        cell_e = ws.cell(row=row, column=5, value=cantidad)
+        cell_e.font = Font(name='Arial', bold=True, size=11)
+        cell_e.fill = PatternFill("solid", fgColor="E9F0FA")
+        cell_e.alignment = Alignment(horizontal='center', vertical='center')
+        cell_e.border = bd()
+        
+        # Color de fondo alternado para mejor legibilidad
+        if row % 2 == 0:
+            for col in range(1, 6):
+                ws.cell(row=row, column=col).fill = PatternFill("solid", fgColor="F9F9F9")
+    
+    # Fila de total
+    total_row = len(productos_ordenados) + 2
+    cell_total = ws.cell(row=total_row, column=4, value="TOTAL:")
+    cell_total.font = Font(name='Arial', bold=True, size=11)
+    cell_total.alignment = Alignment(horizontal='right', vertical='center')
+    cell_total.border = bd()
+    
+    cell_total_num = ws.cell(row=total_row, column=5, value=f"=SUM(E2:E{total_row-1})")
+    cell_total_num.font = Font(name='Arial', bold=True, size=11)
+    cell_total_num.fill = PatternFill("solid", fgColor="E2E8F0")
+    cell_total_num.alignment = Alignment(horizontal='center', vertical='center')
+    cell_total_num.border = bd()
+    
+    return ws
 # ══════════════════════════════════════════════════════════════════════════════
 # FUNCIONES PARA ANOTAR PDF DE ETIQUETAS
 # ══════════════════════════════════════════════════════════════════════════════
 def formatear_productos_orden(productos, resolver_func):
-    """Agrupa productos iguales y devuelve líneas de texto en formato 'Modelo Talle Color xCant'"""
+    """Agrupa productos iguales y devuelve líneas de texto en formato personalizado"""
     grupos = defaultdict(int)
     for info, cant in productos:
         cat, modelo, color, talle = info
-        key = (modelo, talle, color)
+        key = (cat, modelo, talle, color)
         grupos[key] += cant
     
     lineas = []
-    for (modelo, talle, color), cant in grupos.items():
-        if color and color.strip():
-            linea = f"{modelo} {talle} {color} x{cant}"
+    for (cat, modelo, talle, color), cant in grupos.items():
+        # Caso especial: MANTA
+        if cat == "MANTA":
+            color_simple = color.split('/')[0].lower()
+            linea = f"Manta {color_simple} x{cant}"
+        
+        # Caso especial: GATITO INVIERNO
+        elif cat == "INVIERNO" and modelo == "Gatito":
+            linea = f"Gatito invierno {talle} x{cant}"
+        
+        # Formato normal para el resto
         else:
-            linea = f"{modelo} {talle} x{cant}"
+            if color and color.strip():
+                linea = f"{modelo} {talle} {color} x{cant}"
+            else:
+                linea = f"{modelo} {talle} x{cant}"
+        
         lineas.append(linea)
+    
     return lineas
-
 def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_path, output_path):
     """Añade texto con productos justo debajo del segundo número de seguimiento o del texto IMPORTANTE"""
     # Extraer órdenes del PDF de pedidos
@@ -425,7 +718,7 @@ def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_path, output_path):
                 
                 # Escribir cada línea
                 for i, linea in enumerate(lineas):
-                    x_pos = 50
+                    x_pos = 20
                     punto = fitz.Point(x_pos, y_pos + (i * 18))
                     pagina.insert_text(punto, linea, fontsize=tam_fuente, 
                                       fontname="helv", color=(0,0,0))
