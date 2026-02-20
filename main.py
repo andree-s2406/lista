@@ -84,70 +84,199 @@ def cargar_catalogo(texto):
 # MAPA PDF → (cat, modelo, color, talle)
 # ══════════════════════════════════════════════════════════════════════════════
 MAPA_PRODUCTOS = {
-    "gatito verano (talla s":("VERANO","Gatito","Beige","S"),
-    "gatito verano (talla m":("VERANO","Gatito","Beige","M"),
-    "gatito verano (talla l":("VERANO","Gatito","Beige","L"),
-    "gatito verano":("VERANO","Gatito","Beige","S"),
-    "cama pancho antiestrés - ergonomica (talla m":("ANTIESTRES","Pancho","","M"),
-    "cama pancho antiestrés - ergonomica (talla l":("ANTIESTRES","Pancho","","L"),
-    "cama pancho antiestres - ergonomica (talla m":("ANTIESTRES","Pancho","","M"),
-    "cama pancho antiestres - ergonomica (talla l":("ANTIESTRES","Pancho","","L"),
-    "cama pancho antiestrés - ergonomica":("ANTIESTRES","Pancho","","M"),
-    "cama pancho antiestres - ergonomica":("ANTIESTRES","Pancho","","M"),
-    "cama garra - antiestres, ergonomica (talla m":("ANTIESTRES","Garra","Gris","M"),
-    "cama garra - antiestres, ergonomica (talla l":("ANTIESTRES","Garra","Gris","L"),
-    "cama garra - antiestres":("ANTIESTRES","Garra","Gris","M"),
-    "cama nordica lavable (talla m":("NORDICA","Nórdica","Gris","M"),
-    "cama nordica lavable (talla l":("NORDICA","Nórdica","Gris","L"),
-    "cama nordica lavable (talla xl":("NORDICA","Nórdica","Gris","XL"),
-    "cama nordica lavable":("NORDICA","Nórdica","Gris","M"),
-    "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, gris":("DECO","Bahía","Gris","L"),
-    "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, rosa":("DECO","Bahía","Rosa","L"),
-    "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, salmon":("DECO","Bahía","Salmón","L"),
-    "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, mostaza":("DECO","Bahía","Mostaza","L"),
-    "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, gris":("DECO","Bahía","Gris","M"),
-    "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, mostaza":("DECO","Bahía","Mostaza","M"),
-    "cama bahia - ortopedico (talla l 70x95 cm hasta 50":("DECO","Bahía","Gris","L"),
-    "cama bahia - ortopedico (talla m 45x60 cm hasta 20":("DECO","Bahía","Mostaza","M"),
-    "mini sofa - ortopedico (gris/oscuro, talla l":("DECO","Mini Sofá","Gris Oscuro","L"),
-    "mini sofa - ortopedico (gris/oscuro, talla m":("DECO","Mini Sofá","Gris Oscuro","M"),
-    "mini sofa - ortopedico (gris/claro, talla m":("DECO","Mini Sofá","Gris Claro","M"),
-    "mini sofa - ortopedico (gris/claro, talla l":("DECO","Mini Sofá","Gris Claro","L"),
-    "mini sofa - ortopedico (mostaza, talla m":("DECO","Mini Sofá","Mostaza","M"),
-    "mini sofa - ortopedico (mostaza, talla l":("DECO","Mini Sofá","Mostaza","L"),
-    "mini sofa - ortopedico (rosa, talla m":("DECO","Mini Sofá","Rosa","M"),
-    "mini sofa - ortopedico (rosa, talla l":("DECO","Mini Sofá","Rosa","L"),
-    "mini sofa - ortopedico (gris/oscuro":("DECO","Mini Sofá","Gris Oscuro","M"),
-    "mini sofa - ortopedico (gris/claro":("DECO","Mini Sofá","Gris Claro","M"),
-    "mini sofa - ortopedico (mostaza":("DECO","Mini Sofá","Mostaza","M"),
-    "mini sofa - ortopedico (rosa":("DECO","Mini Sofá","Rosa","M"),
-    "sofa cama - ortopedico (gris/oscuro, talla l":("DECO","Sofá Cama","Gris","L"),
-    "sofa cama - ortopedico (gris/oscuro, talla m":("DECO","Sofá Cama","Gris","M"),
-    "sofa cama - ortopedico (salmon, talla l":("DECO","Sofá Cama","Salmón","L"),
-    "sofa cama - ortopedico (salmon, talla m":("DECO","Sofá Cama","Salmón","M"),
-    "sofa cama - ortopedico (mostaza, talla l":("DECO","Sofá Cama","Mostaza","L"),
-    "sofa cama - ortopedico (mostaza, talla m":("DECO","Sofá Cama","Mostaza","M"),
-    "timoteo (talla s 40x60 cm hasta 6 kilos, mostaza":("DECO","Timoteo","Mostaza","S"),
-    "timoteo (talla s 40x60 cm hasta 6 kilos, gris":("DECO","Timoteo","Gris","S"),
-    "timoteo (talla s 40x60 cm hasta 6 kilos, rosa":("DECO","Timoteo","Rosa","S"),
-    "timoteo (talla m 60x80 cm hasta 15 kilos, mostaza":("DECO","Timoteo","Mostaza","M"),
-    "timoteo (talla m 60x80 cm hasta 15 kilos, gris":("DECO","Timoteo","Gris","M"),
-    "timoteo (talla m 60x80 cm hasta 15 kilos, rosa":("DECO","Timoteo","Rosa","M"),
-    "escaleras ortopedica (talla l":("ESCALERA","Escalera","Gris","L"),
-    "escaleras ortopedica (talla m":("ESCALERA","Escalera","Gris","M"),
-        # Productos de invierno
-    "gatito invierno (talla s": ("INVIERNO", "Gatito", "Beige/Marrón", "S"),
-    "gatito invierno (talla m": ("INVIERNO", "Gatito", "Beige/Marrón", "M"),
-    "gatito invierno (talla l": ("INVIERNO", "Gatito", "Beige/Marrón", "L"),
+    # ============================================================
+    # VERANO
+    # ============================================================
+    # Gatito Verano
+    "gatito verano (talla s": ("VERANO", "Gatito", "Beige", "S"),
+    "gatito verano (talla m": ("VERANO", "Gatito", "Beige", "M"),
+    "gatito verano (talla l": ("VERANO", "Gatito", "Beige", "L"),
+    "gatito verano": ("VERANO", "Gatito", "Beige", "S"),
     
+    # Huella Verano
+    "huella verano (talla s": ("VERANO", "Huella", "Rosa", "S"),
+    "huella verano (talla m": ("VERANO", "Huella", "Rosa", "M"),
+    "huella verano (talla l": ("VERANO", "Huella", "Rosa", "L"),
+    "huella verano (talla s 50x50": ("VERANO", "Huella", "Rosa", "S"),
+    "huella verano (talla m 70x70": ("VERANO", "Huella", "Rosa", "M"),
+    "huella verano (talla l 90x90": ("VERANO", "Huella", "Rosa", "L"),
     
-    # Mantitas
-    "mantitas doble faz (gris/blanco": ("MANTA", "Manta Doble Faz", "Gris/Blanco", "U"),
-    "mantitas doble faz (beige/blanco": ("MANTA", "Manta Doble Faz", "Beige/Blanco", "U"),
-    "mantitas doble faz (gris": ("MANTA", "Manta Doble Faz", "Gris/Blanco", "U"),
+    # Garra Verano
+    "garra verano (talla m": ("VERANO", "Garra", "Gris", "M"),
+    "garra verano (talla l": ("VERANO", "Garra", "Gris", "L"),
+    "garra verano (talla m 70x70": ("VERANO", "Garra", "Gris", "M"),
+    "garra verano (talla l 90x90": ("VERANO", "Garra", "Gris", "L"),
+    
+    # ============================================================
+    # INVIERNO
+    # ============================================================
+    # Gatito Invierno
+    "gatito invierno (talla s": ("INVIERNO", "Gatito", "Beige", "S"),
+    "gatito invierno (talla m": ("INVIERNO", "Gatito", "Beige", "M"),
+    "gatito invierno (talla l": ("INVIERNO", "Gatito", "Beige", "L"),
+    "gatito invierno (talla s 50x50": ("INVIERNO", "Gatito", "Beige", "S"),
+    "gatito invierno (talla m 70x70": ("INVIERNO", "Gatito", "Beige", "M"),
+    "gatito invierno (talla l 90x90": ("INVIERNO", "Gatito", "Beige", "L"),
+    
+    # Huella Invierno
+    "huella invierno (talla s": ("INVIERNO", "Huella", "Rosa", "S"),
+    "huella invierno (talla m": ("INVIERNO", "Huella", "Rosa", "M"),
+    "huella invierno (talla l": ("INVIERNO", "Huella", "Rosa", "L"),
+    "huella invierno (talla s 50x50": ("INVIERNO", "Huella", "Rosa", "S"),
+    "huella invierno (talla m 70x70": ("INVIERNO", "Huella", "Rosa", "M"),
+    "huella invierno (talla l 90x90": ("INVIERNO", "Huella", "Rosa", "L"),
+    
+    # Garra Invierno
+    "garra invierno (talla m": ("INVIERNO", "Garra", "Gris", "M"),
+    "garra invierno (talla l": ("INVIERNO", "Garra", "Gris", "L"),
+    "garra invierno (talla m 70x70": ("INVIERNO", "Garra", "Gris", "M"),
+    "garra invierno (talla l 90x90": ("INVIERNO", "Garra", "Gris", "L"),
+    "garra invierno (talla m 70x70 cm hasta 15 kilos, gris/negro": ("INVIERNO", "Garra", "Gris", "M"),
+    "garra invierno (talla l 90x90 cm hasta 38 kilos, gris/negro": ("INVIERNO", "Garra", "Gris", "L"),
+    
+    # ============================================================
+    # ANTIESTRES
+    # ============================================================
+    # Pancho Antiestrés
+    "cama pancho antiestrés - ergonomica (talla m": ("ANTIESTRES", "Pancho", "", "M"),
+    "cama pancho antiestrés - ergonomica (talla l": ("ANTIESTRES", "Pancho", "", "L"),
+    "cama pancho antiestres - ergonomica (talla m": ("ANTIESTRES", "Pancho", "", "M"),
+    "cama pancho antiestres - ergonomica (talla l": ("ANTIESTRES", "Pancho", "", "L"),
+    "cama pancho antiestrés - ergonomica": ("ANTIESTRES", "Pancho", "", "M"),
+    "cama pancho antiestres - ergonomica": ("ANTIESTRES", "Pancho", "", "M"),
+    
+    # Garra Antiestrés (GRIS)
+    "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, gris": ("ANTIESTRES", "Garra", "Gris", "M"),
+    "cama garra - antiestres, ergonomica (talla l 90x90 cm hasta38 kilos, gris": ("ANTIESTRES", "Garra", "Gris", "L"),
+    "cama garra - antiestres, ergonomica (talla m": ("ANTIESTRES", "Garra", "Gris", "M"),
+    "cama garra - antiestres, ergonomica (talla l": ("ANTIESTRES", "Garra", "Gris", "L"),
+    "garra antiestres (talla m": ("ANTIESTRES", "Garra", "Gris", "M"),
+    "garra antiestres (talla l": ("ANTIESTRES", "Garra", "Gris", "L"),
+    
+    # Garra Antiestrés (BEIGE/ROSA) - Mapear a Huella
+    "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, beige/rosa": ("ANTIESTRES", "Huella", "Beige/Rosa", "M"),
+    "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, beige": ("ANTIESTRES", "Huella", "Beige", "M"),
+    "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, rosa": ("ANTIESTRES", "Huella", "Rosa", "M"),
+    "cama garra - antiestres, ergonomica (talla l 90x90 cm hasta38 kilos, beige/rosa": ("ANTIESTRES", "Huella", "Beige/Rosa", "L"),
+    "cama garra - antiestres, ergonomica (talla l 90x90 cm hasta38 kilos, beige": ("ANTIESTRES", "Huella", "Beige", "L"),
+    "cama garra - antiestres, ergonomica (talla l 90x90 cm hasta38 kilos, rosa": ("ANTIESTRES", "Huella", "Rosa", "L"),
+    
+    # Huella Antiestrés (BEIGE)
+    "huella antiestres (talla m": ("ANTIESTRES", "Huella", "Beige", "M"),
+    "huella antiestres (talla l": ("ANTIESTRES", "Huella", "Beige", "L"),
+    "huella antiestres - ergonomica (talla m": ("ANTIESTRES", "Huella", "Beige", "M"),
+    "huella antiestres - ergonomica (talla l": ("ANTIESTRES", "Huella", "Beige", "L"),
+    "cama huella antiestres (talla m": ("ANTIESTRES", "Huella", "Beige", "M"),
+    "cama huella antiestres (talla l": ("ANTIESTRES", "Huella", "Beige", "L"),
+    
+    # ============================================================
+    # DECO
+    # ============================================================
+    # Bahía
+    "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, gris": ("DECO", "Bahía", "Gris", "L"),
+    "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, rosa": ("DECO", "Bahía", "Rosa", "L"),
+    "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, salmon": ("DECO", "Bahía", "Salmón", "L"),
+    "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, mostaza": ("DECO", "Bahía", "Mostaza", "L"),
+    "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, gris": ("DECO", "Bahía", "Gris", "M"),
+    "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, mostaza": ("DECO", "Bahía", "Mostaza", "M"),
+    "cama bahia - ortopedico (talla l 70x95 cm hasta 50": ("DECO", "Bahía", "Gris", "L"),
+    "cama bahia - ortopedico (talla m 45x60 cm hasta 20": ("DECO", "Bahía", "Mostaza", "M"),
+    
+    # Mini Sofá
+    "mini sofa - ortopedico (gris/oscuro, talla l": ("DECO", "Mini Sofá", "Gris Oscuro", "L"),
+    "mini sofa - ortopedico (gris/oscuro, talla m": ("DECO", "Mini Sofá", "Gris Oscuro", "M"),
+    "mini sofa - ortopedico (gris/claro, talla m": ("DECO", "Mini Sofá", "Gris Claro", "M"),
+    "mini sofa - ortopedico (gris/claro, talla l": ("DECO", "Mini Sofá", "Gris Claro", "L"),
+    "mini sofa - ortopedico (mostaza, talla m": ("DECO", "Mini Sofá", "Mostaza", "M"),
+    "mini sofa - ortopedico (mostaza, talla l": ("DECO", "Mini Sofá", "Mostaza", "L"),
+    "mini sofa - ortopedico (rosa, talla m": ("DECO", "Mini Sofá", "Rosa", "M"),
+    "mini sofa - ortopedico (rosa, talla l": ("DECO", "Mini Sofá", "Rosa", "L"),
+    "mini sofa - ortopedico (gris/oscuro": ("DECO", "Mini Sofá", "Gris Oscuro", "M"),
+    "mini sofa - ortopedico (gris/claro": ("DECO", "Mini Sofá", "Gris Claro", "M"),
+    "mini sofa - ortopedico (mostaza": ("DECO", "Mini Sofá", "Mostaza", "M"),
+    "mini sofa - ortopedico (rosa": ("DECO", "Mini Sofá", "Rosa", "M"),
+    
+    # Sofá Cama
+    "sofa cama - ortopedico (gris/oscuro, talla l": ("DECO", "Sofá Cama", "Gris", "L"),
+    "sofa cama - ortopedico (gris/oscuro, talla m": ("DECO", "Sofá Cama", "Gris", "M"),
+    "sofa cama - ortopedico (salmon, talla l": ("DECO", "Sofá Cama", "Salmón", "L"),
+    "sofa cama - ortopedico (salmon, talla m": ("DECO", "Sofá Cama", "Salmón", "M"),
+    "sofa cama - ortopedico (mostaza, talla l": ("DECO", "Sofá Cama", "Mostaza", "L"),
+    "sofa cama - ortopedico (mostaza, talla m": ("DECO", "Sofá Cama", "Mostaza", "M"),
+    
+    # Timoteo
+    "timoteo (talla s 40x60 cm hasta 6 kilos, mostaza": ("DECO", "Timoteo", "Mostaza", "S"),
+    "timoteo (talla s 40x60 cm hasta 6 kilos, gris": ("DECO", "Timoteo", "Gris", "S"),
+    "timoteo (talla s 40x60 cm hasta 6 kilos, rosa": ("DECO", "Timoteo", "Rosa", "S"),
+    "timoteo (talla m 60x80 cm hasta 15 kilos, mostaza": ("DECO", "Timoteo", "Mostaza", "M"),
+    "timoteo (talla m 60x80 cm hasta 15 kilos, gris": ("DECO", "Timoteo", "Gris", "M"),
+    "timoteo (talla m 60x80 cm hasta 15 kilos, rosa": ("DECO", "Timoteo", "Rosa", "M"),
+    
+    # ============================================================
+    # ESCALERA
+    # ============================================================
+    "escaleras ortopedica (talla l": ("ESCALERA", "Escalera", "Gris", "L"),
+    "escaleras ortopedica (talla m": ("ESCALERA", "Escalera", "Gris", "M"),
+    
+    # ============================================================
+    # NORDICA
+    # ============================================================
+    "cama nordica lavable (talla m": ("NORDICA", "Nórdica", "Gris", "M"),
+    "cama nordica lavable (talla l": ("NORDICA", "Nórdica", "Gris", "L"),
+    "cama nordica lavable (talla xl": ("NORDICA", "Nórdica", "Gris", "XL"),
+    "cama nordica lavable": ("NORDICA", "Nórdica", "Gris", "M"),
+    
+    # ============================================================
+    # MANTA
+    # ============================================================
     "mantitas doble faz (beige": ("MANTA", "Manta Doble Faz", "Beige/Blanco", "U"),
-    "remeras deportivas (argentina":("ROPITA","Ropita","Argentina","U"),
-    "buzo panda":("ROPITA","Ropita","Panda","U"),
+    "mantitas doble faz (gris": ("MANTA", "Manta Doble Faz", "Gris/Blanco", "U"),
+    "mantitas doble faz (beige/blanco": ("MANTA", "Manta Doble Faz", "Beige/Blanco", "U"),
+    "mantitas doble faz (gris/blanco": ("MANTA", "Manta Doble Faz", "Gris/Blanco", "U"),
+    
+    # ============================================================
+    # ROPITA
+    # ============================================================
+        # ============================================================
+    # ROPITA
+    # ============================================================
+    # Argentina
+    "remeras deportivas (argentina, xs": ("ROPITA", "Ropita", "Argentina", "XS"),
+    "remeras deportivas (argentina, s": ("ROPITA", "Ropita", "Argentina", "S"),
+    "remeras deportivas (argentina, m": ("ROPITA", "Ropita", "Argentina", "M"),
+    "remeras deportivas (argentina, l": ("ROPITA", "Ropita", "Argentina", "L"),
+    "remeras deportivas (argentina, xl": ("ROPITA", "Ropita", "Argentina", "XL"),
+    "remeras deportivas (argentina": ("ROPITA", "Ropita", "Argentina", "U"),
+    
+    # Boca
+    "remeras deportivas (boca, xs": ("ROPITA", "Ropita", "Boca", "XS"),
+    "remeras deportivas (boca, s": ("ROPITA", "Ropita", "Boca", "S"),
+    "remeras deportivas (boca, m": ("ROPITA", "Ropita", "Boca", "M"),
+    "remeras deportivas (boca, l": ("ROPITA", "Ropita", "Boca", "L"),
+    "remeras deportivas (boca, xl": ("ROPITA", "Ropita", "Boca", "XL"),
+    "remeras deportivas (boca": ("ROPITA", "Ropita", "Boca", "U"),
+    
+    # River
+    "remeras deportivas (river, xs": ("ROPITA", "Ropita", "River", "XS"),
+    "remeras deportivas (river, s": ("ROPITA", "Ropita", "River", "S"),
+    "remeras deportivas (river, m": ("ROPITA", "Ropita", "River", "M"),
+    "remeras deportivas (river, l": ("ROPITA", "Ropita", "River", "L"),
+    "remeras deportivas (river, xl": ("ROPITA", "Ropita", "River", "XL"),
+    "remeras deportivas (river": ("ROPITA", "Ropita", "River", "U"),
+    
+    # Inter Miami
+    "remeras deportivas (inter miami, xs": ("ROPITA", "Ropita", "Inter Miami", "XS"),
+    "remeras deportivas (inter miami, s": ("ROPITA", "Ropita", "Inter Miami", "S"),
+    "remeras deportivas (inter miami, m": ("ROPITA", "Ropita", "Inter Miami", "M"),
+    "remeras deportivas (inter miami, l": ("ROPITA", "Ropita", "Inter Miami", "L"),
+    "remeras deportivas (inter miami, xl": ("ROPITA", "Ropita", "Inter Miami", "XL"),
+    "remeras deportivas (inter miami": ("ROPITA", "Ropita", "Inter Miami", "U"),
+    
+    # Buzo Panda
+    "buzo panda": ("ROPITA", "Ropita", "Panda", "S"),
+    "buzo panda": ("ROPITA", "Ropita", "Panda", "M"),
+    "buzo panda": ("ROPITA", "Ropita", "Panda", "L"),
+
 }
 
 def resolver(nombre):
@@ -625,9 +754,36 @@ def formatear_productos_orden(productos, resolver_func):
             color_simple = color.split('/')[0].lower()
             linea = f"Manta {color_simple} x{cant}"
         
-        # Caso especial: GATITO INVIERNO
-        elif cat == "INVIERNO" and modelo == "Gatito":
-            linea = f"Gatito invierno {talle} x{cant}"
+        # Caso especial: GATITO
+        elif modelo == "Gatito":
+            if cat == "INVIERNO":
+                linea = f"Gatito invierno {talle} x{cant}"
+            elif cat == "VERANO":
+                linea = f"Gatito verano {talle} x{cant}"
+            else:
+                linea = f"Gatito {talle} x{cant}"
+        
+        # Caso especial: HUELLA (para todas las categorías)
+        elif modelo == "Huella":
+            if cat == "INVIERNO":
+                linea = f"Huella invierno {talle} x{cant}"
+            elif cat == "VERANO":
+                linea = f"Huella verano {talle} x{cant}"
+            elif cat == "ANTIESTRES":
+                linea = f"Huella antiestrés {talle} x{cant}"
+            else:
+                linea = f"Huella {talle} x{cant}"
+        
+        # Caso especial: GARRA (solo cuando es realmente Garra, no la que mapeamos a Huella)
+        elif modelo == "Garra" and color == "Gris":
+            if cat == "INVIERNO":
+                linea = f"Garra invierno {talle} x{cant}"
+            elif cat == "VERANO":
+                linea = f"Garra verano {talle} x{cant}"
+            elif cat == "ANTIESTRES":
+                linea = f"Garra antiestrés {talle} x{cant}"
+            else:
+                linea = f"Garra {talle} x{cant}"
         
         # Formato normal para el resto
         else:
@@ -639,6 +795,7 @@ def formatear_productos_orden(productos, resolver_func):
         lineas.append(linea)
     
     return lineas
+
 def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_path, output_path):
     """Añade texto con productos justo debajo del segundo número de seguimiento o del texto IMPORTANTE"""
     # Extraer órdenes del PDF de pedidos
