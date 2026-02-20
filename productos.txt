@@ -39,7 +39,7 @@ ANTIESTRES | Pancho |       | M,L
 INVIERNO | Huella           | Rosa | S,M,L
 INVIERNO | Corona           |      | S,M,L
 INVIERNO | Hamburguesa      |      | S,M,L
-INVIERNO | Gatito | Beige/Marrón | S,M,L
+INVIERNO | Gatito | Beige   | S,M,L
 INVIERNO | Ballena          |      | S,M,L
 INVIERNO | Cactus           |      | S,M,L
 INVIERNO | Panda            |      | S,M,L
@@ -83,3 +83,4 @@ ROPITA | Ropita | Mami      | XS,SM,LXL
 # ── MANTA ────────────────────────────────────────────────────────────────────
 MANTA | Manta Doble Faz | Beige/Blanco | U
 MANTA | Manta Doble Faz | Gris/Blanco  | U
+
