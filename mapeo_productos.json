@@ -25,22 +25,22 @@
     "Huella": [
       {
         "texto": "huella verano (talla s",
-        "color": "Rosa/viejo,",
+        "color": "Rosa",
         "talle": "S"
       },
       {
         "texto": "huella verano (talla m",
-        "color": "Rosa/viejo,",
+        "color": "Rosa",
         "talle": "M"
       },
       {
         "texto": "huella verano (talla l",
-        "color": "Rosa/viejo,",
+        "color": "Rosa",
         "talle": "L"
       },
       {
         "texto": "huella verano (talla s 50x50",
-        "color": "Rosa/viejo,",
+        "color": "Rosa",
         "talle": "S"
       },
       {
@@ -50,7 +50,7 @@
       },
       {
         "texto": "huella verano (talla l 90x90",
-        "color": "Rosa/viejo,",
+        "color": "Rosa",
         "talle": "L"
       }
     ],
@@ -120,27 +120,27 @@
     "Huella": [
       {
         "texto": "huella invierno (talla s",
-        "color": "Rosa/viejo,",
+        "color": "Rosa",
         "talle": "S"
       },
       {
         "texto": "huella invierno (talla m",
-        "color": "Rosa/viejo,",
+        "color": "Rosa",
         "talle": "M"
       },
       {
         "texto": "huella invierno (talla l",
-        "color": "Rosa/viejo,",
+        "color": "Rosa",
         "talle": "L"
       },
       {
         "texto": "huella invierno (talla s 50x50",
-        "color": "Rosa/viejo,",
+        "color": "Rosa",
         "talle": "S"
       },
       {
         "texto": "huella invierno (talla m 70x70",
-        "color": "Rosa/viejo,",
+        "color": "Rosa",
         "talle": "M"
       },
       {
@@ -390,13 +390,13 @@
         "talle": "L"
       },
       {
-        "texto": "mini sofa - ortopedico (rosa, talla m",
-        "color": "Rosa",
+        "texto": "mini sofa - ortopedico (rosa/viejo, talla m",
+        "color": "Rosa/Viejo",
         "talle": "M"
       },
       {
-        "texto": "mini sofa - ortopedico (rosa, talla l",
-        "color": "Rosa",
+        "texto": "mini sofa - ortopedico (rosa/viejo, talla l",
+        "color": "Rosa/Viejo",
         "talle": "L"
       },
       {
@@ -415,8 +415,8 @@
         "talle": "M"
       },
       {
-        "texto": "mini sofa - ortopedico (rosa",
-        "color": "Rosa",
+        "texto": "mini sofa - ortopedico (rosa/viejo",
+        "color": "Rosa/Viejo",
         "talle": "M"
       }
     ],
@@ -450,6 +450,37 @@
         "texto": "sofa cama - ortopedico (mostaza, talla m",
         "color": "Mostaza",
         "talle": "M"
+      },
+      {
+        "texto": "sofa cama - ortopedico (rosa/viejo, talla l",
+        "color": "Rosa/Viejo",
+        "talle": "L"
+      },
+      {
+        "texto": "sofa cama - ortopedico (rosa/viejo, talla m",
+        "color": "Rosa/Viejo",
+        "talle": "M"
+      },
+      {
+        "texto": "sofa cama - ortopedico (rosa/viejo, talla l",
+        "color": "Rosa/Viejo",
+        "talle": "L"
+      },
+      
+      {
+        "texto": "sofa cama - ortopedico (gris/oscuro",
+        "color": "Gris Oscuro",
+        "talle": "M"
+      },
+      {
+        "texto": "sofa cama - ortopedico (salmon",
+        "color": "Salmón",
+        "talle": "M"
+      },
+      {
+        "texto": "sofa cama - ortopedico (mostaza",
+        "color": "Mostaza",
+        "talle": "M"
       }
     ],
     "Timoteo": [
@@ -464,8 +495,8 @@
         "talle": "S"
       },
       {
-        "texto": "timoteo (talla s 40x60 cm hasta 6 kilos, rosa",
-        "color": "Rosa",
+        "texto": "timoteo (talla s 40x60 cm hasta 6 kilos, rosa/viejo",
+        "color": "Rosa/Viejo",
         "talle": "S"
       },
       {
@@ -479,8 +510,8 @@
         "talle": "M"
       },
       {
-        "texto": "timoteo (talla m 60x80 cm hasta 15 kilos, rosa",
-        "color": "Rosa",
+        "texto": "timoteo (talla m 60x80 cm hasta 15 kilos, rosa/viejo",
+        "color": "Rosa/Viejo",
         "talle": "M"
       }
     ],
@@ -516,13 +547,13 @@
         "talle": "L"
       },
       {
-        "texto": "Mini sofa - Ortopedico (Rosa, Talla M 45x60 cm Hasta 20 kilos, Solo Funda De Repuesto",
-        "color": "Rosa",
+        "texto": "Mini sofa - Ortopedico (Rosa/Viejo, Talla M 45x60 cm Hasta 20 kilos, Solo Funda De Repuesto",
+        "color": "Rosa/Viejo",
         "talle": "M"
       },
       {
-        "texto": "Mini sofa - Ortopedico (Rosa, Talla L 70x95 cm Hasta 50 kilos, Solo Funda De Repuesto",
-        "color": "Rosa",
+        "texto": "Mini sofa - Ortopedico (Rosa/Viejo, Talla L 70x95 cm Hasta 50 kilos, Solo Funda De Repuesto",
+        "color": "Rosa/Viejo",
         "talle": "L"
       }
     ],
@@ -558,13 +589,13 @@
         "talle": "M"
       },
       {
-        "texto": "Sofa Cama - Ortopedico (Rosa, Talla L (cerrada) 95x70 cm Hasta 50 kilos, Solo Funda De Repues",
-        "color": "Rosa",
+        "texto": "Sofa Cama - Ortopedico (Rosa/Viejo, Talla L (cerrada) 95x70 cm Hasta 50 kilos, Solo Funda De Repues",
+        "color": "Rosa/Viejo",
         "talle": "L"
       },
       {
-        "texto": "Sofa Cama - Ortopedico (Rosa, Talla M (cerrada) 95x70 cm Hasta 50 kilos, Solo Funda De Repues",
-        "color": "Rosa",
+        "texto": "Sofa Cama - Ortopedico (Rosa/Viejo, Talla M (cerrada) 95x70 cm Hasta 50 kilos, Solo Funda De Repues",
+        "color": "Rosa/Viejo",
         "talle": "M"
       }
     ],
@@ -575,7 +606,7 @@
         "talle": "M"
       },
       {
-        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, Rosa, funda de repuesto)",
+        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, Rosa/Viejo, funda de repuesto)",
         "color": "Rosa/Viejo",
         "talle": "M"
       },
@@ -590,8 +621,8 @@
         "talle": "L"
       },
       {
-        "texto": "cama bahia - ortopedico (talla l 45x60 cm hasta 20 kilos, Rosa, funda de repuesto)",
-        "color": "Rosa/viejo,",
+        "texto": "cama bahia - ortopedico (talla l 45x60 cm hasta 20 kilos, Rosa/Viejo, funda de repuesto)",
+        "color": "Rosa/Viejo",
         "talle": "L"
       },
       {
