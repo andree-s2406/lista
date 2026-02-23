@@ -466,7 +466,6 @@
         "color": "Rosa/Viejo",
         "talle": "L"
       },
-      
       {
         "texto": "sofa cama - ortopedico (gris/oscuro",
         "color": "Gris Oscuro",
@@ -705,6 +704,48 @@
         "texto": "escaleras ortopedica (talla m",
         "color": "Gris",
         "talle": "M"
+      }
+    ],
+    "Funda escalera": [
+      {
+        "texto": "Escaleras Ortopedica (Talla M 40cm, alto x 38cm ancho, Gris/Oscuro, Solo Funda de repuesto)",
+        "color": "Gris/Oscuro",
+        "talle": "M"
+      },
+      {
+        "texto": "escaleras ortopedica (talla m 40cm, Rosa/viejo, alto x 38cm ancho, solo funda de repuesto)",
+        "color": "Rosa/viejo",
+        "talle": "M"
+      },
+      {
+        "texto": "escaleras ortopedica (talla m 40cm, Mostaza, alto x 38cm ancho, solo funda de repuesto)",
+        "color": "Mostaza",
+        "talle": "M"
+      },
+      {
+        "texto": "escaleras ortopedica (talla m 40cm, Salmon, alto x 38cm ancho, solo funda de repuesto)",
+        "color": "Salmon",
+        "talle": "M"
+      },
+      {
+        "texto": "Escaleras Ortopedica (Talla L 40cm, alto x 38cm ancho, Gris/Oscuro, Solo Funda de repuesto)",
+        "color": "Gris/Oscuro",
+        "talle": "L"
+      },
+      {
+        "texto": "escaleras ortopedica (talla l 40cm, Rosa/viejo, alto x 38cm ancho, solo funda de repuesto)",
+        "color": "Rosa/viejo",
+        "talle": "L"
+      },
+      {
+        "texto": "escaleras ortopedica (talla l 40cm, Mostaza, alto x 38cm ancho, solo funda de repuesto)",
+        "color": "Mostaza",
+        "talle": "L"
+      },
+      {
+        "texto": "escaleras ortopedica (talla l 40cm, Salmon, alto x 38cm ancho, solo funda de repuesto)",
+        "color": "Salmon",
+        "talle": "L"
       }
     ]
   },
