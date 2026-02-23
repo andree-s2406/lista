@@ -281,7 +281,7 @@ tr:hover td{background:rgba(255,255,255,.018)}
     </table>
   </div>
 
-  <!-- Modal para editar/agregar (mismo que antes) -->
+  <!-- Modal para editar/agregar -->
   <div id="modalProducto" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center;">
     <div style="background:var(--card); width:90%; max-width:500px; border-radius:10px; padding:25px; border:1px solid var(--border);">
       
@@ -316,25 +316,54 @@ tr:hover td{background:rgba(255,255,255,.018)}
       </div>
 
       <div style="margin-bottom:15px;">
-        <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Color:</label>
-        <input id="campoColor" type="text" placeholder="Ej: Gris, Rosa, Beige" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
+        <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Color(es):</label>
+        <input id="campoColor" type="text" placeholder="Ej: Gris, Rosa, Beige (separados por coma)" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
+        <small style="color:var(--muted);">Si tiene varios colores, separalos por coma. Podés dejarlo vacío.</small>
       </div>
 
       <div style="margin-bottom:15px;">
-        <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Talle:</label>
-        <select id="campoTalle" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
-          <option value="XS">XS</option>
-          <option value="S">S</option>
-          <option value="M">M</option>
-          <option value="L">L</option>
-          <option value="XL">XL</option>
-          <option value="U">Único</option>
-        </select>
+        <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Talle(s):</label>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:5px;">
+          <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
+            <input type="checkbox" class="talle-checkbox" value="XS"> XS
+          </label>
+          <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
+            <input type="checkbox" class="talle-checkbox" value="S"> S
+          </label>
+          <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
+            <input type="checkbox" class="talle-checkbox" value="M"> M
+          </label>
+          <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
+            <input type="checkbox" class="talle-checkbox" value="L"> L
+          </label>
+          <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
+            <input type="checkbox" class="talle-checkbox" value="XL"> XL
+          </label>
+          <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
+            <input type="checkbox" class="talle-checkbox" value="U"> Único
+          </label>
+        </div>
+        <small style="color:var(--muted);">Seleccioná uno o más talles</small>
+      </div>
+
+      <!-- Checkboxes para tipo de producto -->
+      <div style="margin-bottom:15px;">
+        <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Tipo de producto:</label>
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+          <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
+            <input type="checkbox" id="tipoCompleto" value="completo" checked> 🛏️ Cama completa
+          </label>
+          <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
+            <input type="checkbox" id="tipoFunda" value="funda"> 🧵 Solo funda
+          </label>
+        </div>
+        <small style="color:var(--muted);">Podés seleccionar ambos si corresponde</small>
       </div>
 
       <div style="margin-bottom:20px;">
-        <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Texto que aparece en el PDF:</label>
-        <input id="campoTexto" type="text" placeholder="Ej: gatito verano (talla" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
+        <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Texto base que aparece en el PDF:</label>
+        <input id="campoTexto" type="text" placeholder="Ej: cama bahia - ortopedico (talla 45x60 cm hasta 20 kilos, , funda de repuesto" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
+        <small style="color:var(--muted);">Incluí una coma extra donde quieras que vaya el color. El sistema agrega talle y "solo funda" automáticamente.</small>
       </div>
 
       <div style="display:flex; gap:10px; justify-content:flex-end;">
@@ -348,7 +377,7 @@ tr:hover td{background:rgba(255,255,255,.018)}
 <div class="toast" id="toast"></div>
 
 <script>
-let productosData = []; // Todos los productos planos
+let productosData = [];
 let filteredData = [];
 
 // Cargar productos al inicio
@@ -356,10 +385,17 @@ async function cargarProductos() {
   try {
     const resp = await fetch('/mapeo');
     const data = await resp.json();
-    const mapeo = JSON.parse(data.contenido || '{}');
     
-    // Convertir a lista plana
+    if (!data.contenido) {
+      productosData = [];
+      filteredData = [];
+      renderTabla();
+      return;
+    }
+    
+    const mapeo = JSON.parse(data.contenido);
     productosData = [];
+    
     for (const categoria in mapeo) {
       for (const modelo in mapeo[categoria]) {
         for (const item of mapeo[categoria][modelo]) {
@@ -377,7 +413,8 @@ async function cargarProductos() {
     filteredData = [...productosData];
     renderTabla();
   } catch(e) {
-    toast('❌ Error cargando productos');
+    toast('❌ Error cargando productos: ' + e.message);
+    console.error(e);
   }
 }
 
@@ -427,15 +464,22 @@ function abrirAgregarProducto() {
   document.getElementById('campoCategoria').value = 'VERANO';
   document.getElementById('campoModelo').value = '';
   document.getElementById('campoColor').value = '';
-  document.getElementById('campoTalle').value = 'S';
   document.getElementById('campoTexto').value = '';
+  
+  // Resetear checkboxes de tipo
+  document.getElementById('tipoCompleto').checked = true;
+  document.getElementById('tipoFunda').checked = false;
+  
+  // Limpiar checkboxes de talles
+  const checkboxes = document.querySelectorAll('.talle-checkbox');
+  checkboxes.forEach(cb => cb.checked = false);
+  
   document.getElementById('modalProducto').style.display = 'flex';
 }
 
 // Editar producto
 function editarProducto(index) {
   const p = filteredData[index];
-  // Encontrar el índice real en productosData
   const realIndex = productosData.findIndex(x => 
     x.categoria === p.categoria && 
     x.modelo === p.modelo && 
@@ -452,10 +496,35 @@ function editarProducto(index) {
   document.getElementById('editTalleOriginal').value = p.talle;
   
   document.getElementById('campoCategoria').value = p.categoria;
-  document.getElementById('campoModelo').value = p.modelo;
+  
+  // Limpiar el modelo de posibles sufijos
+  let modeloBase = p.modelo;
+  const esFunda = p.modelo.includes('(solo funda)');
+  if (esFunda) {
+    modeloBase = p.modelo.replace(' (solo funda)', '');
+  }
+  document.getElementById('campoModelo').value = modeloBase;
+  
   document.getElementById('campoColor').value = p.color;
-  document.getElementById('campoTalle').value = p.talle;
-  document.getElementById('campoTexto').value = p.texto;
+  
+  // Limpiar el texto de posibles agregados automáticos
+  let textoBase = p.texto;
+  textoBase = textoBase.replace(` ${p.talle.toLowerCase()}`, '');
+  textoBase = textoBase.replace(' solo funda de repuesto', '');
+  if (p.color) {
+    textoBase = textoBase.replace(`, ${p.color}`, ',');
+    textoBase = textoBase.replace(`${p.color},`, ',');
+  }
+  document.getElementById('campoTexto').value = textoBase;
+  
+  document.getElementById('tipoCompleto').checked = !esFunda;
+  document.getElementById('tipoFunda').checked = esFunda;
+  
+  // Marcar el talle correspondiente
+  const checkboxes = document.querySelectorAll('.talle-checkbox');
+  checkboxes.forEach(cb => {
+    cb.checked = (cb.value === p.talle);
+  });
   
   document.getElementById('modalProducto').style.display = 'flex';
 }
@@ -474,12 +543,10 @@ async function eliminarProducto(index) {
   );
   
   try {
-    // Cargar JSON actual
     const resp = await fetch('/mapeo');
     const data = await resp.json();
     let mapeo = JSON.parse(data.contenido || '{}');
     
-    // Eliminar el item específico
     if (mapeo[p.categoria] && mapeo[p.categoria][p.modelo]) {
       const items = mapeo[p.categoria][p.modelo];
       const itemIndex = items.findIndex(item => 
@@ -491,12 +558,10 @@ async function eliminarProducto(index) {
       if (itemIndex !== -1) {
         items.splice(itemIndex, 1);
         
-        // Si no quedan items en ese modelo, eliminar el modelo
         if (items.length === 0) {
           delete mapeo[p.categoria][p.modelo];
         }
         
-        // Guardar cambios
         await fetch('/mapeo', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
@@ -504,7 +569,7 @@ async function eliminarProducto(index) {
         });
         
         toast('✅ Producto eliminado');
-        cargarProductos(); // Recargar tabla
+        cargarProductos();
       }
     }
   } catch(e) {
@@ -512,36 +577,54 @@ async function eliminarProducto(index) {
   }
 }
 
-// Guardar producto (nuevo o editado)
+// Guardar producto - VERSIÓN MEJORADA
 async function guardarProducto() {
   const categoria = document.getElementById('campoCategoria').value;
-  const modelo = document.getElementById('campoModelo').value.trim();
-  const color = document.getElementById('campoColor').value.trim();
-  const talle = document.getElementById('campoTalle').value;
-  const texto = document.getElementById('campoTexto').value.trim().toLowerCase();
+  let modelo = document.getElementById('campoModelo').value.trim();
+  const coloresInput = document.getElementById('campoColor').value.trim();
+  const textoBase = document.getElementById('campoTexto').value.trim().toLowerCase();
   const editIndex = document.getElementById('editIndex').value;
-  
-  if (!modelo || !texto) {
+
+  const tipoCompleto = document.getElementById('tipoCompleto').checked;
+  const tipoFunda = document.getElementById('tipoFunda').checked;
+
+  const checkboxes = document.querySelectorAll('.talle-checkbox');
+  const tallesSeleccionados = [];
+  checkboxes.forEach(cb => {
+    if (cb.checked) tallesSeleccionados.push(cb.value);
+  });
+
+  // Si no hay colores, usar uno vacío
+  const colores = coloresInput ? coloresInput.split(',').map(c => c.trim()) : [''];
+
+  if (!modelo || !textoBase) {
     toast('❌ Modelo y texto son obligatorios');
     return;
   }
-  
+
+  if (tallesSeleccionados.length === 0) {
+    toast('❌ Seleccioná al menos un talle');
+    return;
+  }
+
+  if (!tipoCompleto && !tipoFunda) {
+    toast('❌ Seleccioná al menos un tipo (completo o funda)');
+    return;
+  }
+
   try {
     const resp = await fetch('/mapeo');
     const data = await resp.json();
     let mapeo = JSON.parse(data.contenido || '{}');
-    
-    if (!mapeo[categoria]) mapeo[categoria] = {};
-    if (!mapeo[categoria][modelo]) mapeo[categoria][modelo] = [];
-    
+
+    // Si estamos editando, eliminar el producto viejo
     if (editIndex !== '') {
-      // Editando: eliminar el viejo y agregar el nuevo
       const oldCat = document.getElementById('editCategoriaOriginal').value;
       const oldModelo = document.getElementById('editModeloOriginal').value;
       const oldColor = document.getElementById('editColorOriginal').value;
       const oldTalle = document.getElementById('editTalleOriginal').value;
       const oldTexto = productosData[editIndex].texto;
-      
+
       if (mapeo[oldCat] && mapeo[oldCat][oldModelo]) {
         const items = mapeo[oldCat][oldModelo];
         const itemIndex = items.findIndex(item => 
@@ -556,24 +639,103 @@ async function guardarProducto() {
         }
       }
     }
-    
-    // Agregar nuevo
-    mapeo[categoria][modelo].push({
-      texto: texto,
-      color: color,
-      talle: talle
-    });
-    
+
+    let productosAgregados = 0;
+    const tipos = [];
+    if (tipoCompleto) tipos.push('completo');
+    if (tipoFunda) tipos.push('funda');
+
+    for (const tipo of tipos) {
+      let modeloConTipo = modelo;
+      if (tipo === 'funda') {
+        modeloConTipo = `${modelo} (solo funda)`;
+      }
+
+      if (!mapeo[categoria][modeloConTipo]) {
+        mapeo[categoria][modeloConTipo] = [];
+      }
+
+      for (const talle of tallesSeleccionados) {
+        for (const color of colores) {
+          // Construir texto según el talle y color
+          let textoCompleto = textoBase;
+          
+          // 1. Insertar el color donde corresponde (si hay color)
+          if (color) {
+            // Buscar lugar para insertar color (después de la primera coma)
+            const despuesDeMedidas = textoCompleto.indexOf(',');
+            if (despuesDeMedidas !== -1) {
+              // Insertar color después de la primera coma
+              textoCompleto = textoCompleto.substring(0, despuesDeMedidas + 1) + 
+                             ` ${color},` + 
+                             textoCompleto.substring(despuesDeMedidas + 1);
+            } else {
+              // Si no hay coma, agregar al final
+              textoCompleto = `${textoCompleto}, ${color}`;
+            }
+          }
+          
+          // 2. Insertar el talle después de "talla" (más flexible)
+          if (talle !== 'U') {
+            // Buscar "talla" o "tallal" o "talla " (cualquier palabra que empiece con talla)
+            const patronTalla = /talla\w*/i;
+            const match = textoCompleto.match(patronTalla);
+            
+            if (match) {
+              const posTalla = match.index;
+              const palabraTalla = match[0];
+              const largoPalabra = palabraTalla.length;
+              
+              // Insertar talle después de la palabra "talla" (cualquier variante)
+              const antes = textoCompleto.substring(0, posTalla + largoPalabra);
+              const despues = textoCompleto.substring(posTalla + largoPalabra);
+              textoCompleto = `${antes} ${talle.toLowerCase()}${despues}`;
+            } else {
+              // Si no hay "talla", agregarlo al principio
+              textoCompleto = `${textoCompleto} (talla ${talle.toLowerCase()}`;
+            }
+          }
+          
+          // 3. Agregar indicador de funda si corresponde
+          if (tipo === 'funda' && !textoCompleto.includes('solo funda')) {
+            // Buscar lugar apropiado para "solo funda" (después del color si existe)
+            if (color) {
+              const posColor = textoCompleto.lastIndexOf(color);
+              if (posColor !== -1) {
+                const antes = textoCompleto.substring(0, posColor + color.length);
+                const despues = textoCompleto.substring(posColor + color.length);
+                textoCompleto = `${antes}, solo funda de repuesto${despues}`;
+              } else {
+                textoCompleto = `${textoCompleto}, solo funda de repuesto`;
+              }
+            } else {
+              textoCompleto = `${textoCompleto}, solo funda de repuesto`;
+            }
+          }
+
+          // Limpiar espacios extras
+          textoCompleto = textoCompleto.replace(/\s+/g, ' ').trim();
+
+          mapeo[categoria][modeloConTipo].push({
+            texto: textoCompleto,
+            color: color,
+            talle: talle
+          });
+          productosAgregados++;
+        }
+      }
+    }
+
     await fetch('/mapeo', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({contenido: JSON.stringify(mapeo, null, 2)})
     });
-    
-    toast(`✅ Producto ${editIndex === '' ? 'agregado' : 'actualizado'}`);
+
+    toast(`✅ ${productosAgregados} producto(s) ${editIndex === '' ? 'agregado(s)' : 'actualizado(s)'}`);
     cerrarModal();
     cargarProductos();
-    
+
   } catch(e) {
     toast('❌ Error: ' + e.message);
   }

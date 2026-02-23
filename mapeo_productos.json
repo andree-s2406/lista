@@ -25,22 +25,22 @@
     "Huella": [
       {
         "texto": "huella verano (talla s",
-        "color": "Rosa",
+        "color": "Rosa/viejo,",
         "talle": "S"
       },
       {
         "texto": "huella verano (talla m",
-        "color": "Rosa",
+        "color": "Rosa/viejo,",
         "talle": "M"
       },
       {
         "texto": "huella verano (talla l",
-        "color": "Rosa",
+        "color": "Rosa/viejo,",
         "talle": "L"
       },
       {
         "texto": "huella verano (talla s 50x50",
-        "color": "Rosa",
+        "color": "Rosa/viejo,",
         "talle": "S"
       },
       {
@@ -50,7 +50,7 @@
       },
       {
         "texto": "huella verano (talla l 90x90",
-        "color": "Rosa",
+        "color": "Rosa/viejo,",
         "talle": "L"
       }
     ],
@@ -120,27 +120,27 @@
     "Huella": [
       {
         "texto": "huella invierno (talla s",
-        "color": "Rosa",
+        "color": "Rosa/viejo,",
         "talle": "S"
       },
       {
         "texto": "huella invierno (talla m",
-        "color": "Rosa",
+        "color": "Rosa/viejo,",
         "talle": "M"
       },
       {
         "texto": "huella invierno (talla l",
-        "color": "Rosa",
+        "color": "Rosa/viejo,",
         "talle": "L"
       },
       {
         "texto": "huella invierno (talla s 50x50",
-        "color": "Rosa",
+        "color": "Rosa/viejo,",
         "talle": "S"
       },
       {
         "texto": "huella invierno (talla m 70x70",
-        "color": "Rosa",
+        "color": "Rosa/viejo,",
         "talle": "M"
       },
       {
@@ -318,9 +318,9 @@
         "talle": "L"
       },
       {
-        "texto": "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, rosa",
-        "color": "Rosa",
-        "talle": "L"
+        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, rosa/viejo, cama completa (espuma y funda)",
+        "color": "Rosa/Viejo",
+        "talle": "M"
       },
       {
         "texto": "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, salmon",
@@ -351,6 +351,11 @@
         "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20",
         "color": "Mostaza",
         "talle": "M"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla l 70x95 cm hasta 20 kilos, rosa/viejo, cama completa (espuma y funda) ",
+        "color": "Rosa/Viejo",
+        "talle": "L"
       }
     ],
     "Mini Sofá": [
@@ -478,6 +483,184 @@
         "color": "Rosa",
         "talle": "M"
       }
+    ],
+    "Funda Mini Sofá": [
+      {
+        "texto": "Mini sofa - Ortopedico (Gris/Oscuro, Talla L 70x95 cm Hastsa 50 kilos, Solo Funda De Repuest",
+        "color": "Gris Oscuro",
+        "talle": "L"
+      },
+      {
+        "texto": "Mini sofa - Ortopedico (Gris/Oscuro, Talla M 45x60 cm Hasta 20 kilos, Solo Funda De Repuesto",
+        "color": "Gris Oscuro",
+        "talle": "M"
+      },
+      {
+        "texto": "Mini sofa - Ortopedico (Gris/Claro, Talla M 45x60 cm Hasta 20 kilos, Solo Funda De Repuesto",
+        "color": "Gris Claro",
+        "talle": "M"
+      },
+      {
+        "texto": "Mini sofa - Ortopedico (Gris/Claro, Talla L 70x95 cm Hasta 50 kilos, Solo Funda De Repuesto",
+        "color": "Gris Claro",
+        "talle": "L"
+      },
+      {
+        "texto": "Mini sofa - Ortopedico (Mostaza, Talla M 45x60 cm Hasta 20 kilos, Solo Funda De Repuesto",
+        "color": "Mostaza",
+        "talle": "M"
+      },
+      {
+        "texto": "Mini sofa - Ortopedico (Mostaza, Talla L 70x95 cm Hasta 50 kilos, Solo Funda De Repuesto",
+        "color": "Mostaza",
+        "talle": "L"
+      },
+      {
+        "texto": "Mini sofa - Ortopedico (Rosa, Talla M 45x60 cm Hasta 20 kilos, Solo Funda De Repuesto",
+        "color": "Rosa",
+        "talle": "M"
+      },
+      {
+        "texto": "Mini sofa - Ortopedico (Rosa, Talla L 70x95 cm Hasta 50 kilos, Solo Funda De Repuesto",
+        "color": "Rosa",
+        "talle": "L"
+      }
+    ],
+    "Funda Sofá cama": [
+      {
+        "texto": "Sofa Cama - Ortopedico (Gris/Oscuro, Talla L (cerrada) 95x70 cm Hasta 50 kilos, Solo Funda De Repues",
+        "color": "Gris Oscuro",
+        "talle": "L"
+      },
+      {
+        "texto": "Sofa Cama - Ortopedico (Gris/Oscuro, Talla M (cerrada) 95x70 cm Hasta 50 kilos, Solo Funda De Repues",
+        "color": "Gris Oscuro",
+        "talle": "M"
+      },
+      {
+        "texto": "Sofa Cama - Ortopedico (Salmón, Talla L (cerrada) 95x70 cm Hasta 50 kilos, Solo Funda De Repues",
+        "color": "Salmón",
+        "talle": "L"
+      },
+      {
+        "texto": "Sofa Cama - Ortopedico (Salmón, Talla M (cerrada) 95x70 cm Hasta 50 kilos, Solo Funda De Repues",
+        "color": "Salmón",
+        "talle": "M"
+      },
+      {
+        "texto": "Sofa Cama - Ortopedico (Mostaza, Talla L (cerrada) 95x70 cm Hasta 50 kilos, Solo Funda De Repues",
+        "color": "Mostaza",
+        "talle": "L"
+      },
+      {
+        "texto": "Sofa Cama - Ortopedico (Mostaza, Talla M (cerrada) 95x70 cm Hasta 50 kilos, Solo Funda De Repues",
+        "color": "Mostaza",
+        "talle": "M"
+      },
+      {
+        "texto": "Sofa Cama - Ortopedico (Rosa, Talla L (cerrada) 95x70 cm Hasta 50 kilos, Solo Funda De Repues",
+        "color": "Rosa",
+        "talle": "L"
+      },
+      {
+        "texto": "Sofa Cama - Ortopedico (Rosa, Talla M (cerrada) 95x70 cm Hasta 50 kilos, Solo Funda De Repues",
+        "color": "Rosa",
+        "talle": "M"
+      }
+    ],
+    "Funda Bahia": [
+      {
+        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, Gris/Oscuro, funda de repuesto)",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, Rosa, funda de repuesto)",
+        "color": "Rosa/Viejo",
+        "talle": "M"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, Mostaza, funda de repuesto)",
+        "color": "Mostaza",
+        "talle": "M"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla l 45x60 cm hasta 20 kilos, Gris/Oscuro, funda de repuesto)",
+        "color": "Gris",
+        "talle": "L"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla l 45x60 cm hasta 20 kilos, Rosa, funda de repuesto)",
+        "color": "Rosa/viejo,",
+        "talle": "L"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla l 45x60 cm hasta 20 kilos, Mostaza, funda de repuesto)",
+        "color": "Mostaza",
+        "talle": "L"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla l 45x60 cm hasta 20 kilos, Salmon, funda de repuesto)",
+        "color": "Salmon",
+        "talle": "L"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, Salmon,, funda de repuesto)",
+        "color": "Salmon",
+        "talle": "M"
+      }
+    ],
+    "Funda Timoteo": [
+      {
+        "texto": "timoteo (talla m 60x80 cm hasta 15 kilos, Gris/Claro, funda de repuesto)",
+        "color": "Gris/Claro",
+        "talle": "M"
+      },
+      {
+        "texto": "timoteo (talla m 60x80 cm hasta 15 kilos, Salmon, funda de repuesto)",
+        "color": "Salmon",
+        "talle": "M"
+      },
+      {
+        "texto": "timoteo (talla m 60x80 cm hasta 15 kilos, Gris/Oscuro, funda de repuesto)",
+        "color": "Gris/Oscuro",
+        "talle": "M"
+      },
+      {
+        "texto": "timoteo (talla m 60x80 cm hasta 15 kilos, Mostaza, funda de repuesto)",
+        "color": "Mostaza",
+        "talle": "M"
+      },
+      {
+        "texto": "timoteo (talla s 60x80 cm hasta 15 kilos, Gris/Claro, funda de repuesto)",
+        "color": "Gris/Claro",
+        "talle": "S"
+      },
+      {
+        "texto": "timoteo (talla m 60x80 cm hasta 15 kilos, Rosa/viejo, funda de repuesto)",
+        "color": "Rosa/viejo",
+        "talle": "M"
+      },
+      {
+        "texto": "timoteo (talla s 60x80 cm hasta 15 kilos, Salmon, funda de repuesto)",
+        "color": "Salmon",
+        "talle": "S"
+      },
+      {
+        "texto": "timoteo (talla s 60x80 cm hasta 15 kilos, Mostaza, funda de repuesto)",
+        "color": "Mostaza",
+        "talle": "S"
+      },
+      {
+        "texto": "timoteo (talla s 60x80 cm hasta 15 kilos, Gris/Oscuro, funda de repuesto)",
+        "color": "Gris/Oscuro",
+        "talle": "S"
+      },
+      {
+        "texto": "timoteo (talla s 60x80 cm hasta 15 kilos, Rosa/viejo, funda de repuesto)",
+        "color": "Rosa/viejo",
+        "talle": "S"
+      }
     ]
   },
   "ESCALERA": {
@@ -515,6 +698,48 @@
         "texto": "cama nordica lavable",
         "color": "Gris",
         "talle": "M"
+      }
+    ],
+    "Funda Nordica": [
+      {
+        "texto": "Cama Nordica Lavable (Talla M (60x60 cm) Hasta 8 kilos,  (pelo largo), Solo funda De Repuesto) ",
+        "color": "Beige",
+        "talle": "M"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla L (60x60 cm) Hasta 8 kilos,  (pelo largo), Solo funda De Repuesto) ",
+        "color": "Beige",
+        "talle": "L"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla M (60x60 cm) Hasta 8 kilos, GRIS (pelo largo), Solo funda De Repuesto)",
+        "color": "Gris",
+        "talle": "M"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla L (60x60 cm) Hasta 8 kilos, GRIS (pelo largo), Solo funda De Repuesto)",
+        "color": "Gris",
+        "talle": "L"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla M (60x60 cm) Hasta 8 kilos, NEGRO (pelo largo), Solo funda De Repuesto)",
+        "color": "Negro",
+        "talle": "M"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla L (60x60 cm) Hasta 8 kilos, NEGRO (pelo largo), Solo funda De Repuesto)",
+        "color": "Negro",
+        "talle": "L"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla M (60x60 cm) Hasta 8 kilos, NEGRO (pelo corto), Solo funda De Repuesto)",
+        "color": "Negro pelo corto",
+        "talle": "M"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla L (60x60 cm) Hasta 8 kilos, NEGRO (pelo corto), Solo funda De Repuesto)",
+        "color": "Negro pelo corto",
+        "talle": "L"
       }
     ]
   },
@@ -677,6 +902,38 @@
       {
         "texto": "buzo panda",
         "color": "Panda",
+        "talle": "L"
+      },
+      {
+        "texto": "buzo Ranita",
+        "color": "Ranita",
+        "talle": "L"
+      },
+      {
+        "texto": "buzo Ranita",
+        "color": "Ranita",
+        "talle": "M"
+      },
+      {
+        "texto": "buzo Ranita",
+        "color": "Ranita",
+        "talle": "S"
+      }
+    ],
+    "Monito": [
+      {
+        "texto": "buzo Monito",
+        "color": "Monito",
+        "talle": "S"
+      },
+      {
+        "texto": "buzo Monito",
+        "color": "Monito",
+        "talle": "M"
+      },
+      {
+        "texto": "buzo Monito",
+        "color": "Monito",
         "talle": "L"
       }
     ]

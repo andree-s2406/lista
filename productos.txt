@@ -59,9 +59,18 @@ DECO | Mini Sofá | Mostaza     | S,M,L
 DECO | Sofá Cama | Mostaza     | S,M,L
 DECO | Sofá Cama | Gris        | S,M,L
 DECO | Sofá Cama | Salmón      | S,M,L
+DECO | Sofá Cama | Rosa        | S,M,L
 DECO | Timoteo   | Mostaza     | S,M,L
 DECO | Timoteo   | Rosa        | S,M,L
 DECO | Timoteo   | Gris        | S,M,L
+DECO | Funda Mini Sofá | Gris Oscuro | M,L
+DECO | Funda Mini Sofá | Gris Claro  | M,L
+DECO | Funda Mini Sofá | Mostaza     | M,L
+DECO | Funda Mini Sofá | Rosa        | M,L
+DECO | Funda Sofá Cama | Gris   | M,L
+DECO | Funda Sofá Cama | Salmón | M,L
+DECO | Funda Sofá Cama | Mostaza| M,L
+DECO | Funda Sofá Cama | Rosa   | M,L
 
 # ── ESCALERA ─────────────────────────────────────────────────────────────────
 ESCALERA | Escalera | Gris               | M,L
@@ -71,6 +80,9 @@ ESCALERA | Escalera | Rosa (próximamente)| M,L
 NORDICA | Nórdica | Gris  | M,L,XL
 NORDICA | Nórdica | Beige | M,L,XL
 NORDICA | Nórdica | Negro | M,L,XL
+NORDICA | Funda Nórdica | Gris  | M,L,XL
+NORDICA | Funda Nórdica | Beige | M,L,XL
+NORDICA | Funda Nórdica | Negro | M,L,XL
 
 # ── ROPITA ───────────────────────────────────────────────────────────────────
 ROPITA | Ropita | Panda     | XS,S,M,L,XL
@@ -82,4 +94,3 @@ ROPITA | Ropita | Inter Miami    | XS,S,M,L,XL
 # ── MANTA ────────────────────────────────────────────────────────────────────
 MANTA | Manta Doble Faz | Beige/Blanco | U
 MANTA | Manta Doble Faz | Gris/Blanco  | U
-VERANO | Cactus | verde | U
