@@ -578,6 +578,7 @@ async function eliminarProducto(index) {
 }
 
 // Guardar producto - VERSIÓN MEJORADA
+// Guardar producto - VERSIÓN CON DETECCIÓN FLEXIBLE
 async function guardarProducto() {
   const categoria = document.getElementById('campoCategoria').value;
   let modelo = document.getElementById('campoModelo').value.trim();
@@ -657,71 +658,154 @@ async function guardarProducto() {
 
       for (const talle of tallesSeleccionados) {
         for (const color of colores) {
-          // Construir texto según el talle y color
+          // ===== CONSTRUCCIÓN DEL TEXTO FLEXIBLE =====
+          
+          // Empezar con el texto base
           let textoCompleto = textoBase;
           
           // 1. Insertar el color donde corresponde (si hay color)
           if (color) {
-            // Buscar lugar para insertar color (después de la primera coma)
-            const despuesDeMedidas = textoCompleto.indexOf(',');
-            if (despuesDeMedidas !== -1) {
-              // Insertar color después de la primera coma
-              textoCompleto = textoCompleto.substring(0, despuesDeMedidas + 1) + 
-                             ` ${color},` + 
-                             textoCompleto.substring(despuesDeMedidas + 1);
-            } else {
-              // Si no hay coma, agregar al final
-              textoCompleto = `${textoCompleto}, ${color}`;
+            // Buscar lugar para insertar color (después de la talla y medidas)
+            // Buscar palabras clave que indiquen dónde va el color
+            const palabrasClave = ['gris', 'oscuro', 'claro', 'mostaza', 'rosa', 'beige', 'salmon', 'negro', 'blanco'];
+            
+            // Ver si ya hay un color en el texto base
+            let tieneColor = false;
+            for (const palabra of palabrasClave) {
+              if (textoBase.includes(palabra)) {
+                tieneColor = true;
+                break;
+              }
+            }
+            
+            // Si no tiene color, insertarlo en un lugar apropiado
+            if (!tieneColor) {
+              // Buscar después de "talla" o después de la primera coma
+              if (textoBase.includes('talla')) {
+                const posTalla = textoBase.indexOf('talla') + 5;
+                // Buscar la siguiente coma después de "talla"
+                const posComa = textoBase.indexOf(',', posTalla);
+                if (posComa !== -1) {
+                  textoCompleto = textoBase.substring(0, posComa + 1) + 
+                                 ` ${color},` + 
+                                 textoBase.substring(posComa + 1);
+                } else {
+                  textoCompleto = `${textoBase}, ${color}`;
+                }
+              } else {
+                textoCompleto = `${textoBase}, ${color}`;
+              }
             }
           }
           
-          // 2. Insertar el talle después de "talla" (más flexible)
+          // 2. Insertar el talle de manera flexible
           if (talle !== 'U') {
-            // Buscar "talla" o "tallal" o "talla " (cualquier palabra que empiece con talla)
-            const patronTalla = /talla\w*/i;
+            // Buscar cualquier palabra que empiece con "tall" (talla, talles, talla, tallal, etc.)
+            const patronTalla = /\btall\w*/i;
             const match = textoCompleto.match(patronTalla);
             
             if (match) {
-              const posTalla = match.index;
+              // Encontró una palabra como "talla", "tallal", "talles"
               const palabraTalla = match[0];
+              const posTalla = match.index;
               const largoPalabra = palabraTalla.length;
               
-              // Insertar talle después de la palabra "talla" (cualquier variante)
-              const antes = textoCompleto.substring(0, posTalla + largoPalabra);
+              // Ver qué hay después de la palabra
               const despues = textoCompleto.substring(posTalla + largoPalabra);
-              textoCompleto = `${antes} ${talle.toLowerCase()}${despues}`;
+              
+              // Si después hay un espacio, insertar talle después
+              if (despues.startsWith(' ')) {
+                textoCompleto = textoCompleto.substring(0, posTalla + largoPalabra) + 
+                               ` ${talle.toLowerCase()}` + 
+                               despues;
+              } else {
+                textoCompleto = textoCompleto.substring(0, posTalla + largoPalabra) + 
+                               ` ${talle.toLowerCase()} ` + 
+                               despues;
+              }
             } else {
-              // Si no hay "talla", agregarlo al principio
-              textoCompleto = `${textoCompleto} (talla ${talle.toLowerCase()}`;
+              // Si no encuentra "tall", buscar medidas (cm, mm, etc.)
+              const medidas = ['cm', 'mm', 'x', 'por'];
+              let insertado = false;
+              
+              for (const medida of medidas) {
+                const posMedida = textoCompleto.indexOf(medida);
+                if (posMedida !== -1) {
+                  // Insertar talle después de la medida
+                  textoCompleto = textoCompleto.substring(0, posMedida + medida.length) + 
+                                 `, talle ${talle.toLowerCase()}` + 
+                                 textoCompleto.substring(posMedida + medida.length);
+                  insertado = true;
+                  break;
+                }
+              }
+              
+              // Si no hay medidas, agregar al final
+              if (!insertado) {
+                textoCompleto = `${textoCompleto}, talle ${talle.toLowerCase()}`;
+              }
             }
           }
           
-          // 3. Agregar indicador de funda si corresponde
-          if (tipo === 'funda' && !textoCompleto.includes('solo funda')) {
-            // Buscar lugar apropiado para "solo funda" (después del color si existe)
-            if (color) {
-              const posColor = textoCompleto.lastIndexOf(color);
-              if (posColor !== -1) {
-                const antes = textoCompleto.substring(0, posColor + color.length);
-                const despues = textoCompleto.substring(posColor + color.length);
-                textoCompleto = `${antes}, solo funda de repuesto${despues}`;
+          // 3. Agregar indicador de funda de manera flexible
+          if (tipo === 'funda' && !textoCompleto.includes('funda')) {
+            // Buscar palabras clave de funda
+            if (textoCompleto.includes('solo') || textoCompleto.includes('repuesto')) {
+              // Ya tiene indicadores, solo asegurar que diga "solo funda"
+              if (!textoCompleto.includes('solo funda')) {
+                textoCompleto = textoCompleto.replace(/funda/gi, 'solo funda de repuesto');
+              }
+            } else {
+              // No menciona funda, agregarlo después del color si existe
+              if (color && textoCompleto.includes(color)) {
+                const posColor = textoCompleto.lastIndexOf(color) + color.length;
+                textoCompleto = textoCompleto.substring(0, posColor) + 
+                               `, solo funda de repuesto` + 
+                               textoCompleto.substring(posColor);
               } else {
                 textoCompleto = `${textoCompleto}, solo funda de repuesto`;
               }
-            } else {
-              textoCompleto = `${textoCompleto}, solo funda de repuesto`;
             }
           }
 
-          // Limpiar espacios extras
-          textoCompleto = textoCompleto.replace(/\s+/g, ' ').trim();
+          // 4. Normalizar espacios y puntuación
+          textoCompleto = textoCompleto
+            .replace(/\s+/g, ' ')                    // Espacios múltiples a uno
+            .replace(/\s*,\s*/g, ', ')                // Comas con espacios
+            .replace(/\s*\(\s*/g, ' (')               // Paréntesis
+            .replace(/\s*\)\s*/g, ')')
+            .replace(/,+\s*,+/g, ',')                  // Comas múltiples
+            .trim();
 
-          mapeo[categoria][modeloConTipo].push({
-            texto: textoCompleto,
-            color: color,
-            talle: talle
-          });
-          productosAgregados++;
+          // 5. Versiones alternativas (para mayor flexibilidad)
+          const versiones = [];
+          
+          // Versión principal
+          versiones.push(textoCompleto);
+          
+          // Versión sin acentos (simplificada)
+          const sinAcentos = textoCompleto
+            .replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i')
+            .replace(/ó/g, 'o').replace(/ú/g, 'u');
+          if (sinAcentos !== textoCompleto) versiones.push(sinAcentos);
+          
+          // Versión con palabras clave simplificadas
+          const simplificada = textoCompleto
+            .replace(/ortopedico/g, '')
+            .replace(/ergonomica/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (simplificada !== textoCompleto) versiones.push(simplificada);
+          
+          // Guardar todas las versiones
+          for (const version of versiones) {
+            mapeo[categoria][modeloConTipo].push({
+              texto: version,
+              color: color,
+              talle: talle
+            });
+            productosAgregados++;
+          }
         }
       }
     }
@@ -732,7 +816,7 @@ async function guardarProducto() {
       body: JSON.stringify({contenido: JSON.stringify(mapeo, null, 2)})
     });
 
-    toast(`✅ ${productosAgregados} producto(s) ${editIndex === '' ? 'agregado(s)' : 'actualizado(s)'}`);
+    toast(`✅ ${productosAgregados} versión(es) de producto(s) guardada(s)`);
     cerrarModal();
     cargarProductos();
 
