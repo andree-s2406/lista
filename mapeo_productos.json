@@ -308,6 +308,18 @@
         "color": "Beige",
         "talle": "L"
       }
+    ],
+    "Corona antiestres": [
+      {
+        "texto": "Corona - Ergonomica (Talla M L 890x90 cm Hasta 50 kilos)",
+        "color": "",
+        "talle": "M"
+      },
+      {
+        "texto": "Corona - Ergonomica (Talla L L 890x90 cm Hasta 50 kilos)",
+        "color": "",
+        "talle": "L"
+      }
     ]
   },
   "DECO": {
@@ -765,6 +777,50 @@
       {
         "texto": "escaleras ortopedica (talla l 40cm, Salmon, alto x 38cm ancho, solo funda de repuesto)",
         "color": "Salmon",
+        "talle": "L"
+      }
+    ],
+    "Escalera izquierda": [
+      {
+        "texto": "Escaleras Ortopedica (Talla M ( Izquierda) (30 cm de alto) , Rosa/viejo, Escalera completa ( espuma",
+        "color": "Rosa/viejo",
+        "talle": "M"
+      },
+      {
+        "texto": "Escaleras Ortopedica (Talla L ( Izquierda) (30 cm de alto) , Rosa/viejo, Escalera completa ( espuma",
+        "color": "Rosa/viejo",
+        "talle": "L"
+       },
+       {
+       "texto": "Escaleras Ortopedica (Talla M ( Izquierda)  (30 cm de alto) , Gris/Oscuro, Escalera completa ( espuma y",
+        "color": "Gris/Oscuro",
+        "talle": "M"
+      },
+      {
+        "texto": "Escaleras Ortopedica (Talla L ( Izquierda)  (30 cm de alto) , Gris/Oscuro, Escalera completa ( espuma y",
+        "color": "Gris/Oscuro",
+        "talle": "L"
+      }
+    ],
+    "Escalera Derecha": [
+      {
+        "texto": "Escaleras Ortopedica (Talla M ( Derecha) (30 cm de alto), Rosa/viejo,  Escalera completa ( espuma",
+        "color": "Rosa/viejo",
+        "talle": "M"
+      },
+      {
+        "texto": "Escaleras Ortopedica (Talla M (Derecha)  (30 cm de alto) , Gris/Oscuro, Escalera completa ( espuma y",
+        "color": "Gris/Oscuro",
+        "talle": "M"
+      },
+      {
+        "texto": "Escaleras Ortopedica (Talla L (Derecha ) (40 cm de alto), Gris/Oscuro, Escalera completa ( espuma y ",
+        "color": "Gris/Oscuro",
+        "talle": "L"
+      },
+      {
+        "texto": "Escaleras Ortopedica (Talla L (Derecha ) (40 cm de alto), Rosa/viejo, Escalera completa ( espuma y f",
+        "color": "Rosa/viejo",
         "talle": "L"
       }
     ]
