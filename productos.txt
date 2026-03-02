@@ -73,8 +73,11 @@ DECO | Funda Sofá Cama | Mostaza| M,L
 DECO | Funda Sofá Cama | Rosa   | M,L
 
 # ── ESCALERA ─────────────────────────────────────────────────────────────────
-ESCALERA | Escalera | Gris               | M,L
-ESCALERA | Escalera | Rosa (próximamente)| M,L
+ESCALERA IZQUIERDA| Escalera | Gris               | M,L
+ESCALERA IZQUIERDA| Escalera | Rosa | M,L
+ESCALERA DERECHA  | Escalera | rosa | M,L   
+ESCALERA IZQUIERDA  | Escalera | rosa | M,L   
+
 
 # ── NORDICA ──────────────────────────────────────────────────────────────────
 NORDICA | Nórdica | Gris  | M,L,XL
