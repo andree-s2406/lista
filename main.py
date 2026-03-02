@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Pulguitas — Servidor local
 Ejecutá: python app.py
@@ -118,33 +118,103 @@ def cargar_catalogo(texto):
 # ══════════════════════════════════════════════════════════════════════════════
 def resolver(nombre):
     """
-    Resuelve un nombre de producto buscando en MAPA_PRODUCTOS (cargado desde JSON)
-    Prioriza entradas que contienen color específico
+    Resuelve un nombre de producto de manera flexible buscando palabras clave
+    con pesos específicos por categoría
     """
+    if not nombre:
+        return None
+    
     key = nombre.lower().strip()
     
-    # Primero buscar entradas que tengan color específico
-    mejor_con_color = None
-    mejor_len_color = 0
+    # Palabras que causan falsos positivos (ignorar si aparecen solas)
+    palabras_prohibidas = ['argentina', 'boca', 'river', 'inter', 'miami', 'panda']
+    
+    # 1. Primero intentar con el método exacto (por si coincide)
+    mejor_match_exacto = None
+    mejor_len_exacto = 0
     
     for p, info in MAPA_PRODUCTOS.items():
-        # Verificar si esta entrada tiene un color definido (no es vacío)
-        if info[2] and info[2].strip():  # info[2] es el color
-            if key.startswith(p) and len(p) > mejor_len_color:
-                mejor_con_color = info
-                mejor_len_color = len(p)
+        if key.startswith(p):
+            if len(p) > mejor_len_exacto:
+                mejor_len_exacto = len(p)
+                mejor_match_exacto = info
     
-    if mejor_con_color:
-        return mejor_con_color
+    if mejor_match_exacto:
+        return mejor_match_exacto
     
-    # Si no hay con color, buscar entradas genéricas
-    mejor, n = None, 0
+    # 2. Si no, buscar por palabras clave con pesos
+    mejor_match = None
+    mejor_puntaje = 0
+    
     for p, info in MAPA_PRODUCTOS.items():
-        if key.startswith(p) and len(p) > n:
-            mejor = info
-            n = len(p)
+        puntaje = 0
+        cat, modelo, color, talle = info
+        
+        # Palabras clave del producto
+        palabras_clave = p.lower().split()
+        
+        # CONTAR COINCIDENCIAS BÁSICAS
+        for palabra in palabras_clave:
+            if len(palabra) > 2 and palabra in key:
+                puntaje += 1
+        
+        # PESOS ESPECIALES POR CATEGORÍA
+        
+        # ROPITA: requiere "remera" o "buzo" además del color/equipo
+        if cat == "ROPITA":
+            if "remera" in key or "buzo" in key:
+                puntaje += 5  # Bonus grande si encuentra "remera"
+            if color.lower() in key and ("remera" in key or "buzo" in key):
+                puntaje += 10  # Si tiene remera + color, es casi seguro
+            elif color.lower() in key and not ("remera" in key or "buzo" in key):
+                puntaje -= 5  # Penalización si está el color pero no "remera"
+        
+        # MANTA: requiere "manta" o "mantita"
+        elif cat == "MANTA":
+            if "manta" in key or "mantita" in key:
+                puntaje += 5
+            elif "doble faz" in key:
+                puntaje += 3
+        
+        # FUNDA (detectar por palabras clave)
+        if "funda" in key or "solo funda" in key or "repuesto" in key:
+            if "funda" in modelo.lower() or "funda" in p:
+                puntaje += 8  # Coincide con producto que es funda
+            elif "completa" in key:
+                puntaje -= 3  # Es completa, no funda
+        
+        # BONUS POR MODELO
+        if modelo.lower() in key:
+            puntaje += 3
+        
+        # BONUS POR COLOR
+        if color and color.lower() in key:
+            puntaje += 4
+        
+        # BONUS POR TALLE
+        if talle and talle.lower() in key:
+            puntaje += 2
+        
+        # CASTIGO por palabras prohibidas (para ROPITA)
+        for prohibida in palabras_prohibidas:
+            if prohibida in key and cat != "ROPITA":
+                # Si aparece "argentina" pero no es ROPITA, penalizar
+                puntaje -= 10
+        
+        if puntaje > mejor_puntaje:
+            mejor_puntaje = puntaje
+            mejor_match = info
     
-    return mejor
+    # Umbral más alto para ROPITA
+    umbral = 5
+    if mejor_match and mejor_match[0] == "ROPITA":
+        umbral = 8  # Necesita más puntos para ROPITA
+    
+    if mejor_puntaje >= umbral:
+        print(f"  ✅ Match flexible: {mejor_match} (puntaje: {mejor_puntaje})")
+        return mejor_match
+    
+    return None
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PDF EXTRACTION (usando pymupdf)
