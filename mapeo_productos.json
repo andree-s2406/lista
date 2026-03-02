@@ -22,7 +22,7 @@
         "talle": "S"
       }
     ],
-    "Huella": [
+    "Huella Verano": [
       {
         "texto": "huella verano (talla s",
         "color": "Rosa",
@@ -54,7 +54,7 @@
         "talle": "L"
       }
     ],
-    "Garra": [
+    "Garra verano": [
       {
         "texto": "garra verano (talla m",
         "color": "Gris",
@@ -117,7 +117,7 @@
         "talle": "L"
       }
     ],
-    "Huella": [
+    "Huella invierno": [
       {
         "texto": "huella invierno (talla s",
         "color": "Rosa",
@@ -149,7 +149,7 @@
         "talle": "L"
       }
     ],
-    "Garra": [
+    "Garra invierno": [
       {
         "texto": "garra invierno (talla m",
         "color": "Gris",
@@ -215,7 +215,7 @@
         "talle": "M"
       }
     ],
-    "Garra": [
+    "Garra antiestres": [
       {
         "texto": "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, gris",
         "color": "Gris",
@@ -247,7 +247,7 @@
         "talle": "L"
       }
     ],
-    "Huella": [
+    "Huella Antiestres": [
       {
         "texto": "cama garra - antiestres, ergonomica (talla m 70x70 cm hasta15 kilos, beige/rosa",
         "color": "Beige/Rosa",
@@ -353,8 +353,18 @@
         "talle": "M"
       },
       {
-        "texto": "cama bahia - ortopedico (talla l 70x95 cm hasta 20 kilos, rosa/viejo, cama completa (espuma y funda) ",
+        "texto": "cama bahia - (talla l, Rosa/Viejo, cama completa (espuma y funda),",
         "color": "Rosa/Viejo",
+        "talle": "L"
+      },
+      {
+        "texto": "cama bahia - ortopedico (talla l 70x95 cm hasta 50 kilos, Rosa/Viejo, cama completa (espuma y funda)",
+        "color": "Rosa/Viejo",
+        "talle": "L"
+      },
+      {
+        "texto": "cama bahia - (talla l 70x95 cm hasta 50 kilos, Rosa/viejo, cama completa (espuma y funda)",
+        "color": "Rosa/viejo",
         "talle": "L"
       }
     ],
@@ -708,7 +718,7 @@
     ],
     "Funda escalera": [
       {
-        "texto": "Escaleras Ortopedica (Talla M 40cm, alto x 38cm ancho, Gris/Oscuro, Solo Funda de repuesto)",
+        "texto": "Escaleras Ortopedica (Talla M , Gris/Oscuro, Solo Funda de repuesto)",
         "color": "Gris/Oscuro",
         "talle": "M"
       },
