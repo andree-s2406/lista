@@ -116,6 +116,38 @@ def cargar_catalogo(texto):
 # ══════════════════════════════════════════════════════════════════════════════
 # RESOLVER (usa el mapa cargado desde JSON)
 # ══════════════════════════════════════════════════════════════════════════════
+
+
+def normalizar_texto(texto):
+    """
+    Normaliza un texto para comparación flexible:
+    - Minúsculas
+    - Elimina espacios extras
+    - Normaliza paréntesis y caracteres especiales
+    - Unifica "cm" y "c m"
+    """
+    if not texto:
+        return ""
+    
+    import re
+    
+    # 1. Minúsculas
+    texto = texto.lower()
+    
+    # 2. Reemplazar paréntesis y caracteres especiales por espacios
+    texto = re.sub(r'[\(\)\[\]\{\}]', ' ', texto)
+    
+    # 3. Normalizar "cm" (puede venir como "c m" o "cm")
+    texto = re.sub(r'c\s+m', 'cm', texto)
+    
+    # 4. Eliminar espacios múltiples
+    texto = re.sub(r'\s+', ' ', texto)
+    
+    # 5. Eliminar espacios al inicio y final
+    texto = texto.strip()
+    
+    return texto
+
 def resolver(nombre):
     """
     Resuelve un nombre de producto de manera flexible buscando palabras clave
@@ -124,21 +156,26 @@ def resolver(nombre):
     if not nombre:
         return None
     
-    key = nombre.lower().strip()
+    # Normalizar el texto de entrada
+    key_original = nombre.lower().strip()
+    key_normalizado = normalizar_texto(nombre)
     
     # Palabras que causan falsos positivos (ignorar si aparecen solas)
     palabras_prohibidas = ['argentina', 'boca', 'river', 'inter', 'miami', 'panda']
     
-    # 1. Primero intentar con el método exacto (por si coincide)
+    # 1. Primero intentar con coincidencia exacta del texto normalizado
     mejor_match_exacto = None
     mejor_len_exacto = 0
     
     for p, info in MAPA_PRODUCTOS.items():
-        # CAMBIO IMPORTANTE: usar 'in' en lugar de 'startswith'
-        if p in key:
-            if len(p) > mejor_len_exacto:
-                mejor_len_exacto = len(p)
+        p_normalizado = normalizar_texto(p)
+        
+        # Buscar si el texto normalizado de la entrada está en el texto normalizado del PDF
+        if p_normalizado in key_normalizado:
+            if len(p_normalizado) > mejor_len_exacto:
+                mejor_len_exacto = len(p_normalizado)
                 mejor_match_exacto = info
+                print(f"  ✅ Match exacto normalizado: '{p_normalizado}' en '{key_normalizado}'")
     
     if mejor_match_exacto:
         return mejor_match_exacto
@@ -147,59 +184,86 @@ def resolver(nombre):
     mejor_match = None
     mejor_puntaje = 0
     
+    # Generar bigramas del texto normalizado para mejor precisión
+    palabras_normalizadas = key_normalizado.split()
+    bigramas = set()
+    for i in range(len(palabras_normalizadas)-1):
+        bigramas.add(f"{palabras_normalizadas[i]} {palabras_normalizadas[i+1]}")
+    
     for p, info in MAPA_PRODUCTOS.items():
         puntaje = 0
         cat, modelo, color, talle = info
         
-        # Palabras clave del producto
-        palabras_clave = p.lower().split()
+        # Normalizar también para comparación
+        p_normalizado = normalizar_texto(p)
+        modelo_norm = modelo.lower()
+        color_norm = color.lower() if color else ""
+        talle_norm = talle.lower() if talle else ""
         
-        # CONTAR COINCIDENCIAS BÁSICAS
+        # Palabras clave del producto (normalizadas)
+        palabras_clave = p_normalizado.split()
+        
+        # CONTAR COINCIDENCIAS BÁSICAS (con palabras normalizadas)
         for palabra in palabras_clave:
-            if len(palabra) > 2 and palabra in key:
-                puntaje += 1
+            if len(palabra) > 2 and palabra in key_normalizado:
+                puntaje += 2  # Aumentamos el peso de palabras individuales
+        
+        # BUSCAR BIGRAMAS (mayor precisión)
+        palabras_p = p_normalizado.split()
+        for i in range(len(palabras_p)-1):
+            bigrama = f"{palabras_p[i]} {palabras_p[i+1]}"
+            if bigrama in bigramas:
+                puntaje += 5  # Bigrama encontrado = mucha confianza
         
         # PESOS ESPECIALES POR CATEGORÍA
         
         # ROPITA: requiere "remera" o "buzo" además del color/equipo
         if cat == "ROPITA":
-            if "remera" in key or "buzo" in key:
+            if "remera" in key_normalizado or "buzo" in key_normalizado:
                 puntaje += 5
-            if color.lower() in key and ("remera" in key or "buzo" in key):
+            if color_norm in key_normalizado and ("remera" in key_normalizado or "buzo" in key_normalizado):
                 puntaje += 10
-            elif color.lower() in key and not ("remera" in key or "buzo" in key):
+            elif color_norm in key_normalizado and not ("remera" in key_normalizado or "buzo" in key_normalizado):
                 puntaje -= 5
         
         # MANTA: requiere "manta" o "mantita"
         elif cat == "MANTA":
-            if "manta" in key or "mantita" in key:
+            if "manta" in key_normalizado or "mantita" in key_normalizado:
                 puntaje += 5
-            elif "doble faz" in key:
+            elif "doble faz" in key_normalizado:
                 puntaje += 3
         
         # FUNDA
-        if "funda" in key or "solo funda" in key or "repuesto" in key:
-            if "funda" in modelo.lower() or "funda" in p:
+        if "funda" in key_normalizado or "solo funda" in key_normalizado or "repuesto" in key_normalizado:
+            if "funda" in modelo_norm or "funda" in p_normalizado:
                 puntaje += 8
-            elif "completa" in key:
+            elif "completa" in key_normalizado:
                 puntaje -= 3
         
-        # BONUS POR MODELO
-        if modelo.lower() in key:
+        # BONUS POR MODELO (buscar en texto normalizado)
+        if modelo_norm in key_normalizado:
             puntaje += 3
         
         # BONUS POR COLOR
-        if color and color.lower() in key:
+        if color_norm and color_norm in key_normalizado:
             puntaje += 4
         
         # BONUS POR TALLE
-        if talle and talle.lower() in key:
+        if talle_norm and talle_norm in key_normalizado:
             puntaje += 2
         
         # CASTIGO por palabras prohibidas
         for prohibida in palabras_prohibidas:
-            if prohibida in key and cat != "ROPITA":
+            if prohibida in key_normalizado and cat != "ROPITA":
                 puntaje -= 10
+        
+        # TOLERANCIA A ESPACIOS EN "talla l" vs "tallal"
+        if "talla" in key_normalizado and talle_norm:
+            # Buscar "talla" seguido del talle (con o sin espacio)
+            import re
+            patron = f"talla\\s*{talle_norm}"
+            if re.search(patron, key_normalizado):
+                puntaje += 3
         
         if puntaje > mejor_puntaje:
             mejor_puntaje = puntaje
