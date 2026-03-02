@@ -531,37 +531,37 @@
         "talle": "L"
       },
       {
-        "texto": "Mini sofa - Ortopedico (Gris/Oscuro, Talla M 45x60 cm Hasta 20 kilos, Solo Funda De Repuesto",
+        "texto": "Mini sofa - Ortopedico (Gris/Oscuro, Talla M 45x60 cm Hasta 15 kilos, Solo Funda De Repuesto)",
         "color": "Gris Oscuro",
         "talle": "M"
       },
       {
-        "texto": "Mini sofa - Ortopedico (Gris/Claro, Talla M 45x60 cm Hasta 20 kilos, Solo Funda De Repuesto",
+        "texto": "Mini sofa - Ortopedico (Gris/Claro, Talla M 45x60 cm Hasta 20 kilos, Solo Funda De Repuesto)",
         "color": "Gris Claro",
         "talle": "M"
       },
       {
-        "texto": "Mini sofa - Ortopedico (Gris/Claro, Talla L 70x95 cm Hasta 50 kilos, Solo Funda De Repuesto",
+        "texto": "Mini sofa - Ortopedico (Gris/Claro, Talla L 70x95 cm Hasta 50 kilos, Solo Funda De Repuesto)",
         "color": "Gris Claro",
         "talle": "L"
       },
       {
-        "texto": "Mini sofa - Ortopedico (Mostaza, Talla M 45x60 cm Hasta 20 kilos, Solo Funda De Repuesto",
+        "texto": "Mini sofa - Ortopedico (Mostaza, Talla M 45x60 cm Hasta 20 kilos, Solo Funda De Repuesto)",
         "color": "Mostaza",
         "talle": "M"
       },
       {
-        "texto": "Mini sofa - Ortopedico (Mostaza, Talla L 70x95 cm Hasta 50 kilos, Solo Funda De Repuesto",
+        "texto": "Mini sofa - Ortopedico (Mostaza, Talla L 70x95 cm Hasta 50 kilos, Solo Funda De Repuesto)",
         "color": "Mostaza",
         "talle": "L"
       },
       {
-        "texto": "Mini sofa - Ortopedico (Rosa/Viejo, Talla M 45x60 cm Hasta 20 kilos, Solo Funda De Repuesto",
+        "texto": "Mini sofa - Ortopedico (Rosa/Viejo, Talla M 45x60 cm Hasta 20 kilos, Solo Funda De Repuesto)",
         "color": "Rosa/Viejo",
         "talle": "M"
       },
       {
-        "texto": "Mini sofa - Ortopedico (Rosa/Viejo, Talla L 70x95 cm Hasta 50 kilos, Solo Funda De Repuesto",
+        "texto": "Mini sofa - Ortopedico (Rosa/Viejo, Talla L 70x95 cm Hasta 50 kilos, Solo Funda De Repuesto)",
         "color": "Rosa/Viejo",
         "talle": "L"
       }
@@ -716,14 +716,14 @@
         "talle": "M"
       },
       {
-        "texto": "Escaleras Ortopedica (Talla l 30cm, alto x 38cm ancho, Rosa/viejo, Escalera comp",
-        "color": "Rosa/viejo",
-        "talle": "L"
-      },
-      {
         "texto": "Escaleras Ortopedica (Talla M 30cm, alto x 38cm ancho, Rosa/viejo, Escalera comp",
         "color": "Rosa/viejo",
         "talle": "M"
+      },
+      {
+        "texto": "Escaleras Ortopedica (Talla L 40cm, alto x 38cm ancho, Rosa/viejo,",
+        "color": "Rosa/viejo",
+        "talle": "L"
       }
     ],
     "Funda escalera": [
