@@ -134,7 +134,8 @@ def resolver(nombre):
     mejor_len_exacto = 0
     
     for p, info in MAPA_PRODUCTOS.items():
-        if key.startswith(p):
+        # CAMBIO IMPORTANTE: usar 'in' en lugar de 'startswith'
+        if p in key:
             if len(p) > mejor_len_exacto:
                 mejor_len_exacto = len(p)
                 mejor_match_exacto = info
@@ -163,11 +164,11 @@ def resolver(nombre):
         # ROPITA: requiere "remera" o "buzo" además del color/equipo
         if cat == "ROPITA":
             if "remera" in key or "buzo" in key:
-                puntaje += 5  # Bonus grande si encuentra "remera"
+                puntaje += 5
             if color.lower() in key and ("remera" in key or "buzo" in key):
-                puntaje += 10  # Si tiene remera + color, es casi seguro
+                puntaje += 10
             elif color.lower() in key and not ("remera" in key or "buzo" in key):
-                puntaje -= 5  # Penalización si está el color pero no "remera"
+                puntaje -= 5
         
         # MANTA: requiere "manta" o "mantita"
         elif cat == "MANTA":
@@ -176,12 +177,12 @@ def resolver(nombre):
             elif "doble faz" in key:
                 puntaje += 3
         
-        # FUNDA (detectar por palabras clave)
+        # FUNDA
         if "funda" in key or "solo funda" in key or "repuesto" in key:
             if "funda" in modelo.lower() or "funda" in p:
-                puntaje += 8  # Coincide con producto que es funda
+                puntaje += 8
             elif "completa" in key:
-                puntaje -= 3  # Es completa, no funda
+                puntaje -= 3
         
         # BONUS POR MODELO
         if modelo.lower() in key:
@@ -195,20 +196,18 @@ def resolver(nombre):
         if talle and talle.lower() in key:
             puntaje += 2
         
-        # CASTIGO por palabras prohibidas (para ROPITA)
+        # CASTIGO por palabras prohibidas
         for prohibida in palabras_prohibidas:
             if prohibida in key and cat != "ROPITA":
-                # Si aparece "argentina" pero no es ROPITA, penalizar
                 puntaje -= 10
         
         if puntaje > mejor_puntaje:
             mejor_puntaje = puntaje
             mejor_match = info
     
-    # Umbral más alto para ROPITA
     umbral = 5
     if mejor_match and mejor_match[0] == "ROPITA":
-        umbral = 8  # Necesita más puntos para ROPITA
+        umbral = 8
     
     if mejor_puntaje >= umbral:
         print(f"  ✅ Match flexible: {mejor_match} (puntaje: {mejor_puntaje})")
