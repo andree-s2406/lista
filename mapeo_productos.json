@@ -595,7 +595,7 @@
         "talle": "L"
       },
       {
-        "texto": "Sofa Cama - Ortopedico (Salmón, Talla M (cerrada) 95x70 cm Hasta 50 kilos, Solo Funda De Repues",
+        "texto": "Sofa Cama - Ortopedico (Salmon, Talla M (cerrada)45X60 cm Hasta 15 kilos, Solo Funda De Repuesto)",
         "color": "Salmón",
         "talle": "M"
       },
@@ -622,42 +622,42 @@
     ],
     "Funda Bahia": [
       {
-        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, Gris/Oscuro, funda de repuesto)",
-        "color": "Gris",
+        "texto": "Cama Bahia - Ortopedico (Talla M 45x60 cm Hasta 20 kilos, Gris/Oscuro, Solo Funda de Repuesto)",
+        "color": "Gris/Oscuro",
         "talle": "M"
       },
       {
-        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, Rosa/Viejo, funda de repuesto)",
+        "texto": "Cama Bahia - Ortopedico (Talla M 45x60 cm Hasta 20 kilos, Rosa/Viejo, Solo Funda de Repuesto)",
         "color": "Rosa/Viejo",
         "talle": "M"
       },
       {
-        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, Mostaza, funda de repuesto)",
+        "texto": "Cama Bahia - Ortopedico (Talla M 45x60 cm Hasta 20 kilos, Mostaza, Solo Funda de Repuesto)",
         "color": "Mostaza",
         "talle": "M"
       },
       {
-        "texto": "cama bahia - ortopedico (talla l 45x60 cm hasta 20 kilos, Gris/Oscuro, funda de repuesto)",
-        "color": "Gris",
+        "texto": "Cama Bahia - Ortopedico (Talla L 45x60 cm Hasta 20 kilos, Gris/Oscuro, Solo Funda de Repuesto)",
+        "color": "Gris/Oscuro",
         "talle": "L"
       },
       {
-        "texto": "cama bahia - ortopedico (talla l 45x60 cm hasta 20 kilos, Rosa/Viejo, funda de repuesto)",
+        "texto": "Cama Bahia - Ortopedico (Talla L 45x60 cm Hasta 20 kilos, Rosa/Viejo, Solo Funda de Repuesto)",
         "color": "Rosa/Viejo",
         "talle": "L"
       },
       {
-        "texto": "cama bahia - ortopedico (talla l 45x60 cm hasta 20 kilos, Mostaza, funda de repuesto)",
+        "texto": "Cama Bahia - Ortopedico (Talla L 45x60 cm Hasta 20 kilos, Mostaza, Solo Funda de Repuesto)",
         "color": "Mostaza",
         "talle": "L"
       },
       {
-        "texto": "cama bahia - ortopedico (talla l 45x60 cm hasta 20 kilos, Salmon, funda de repuesto)",
+        "texto": "Cama Bahia - Ortopedico (Talla L 45x60 cm Hasta 20 kilos, Salmon, Solo Funda de Repuesto)",
         "color": "Salmon",
         "talle": "L"
       },
       {
-        "texto": "cama bahia - ortopedico (talla m 45x60 cm hasta 20 kilos, Salmon,, funda de repuesto)",
+        "texto": "Cama Bahia - Ortopedico (Talla M 45x60 cm Hasta 20 kilos, Salmon, Solo Funda de Repuesto)",
         "color": "Salmon",
         "talle": "M"
       }
@@ -790,14 +790,14 @@
         "texto": "Escaleras Ortopedica (Talla L ( Izquierda) (30 cm de alto) , Rosa/viejo, Escalera completa ( espuma",
         "color": "Rosa/viejo",
         "talle": "L"
-       },
-       {
-       "texto": "Escaleras Ortopedica (Talla M ( Izquierda)  (30 cm de alto) , Gris/Oscuro, Escalera completa ( espuma y",
+      },
+      {
+        "texto": "Escaleras Ortopedica (Talla M ( Izquierda)  (30 cm de alto) , Gris/Oscuro, Escalera completa ( espuma y",
         "color": "Gris/Oscuro",
         "talle": "M"
       },
       {
-        "texto": "Escaleras Ortopedica (Talla L ( Izquierda)  (30 cm de alto) , Gris/Oscuro, Escalera completa ( espuma y",
+        "texto": "Escaleras Ortopedica (Talla L (Izquierda), Gris/Oscuro, Escalera completa",
         "color": "Gris/Oscuro",
         "talle": "L"
       }
@@ -888,6 +888,55 @@
         "texto": "Cama Nordica Lavable (Talla L (60x60 cm) Hasta 8 kilos, NEGRO (pelo corto), Solo funda De Repuesto)",
         "color": "Negro pelo corto",
         "talle": "L"
+      }
+    ],
+    "Nordica pelo corto": [
+      {
+        "texto": "Cama Nordica Lavable (Talla M (60x60 cm) Hasta 8 kilos,  Negro (pelo corto),  Cama Completa (Relleno y funda))",
+        "color": "Negro",
+        "talle": "M"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla XL (60x60 cm) Hasta 8 kilos,  Negro (pelo corto),  Cama Completa (Relleno y funda))",
+        "color": "Negro",
+        "talle": "XL"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla L (60x60 cm) Hasta 8 kilos,  Negro (pelo corto),  Cama Completa (Relleno y funda))",
+        "color": "Negro",
+        "talle": "L"
+      }
+    ],
+    "Nordica": [
+      {
+        "texto": "Cama Nordica Lavable (Talla M 100x100 cm Hasta 40 kilos, BEIGE (pelo largo), Cama Completa",
+        "color": "Beige",
+        "talle": "M"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla L 100x100 cm Hasta 40 kilos, BEIGE (pelo largo), Cama Completa",
+        "color": "Beige",
+        "talle": "L"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla XL 100x100 cm Hasta 40 kilos, BEIGE (pelo largo), Cama Completa",
+        "color": "Beige",
+        "talle": "XL"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla XL 100x100 cm Hasta 40 kilos, NEGRO (pelo largo), Cama Completa",
+        "color": "Negro",
+        "talle": "XL"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla L 100x100 cm Hasta 40 kilos, NEGRO (pelo largo), Cama Completa",
+        "color": "Negro",
+        "talle": "L"
+      },
+      {
+        "texto": "Cama Nordica Lavable (Talla M 100x100 cm Hasta 40 kilos, NEGRO (pelo largo), Cama Completa",
+        "color": "Negro",
+        "talle": "M"
       }
     ]
   },

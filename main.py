@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
 Pulguitas — Servidor local
 Ejecutá: python app.py
@@ -63,6 +63,149 @@ def cargar_mapeo_desde_json():
 MAPA_PRODUCTOS = cargar_mapeo_desde_json()
 
 # ══════════════════════════════════════════════════════════════════════════════
+# CONFIGURACIÓN DINÁMICA DESDE MAPEO
+# ══════════════════════════════════════════════════════════════════════════════
+def cargar_configuracion_desde_mapeo():
+    """
+    Extrae la configuración (modelos, colores, talles) desde el mapeo_productos.json
+    """
+    if not MAPEO_JSON.exists():
+        return {
+            "modelos": [],
+            "colores": {"simples": [], "compuestos": {}},
+            "talles": [],
+            "palabras_prohibidas": ["argentina", "boca", "river", "inter", "miami", "panda"]
+        }
+    
+    try:
+        with open(MAPEO_JSON, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        modelos = set()
+        colores_simples = set()
+        colores_compuestos = {}
+        talles = set()
+        
+        # Recorrer todas las categorías y modelos
+        for categoria, modelos_cat in data.items():
+            for modelo, variantes in modelos_cat.items():
+                # Agregar el modelo (limpiar sufijos como " (solo funda)")
+                modelo_limpio = modelo.replace(' (solo funda)', '').lower()
+                modelos.add(modelo_limpio)
+                
+                for variante in variantes:
+                    color = variante.get('color', '')
+                    talle = variante.get('talle', '')
+                    
+                    if color:
+                        # Detectar si es color compuesto (contiene /)
+                        if '/' in color:
+                            color_lower = color.lower()
+                            # Crear variantes del color compuesto
+                            variantes_color = [
+                                color_lower,
+                                color_lower.replace('/', ' '),
+                                color_lower.replace('/', '')
+                            ]
+                            colores_compuestos[color_lower] = variantes_color
+                        else:
+                            colores_simples.add(color.lower())
+                    
+                    if talle:
+                        talles.add(talle.upper())
+        
+        config = {
+            "modelos": sorted(list(modelos)),
+            "colores": {
+                "simples": sorted(list(colores_simples)),
+                "compuestos": colores_compuestos
+            },
+            "talles": sorted(list(talles)),
+            "palabras_prohibidas": ["argentina", "boca", "river", "inter", "miami", "panda"]
+        }
+        
+        print(f"✅ Configuración cargada desde mapeo: {len(config['modelos'])} modelos, {len(config['colores']['simples'])} colores simples, {len(config['colores']['compuestos'])} colores compuestos")
+        return config
+        
+    except Exception as e:
+        print(f"❌ Error cargando configuración desde mapeo: {e}")
+        return {
+            "modelos": [],
+            "colores": {"simples": [], "compuestos": {}},
+            "talles": [],
+            "palabras_prohibidas": ["argentina", "boca", "river", "inter", "miami", "panda"]
+        }
+
+# Cargar configuración después del MAPA_PRODUCTOS
+CONFIG = cargar_configuracion_desde_mapeo()
+
+def extraer_caracteristicas(texto):
+    """
+    Extrae las características clave de un texto de producto usando la configuración del mapeo
+    """
+    if not texto:
+        return {}
+    
+    texto = texto.lower()
+    import re
+    
+    caracteristicas = {
+        'modelo': None,
+        'color': None,
+        'talle': None,
+        'lado': None,
+        'tipo': 'completa'  # por defecto
+    }
+    
+    # 1. Detectar modelo (desde config)
+    for modelo in CONFIG['modelos']:
+        if modelo in texto:
+            caracteristicas['modelo'] = modelo
+            break
+    
+    # 2. Detectar color (primero compuestos, luego simples)
+    # Buscar colores compuestos
+    for color_compuesto, variantes in CONFIG['colores']['compuestos'].items():
+        for variante in variantes:
+            if variante in texto:
+                caracteristicas['color'] = color_compuesto
+                break
+        if caracteristicas['color']:
+            break
+    
+    # Si no encontró compuesto, buscar simples
+    if not caracteristicas['color']:
+        for color_simple in CONFIG['colores']['simples']:
+            if color_simple in texto:
+                caracteristicas['color'] = color_simple
+                break
+    
+    # 3. Detectar talle (desde config)
+    for t in CONFIG['talles']:
+        t_lower = t.lower()
+        if re.search(r'talla\s*' + t_lower, texto) or \
+           re.search(r'talle\s*' + t_lower, texto) or \
+           re.search(r'\b' + t_lower + r'\b', texto):
+            caracteristicas['talle'] = t.upper()
+            break
+    
+    # 4. Detectar lado
+    if 'derecha' in texto:
+        caracteristicas['lado'] = 'derecha'
+    elif 'izquierda' in texto:
+        caracteristicas['lado'] = 'izquierda'
+    
+    # 5. Detectar tipo
+    if 'funda' in texto and 'completa' not in texto:
+        caracteristicas['tipo'] = 'funda'
+    elif 'solo funda' in texto:
+        caracteristicas['tipo'] = 'funda'
+    elif 'completa' in texto:
+        caracteristicas['tipo'] = 'completa'
+    
+    return caracteristicas
+
+# ══════════════════════════════════════════════════════════════════════════════
 # CATÁLOGO
 # ══════════════════════════════════════════════════════════════════════════════
 TALLE_LABELS = {"S":"Talle S","M":"Talle M","L":"Talle L","XL":"Talle XL",
@@ -120,11 +263,10 @@ def cargar_catalogo(texto):
 
 def normalizar_texto(texto):
     """
-    Normaliza un texto para comparación flexible:
-    - Minúsculas
-    - Elimina espacios extras
-    - Normaliza paréntesis y caracteres especiales
-    - Unifica "cm" y "c m"
+    Normaliza un texto eliminando medidas para comparación flexible:
+    - Elimina números seguidos de cm, mm, etc.
+    - Elimina palabras como "alto", "ancho", "largo"
+    - Luego aplica la normalización normal
     """
     if not texto:
         return ""
@@ -134,16 +276,22 @@ def normalizar_texto(texto):
     # 1. Minúsculas
     texto = texto.lower()
     
-    # 2. Reemplazar paréntesis y caracteres especiales por espacios
+    # 2. ELIMINAR MEDIDAS (números + unidad)
+    texto = re.sub(r'\d+\s*(cm|mm|mt|m)?\s*(de\s*(alto|ancho|largo))?', ' ', texto)
+    
+    # 3. Eliminar palabras de medidas solas
+    texto = re.sub(r'\b(alto|ancho|largo|cm|mm|mt)\b', ' ', texto)
+    
+    # 4. Reemplazar paréntesis y caracteres especiales por espacios
     texto = re.sub(r'[\(\)\[\]\{\}]', ' ', texto)
     
-    # 3. Normalizar "cm" (puede venir como "c m" o "cm")
+    # 5. Normalizar "cm" (ya lo eliminamos, pero por las dudas)
     texto = re.sub(r'c\s+m', 'cm', texto)
     
-    # 4. Eliminar espacios múltiples
+    # 6. Eliminar espacios múltiples
     texto = re.sub(r'\s+', ' ', texto)
     
-    # 5. Eliminar espacios al inicio y final
+    # 7. Eliminar espacios al inicio y final
     texto = texto.strip()
     
     return texto
@@ -151,31 +299,34 @@ def normalizar_texto(texto):
 def resolver(nombre):
     """
     Resuelve un nombre de producto de manera flexible buscando palabras clave
-    con pesos específicos por categoría
+    con pesos específicos por categoría - IGNORA MEDIDAS
     """
     if not nombre:
         return None
     
-    # Normalizar el texto de entrada
+    # Normalizar el texto de entrada SIN MEDIDAS
     key_original = nombre.lower().strip()
-    key_normalizado = normalizar_texto(nombre)
+    key_sin_medidas = normalizar_texto(nombre)
     
-    # Palabras que causan falsos positivos (ignorar si aparecen solas)
-    palabras_prohibidas = ['argentina', 'boca', 'river', 'inter', 'miami', 'panda']
+    print(f"\n🔍 Texto original: {key_original[:100]}...")
+    print(f"🔍 Texto sin medidas: {key_sin_medidas[:100]}...")
     
-    # 1. Primero intentar con coincidencia exacta del texto normalizado
+    # Palabras que causan falsos positivos
+    palabras_prohibidas = CONFIG['palabras_prohibidas']
+    
+    # 1. Primero intentar con coincidencia exacta del texto sin medidas
     mejor_match_exacto = None
     mejor_len_exacto = 0
     
     for p, info in MAPA_PRODUCTOS.items():
         p_normalizado = normalizar_texto(p)
         
-        # Buscar si el texto normalizado de la entrada está en el texto normalizado del PDF
-        if p_normalizado in key_normalizado:
+        # Buscar si el texto normalizado de la entrada está en el texto sin medidas del PDF
+        if p_normalizado in key_sin_medidas:
             if len(p_normalizado) > mejor_len_exacto:
                 mejor_len_exacto = len(p_normalizado)
                 mejor_match_exacto = info
-                print(f"  ✅ Match exacto normalizado: '{p_normalizado}' en '{key_normalizado}'")
+                print(f"  ✅ Match exacto (sin medidas): '{p_normalizado}' en '{key_sin_medidas}'")
     
     if mejor_match_exacto:
         return mejor_match_exacto
@@ -184,8 +335,8 @@ def resolver(nombre):
     mejor_match = None
     mejor_puntaje = 0
     
-    # Generar bigramas del texto normalizado para mejor precisión
-    palabras_normalizadas = key_normalizado.split()
+    # Generar bigramas del texto sin medidas
+    palabras_normalizadas = key_sin_medidas.split()
     bigramas = set()
     for i in range(len(palabras_normalizadas)-1):
         bigramas.add(f"{palabras_normalizadas[i]} {palabras_normalizadas[i+1]}")
@@ -194,75 +345,74 @@ def resolver(nombre):
         puntaje = 0
         cat, modelo, color, talle = info
         
-        # Normalizar también para comparación
-        p_normalizado = normalizar_texto(p)
+        # Normalizar también para comparación (sin medidas)
+        p_sin_medidas = normalizar_texto(p)
         modelo_norm = modelo.lower()
         color_norm = color.lower() if color else ""
         talle_norm = talle.lower() if talle else ""
         
-        # Palabras clave del producto (normalizadas)
-        palabras_clave = p_normalizado.split()
+        # Palabras clave del producto (sin medidas)
+        palabras_clave = p_sin_medidas.split()
         
-        # CONTAR COINCIDENCIAS BÁSICAS (con palabras normalizadas)
+        # CONTAR COINCIDENCIAS BÁSICAS (con palabras sin medidas)
         for palabra in palabras_clave:
-            if len(palabra) > 2 and palabra in key_normalizado:
-                puntaje += 2  # Aumentamos el peso de palabras individuales
+            if len(palabra) > 2 and palabra in key_sin_medidas:
+                puntaje += 2
         
         # BUSCAR BIGRAMAS (mayor precisión)
-        palabras_p = p_normalizado.split()
+        palabras_p = p_sin_medidas.split()
         for i in range(len(palabras_p)-1):
             bigrama = f"{palabras_p[i]} {palabras_p[i+1]}"
             if bigrama in bigramas:
-                puntaje += 5  # Bigrama encontrado = mucha confianza
-        
-        # PESOS ESPECIALES POR CATEGORÍA
-        
-        # ROPITA: requiere "remera" o "buzo" además del color/equipo
-        if cat == "ROPITA":
-            if "remera" in key_normalizado or "buzo" in key_normalizado:
                 puntaje += 5
-            if color_norm in key_normalizado and ("remera" in key_normalizado or "buzo" in key_normalizado):
+        
+        # PESOS ESPECIALES POR CATEGORÍA (usando key_sin_medidas)
+        
+        # ROPITA
+        if cat == "ROPITA":
+            if "remera" in key_sin_medidas or "buzo" in key_sin_medidas:
+                puntaje += 5
+            if color_norm in key_sin_medidas and ("remera" in key_sin_medidas or "buzo" in key_sin_medidas):
                 puntaje += 10
-            elif color_norm in key_normalizado and not ("remera" in key_normalizado or "buzo" in key_normalizado):
+            elif color_norm in key_sin_medidas and not ("remera" in key_sin_medidas or "buzo" in key_sin_medidas):
                 puntaje -= 5
         
-        # MANTA: requiere "manta" o "mantita"
+        # MANTA
         elif cat == "MANTA":
-            if "manta" in key_normalizado or "mantita" in key_normalizado:
+            if "manta" in key_sin_medidas or "mantita" in key_sin_medidas:
                 puntaje += 5
-            elif "doble faz" in key_normalizado:
+            elif "doble faz" in key_sin_medidas:
                 puntaje += 3
         
         # FUNDA
-        if "funda" in key_normalizado or "solo funda" in key_normalizado or "repuesto" in key_normalizado:
-            if "funda" in modelo_norm or "funda" in p_normalizado:
+        if "funda" in key_sin_medidas or "solo funda" in key_sin_medidas or "repuesto" in key_sin_medidas:
+            if "funda" in modelo_norm or "funda" in p_sin_medidas:
                 puntaje += 8
-            elif "completa" in key_normalizado:
+            elif "completa" in key_sin_medidas:
                 puntaje -= 3
         
-        # BONUS POR MODELO (buscar en texto normalizado)
-        if modelo_norm in key_normalizado:
+        # BONUS POR MODELO
+        if modelo_norm in key_sin_medidas:
             puntaje += 3
         
         # BONUS POR COLOR
-        if color_norm and color_norm in key_normalizado:
+        if color_norm and color_norm in key_sin_medidas:
             puntaje += 4
         
-        # BONUS POR TALLE
-        if talle_norm and talle_norm in key_normalizado:
-            puntaje += 2
+        # BONUS POR TALLE (buscar en texto ORIGINAL, porque puede ser "talla l")
+        if talle_norm:
+            if talle_norm in key_original or re.search(r'talla\s*' + talle_norm, key_original):
+                puntaje += 2
         
         # CASTIGO por palabras prohibidas
         for prohibida in palabras_prohibidas:
-            if prohibida in key_normalizado and cat != "ROPITA":
+            if prohibida in key_sin_medidas and cat != "ROPITA":
                 puntaje -= 10
         
-        # TOLERANCIA A ESPACIOS EN "talla l" vs "tallal"
-        if "talla" in key_normalizado and talle_norm:
-            # Buscar "talla" seguido del talle (con o sin espacio)
-            import re
+        # TOLERANCIA A ESPACIOS EN "talla l" (en texto original)
+        if "talla" in key_original and talle_norm:
             patron = f"talla\\s*{talle_norm}"
-            if re.search(patron, key_normalizado):
+            if re.search(patron, key_original):
                 puntaje += 3
         
         if puntaje > mejor_puntaje:
@@ -274,11 +424,10 @@ def resolver(nombre):
         umbral = 8
     
     if mejor_puntaje >= umbral:
-        print(f"  ✅ Match flexible: {mejor_match} (puntaje: {mejor_puntaje})")
+        print(f"  ✅ Match flexible (sin medidas): {mejor_match} (puntaje: {mejor_puntaje})")
         return mejor_match
     
     return None
-
 # ══════════════════════════════════════════════════════════════════════════════
 # PDF EXTRACTION (usando pymupdf)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -830,8 +979,9 @@ def save_mapeo():
             f.write(contenido)
         
         # Recargar el mapa en memoria
-        global MAPA_PRODUCTOS
+        global MAPA_PRODUCTOS, CONFIG
         MAPA_PRODUCTOS = cargar_mapeo_desde_json()
+        CONFIG = cargar_configuracion_desde_mapeo()
         
         return jsonify({"ok": True})
     except json.JSONDecodeError:
