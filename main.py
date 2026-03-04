@@ -1,15 +1,7 @@
-﻿#!/usr/bin/env python3
-"""
-Pulguitas — Servidor local
-Ejecutá: python app.py
-Luego abrí: http://localhost:5173
-"""
-
 import os, re, json, sys, subprocess, tempfile, threading, webbrowser
 from collections import defaultdict
 from pathlib import Path
 
-# ── Auto-instalar dependencias ────────────────────────────────────────────────
 for pkg in ("pdfplumber", "openpyxl", "flask", "pymupdf"):
     try:
         __import__(pkg if pkg != "flask" else "flask")
@@ -896,6 +888,7 @@ def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_path, output_path):
 def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3):
     """
     Reorganiza un PDF anotado para poner múltiples etiquetas por página horizontal
+    Con 2 cm de espacio al inicio de la primera comanda
     """
     doc = fitz.open(pdf_anotado_path)
     output = fitz.open()
@@ -907,17 +900,22 @@ def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3)
     page_height_pt = page_height_mm * 2.83465
     
     # Separación entre etiquetas
-    spacing_mm = 5
+    spacing_mm = 3
     spacing_pt = spacing_mm * 2.83465
     
-    # Margen superior
+    # Margen superior para TODAS las etiquetas
     margin_top_mm = 30
     margin_top_pt = margin_top_mm * 2.83465
+    
+    # ESPACIO EXTRA PARA LA PRIMER COMANDA (0.5 cm)
+    primer_comanda_extra_mm = 5
+    primer_comanda_extra_pt = primer_comanda_extra_mm * 2.83465
     
     total_paginas = len(doc)
     paginas_necesarias = (total_paginas + etiquetas_por_pagina - 1) // etiquetas_por_pagina
     
     print(f"\n📄 Reorganizando {total_paginas} etiquetas en {paginas_necesarias} páginas...")
+    print(f"   📏 Primera comanda con {primer_comanda_extra_mm} mm extra al inicio")
     
     for out_page_idx in range(paginas_necesarias):
         page = output.new_page(width=page_width_pt, height=page_height_pt)
@@ -926,6 +924,11 @@ def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3)
         end_idx = min(start_idx + etiquetas_por_pagina, total_paginas)
         
         current_x_pt = 0
+        
+        # Si es la PRIMERA PÁGINA y la PRIMER COMANDA, agregar espacio extra
+        if out_page_idx == 0:
+            current_x_pt += primer_comanda_extra_pt
+            print(f"   📌 Página 1: primera comanda con +{primer_comanda_extra_mm} mm de margen izquierdo")
         
         for i in range(start_idx, end_idx):
             src_page = doc[i]
