@@ -319,14 +319,13 @@ def resolver(nombre):
     mejor_len_exacto = 0
     
     for p, info in MAPA_PRODUCTOS.items():
-        p_normalizado = normalizar_texto(p)
+        p_sin_medidas = normalizar_texto(p)
         
-        # Buscar si el texto normalizado de la entrada está en el texto sin medidas del PDF
-        if p_normalizado in key_sin_medidas:
-            if len(p_normalizado) > mejor_len_exacto:
-                mejor_len_exacto = len(p_normalizado)
+        if p_sin_medidas in key_sin_medidas:
+            if len(p_sin_medidas) > mejor_len_exacto:
+                mejor_len_exacto = len(p_sin_medidas)
                 mejor_match_exacto = info
-                print(f"  ✅ Match exacto (sin medidas): '{p_normalizado}' en '{key_sin_medidas}'")
+                print(f"  ✅ Match exacto (sin medidas): '{p_sin_medidas}' en '{key_sin_medidas}'")
     
     if mejor_match_exacto:
         return mejor_match_exacto
@@ -351,22 +350,43 @@ def resolver(nombre):
         color_norm = color.lower() if color else ""
         talle_norm = talle.lower() if talle else ""
         
+        # --- VERIFICACIÓN DE MODELO (MUCHO MÁS ESTRICTA) ---
+        # Extraer la palabra principal del modelo
+        palabras_modelo = modelo_norm.split()
+        modelo_principal = palabras_modelo[0] if palabras_modelo else ""
+        
+        # Verificar si la palabra principal del modelo está en el texto
+        if modelo_principal and modelo_principal not in key_sin_medidas:
+            # Si no está la palabra principal, descartar completamente
+            continue
+        
+        # Verificar si hay al menos una palabra completa del modelo
+        modelo_encontrado = False
+        for palabra in palabras_modelo:
+            if len(palabra) > 3 and palabra in key_sin_medidas:
+                modelo_encontrado = True
+                break
+        
+        if not modelo_encontrado and palabras_modelo:
+            # Si ninguna palabra significativa del modelo aparece, descartar
+            continue
+        
         # Palabras clave del producto (sin medidas)
         palabras_clave = p_sin_medidas.split()
         
-        # CONTAR COINCIDENCIAS BÁSICAS (con palabras sin medidas)
+        # CONTAR COINCIDENCIAS BÁSICAS
         for palabra in palabras_clave:
             if len(palabra) > 2 and palabra in key_sin_medidas:
                 puntaje += 2
         
-        # BUSCAR BIGRAMAS (mayor precisión)
+        # BUSCAR BIGRAMAS
         palabras_p = p_sin_medidas.split()
         for i in range(len(palabras_p)-1):
             bigrama = f"{palabras_p[i]} {palabras_p[i+1]}"
             if bigrama in bigramas:
                 puntaje += 5
         
-        # PESOS ESPECIALES POR CATEGORÍA (usando key_sin_medidas)
+        # PESOS ESPECIALES POR CATEGORÍA
         
         # ROPITA
         if cat == "ROPITA":
@@ -384,22 +404,25 @@ def resolver(nombre):
             elif "doble faz" in key_sin_medidas:
                 puntaje += 3
         
-        # FUNDA
+        # FUNDA - Solo si realmente es una funda
         if "funda" in key_sin_medidas or "solo funda" in key_sin_medidas or "repuesto" in key_sin_medidas:
-            if "funda" in modelo_norm or "funda" in p_sin_medidas:
+            # Si el texto dice "cama completa" pero habla de funda, no debería matchear con funda
+            if "completa" in key_sin_medidas and "funda" in modelo_norm:
+                puntaje -= 15  # Penalización fuerte si dice completa pero el producto es funda
+            elif "funda" in modelo_norm:
                 puntaje += 8
-            elif "completa" in key_sin_medidas:
-                puntaje -= 3
+        elif "completa" in key_sin_medidas and "completa" in modelo_norm:
+            puntaje += 5
         
-        # BONUS POR MODELO
+        # BONUS POR MODELO COMPLETO
         if modelo_norm in key_sin_medidas:
-            puntaje += 3
+            puntaje += 10  # Aumentado a 10 para darle mucho peso
         
         # BONUS POR COLOR
         if color_norm and color_norm in key_sin_medidas:
             puntaje += 4
         
-        # BONUS POR TALLE (buscar en texto ORIGINAL, porque puede ser "talla l")
+        # BONUS POR TALLE
         if talle_norm:
             if talle_norm in key_original or re.search(r'talla\s*' + talle_norm, key_original):
                 puntaje += 2
@@ -409,25 +432,30 @@ def resolver(nombre):
             if prohibida in key_sin_medidas and cat != "ROPITA":
                 puntaje -= 10
         
-        # TOLERANCIA A ESPACIOS EN "talla l" (en texto original)
+        # TOLERANCIA A ESPACIOS EN "talla l"
         if "talla" in key_original and talle_norm:
             patron = f"talla\\s*{talle_norm}"
             if re.search(patron, key_original):
                 puntaje += 3
         
+        # CASTIGO si el texto es demasiado corto y no coincide con el modelo
+        if len(key_sin_medidas.split()) < 3 and modelo_norm not in key_sin_medidas:
+            puntaje -= 20
+        
         if puntaje > mejor_puntaje:
             mejor_puntaje = puntaje
             mejor_match = info
     
-    umbral = 5
+    umbral = 10  # Aumentado de 5 a 10 para mayor precisión
     if mejor_match and mejor_match[0] == "ROPITA":
-        umbral = 8
+        umbral = 12  # También aumentado
     
     if mejor_puntaje >= umbral:
         print(f"  ✅ Match flexible (sin medidas): {mejor_match} (puntaje: {mejor_puntaje})")
         return mejor_match
     
     return None
+
 # ══════════════════════════════════════════════════════════════════════════════
 # PDF EXTRACTION (usando pymupdf)
 # ══════════════════════════════════════════════════════════════════════════════
