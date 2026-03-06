@@ -132,15 +132,89 @@ def cargar_configuracion_desde_mapeo():
 # Cargar configuración después del MAPA_PRODUCTOS
 CONFIG = cargar_configuracion_desde_mapeo()
 
+def generar_palabras_clave():
+    """Genera palabras clave dinámicamente desde MAPA_PRODUCTOS"""
+    palabras = set()
+    for texto_entrada in MAPA_PRODUCTOS.keys():
+        primera_palabra = texto_entrada.split()[0] if texto_entrada.split() else ""
+        if len(primera_palabra) > 2:  # Ignorar palabras muy cortas
+            palabras.add(primera_palabra.lower())
+    
+    for info in MAPA_PRODUCTOS.values():
+        modelo = info[1].lower()
+        palabras_modelo = modelo.split()
+        for palabra in palabras_modelo:
+            if len(palabra) > 2:
+                palabras.add(palabra.lower())
+    
+    # Agregar también palabras de categorías importantes
+    categorias_importantes = ["cama", "sofa", "mini", "escalera", "manta", "gatito", 
+                             "nordica", "pancho", "garra", "timoteo", "remeras", "buzo", "huella"]
+    for palabra in categorias_importantes:
+        palabras.add(palabra)
+    
+    return palabras
+
+# Generar palabras clave al inicio
+PALABRAS_CLAVE = generar_palabras_clave()
+print(f"📋 Palabras clave generadas: {len(PALABRAS_CLAVE)}")
+
+def normalizar_texto_sin_medidas(texto):
+    """
+    Normaliza un texto eliminando medidas para comparación flexible:
+    - Elimina números seguidos de cm, mm, etc.
+    - Elimina palabras como "alto", "ancho", "largo"
+    - Luego aplica la normalización normal
+    """
+    if not texto:
+        return ""
+    
+    import re
+    
+    # 1. Minúsculas
+    texto = texto.lower()
+    
+    # 2. ELIMINAR MEDIDAS (números + unidad)
+    texto = re.sub(r'\d+\s*(cm|mm|mt|m)?\s*(de\s*(alto|ancho|largo))?', ' ', texto)
+    
+    # 3. Eliminar palabras de medidas solas
+    texto = re.sub(r'\b(alto|ancho|largo|cm|mm|mt)\b', ' ', texto)
+    
+    # 4. Reemplazar paréntesis y caracteres especiales por espacios
+    texto = re.sub(r'[\(\)\[\]\{\}]', ' ', texto)
+    
+    # 5. Normalizar "cm" (ya lo eliminamos, pero por las dudas)
+    texto = re.sub(r'c\s+m', 'cm', texto)
+    
+    # 6. Eliminar espacios múltiples
+    texto = re.sub(r'\s+', ' ', texto)
+    
+    # 7. Eliminar espacios al inicio y final
+    texto = texto.strip()
+    
+    return texto
+
 def extraer_caracteristicas(texto):
     """
     Extrae las características clave de un texto de producto usando la configuración del mapeo
+    Ignora medidas como "40 cm", "40cm", "alto", "ancho", etc.
     """
     if not texto:
         return {}
     
     texto = texto.lower()
     import re
+    
+    # ELIMINAR MEDIDAS del texto (para que no afecten la detección)
+    # Eliminar patrones como "40 cm", "40cm", "40 cm de alto", etc.
+    texto_sin_medidas = re.sub(r'\d+\s*(cm|mm|mt|m)?\s*(de\s*(alto|ancho|largo))?', ' ', texto)
+    # Eliminar palabras de medidas solas
+    texto_sin_medidas = re.sub(r'\b(alto|ancho|largo|cm|mm|mt)\b', ' ', texto_sin_medidas)
+    # Normalizar espacios
+    texto_sin_medidas = re.sub(r'\s+', ' ', texto_sin_medidas).strip()
+    
+    print(f"  📏 Texto original: {texto[:100]}...")
+    print(f"  📏 Texto sin medidas: {texto_sin_medidas[:100]}...")
     
     caracteristicas = {
         'modelo': None,
@@ -150,17 +224,17 @@ def extraer_caracteristicas(texto):
         'tipo': 'completa'  # por defecto
     }
     
-    # 1. Detectar modelo (desde config)
+    # 1. Detectar modelo (desde config) - USAR TEXTO SIN MEDIDAS
     for modelo in CONFIG['modelos']:
-        if modelo in texto:
+        if modelo in texto_sin_medidas:
             caracteristicas['modelo'] = modelo
             break
     
-    # 2. Detectar color (primero compuestos, luego simples)
+    # 2. Detectar color (primero compuestos, luego simples) - USAR TEXTO SIN MEDIDAS
     # Buscar colores compuestos
     for color_compuesto, variantes in CONFIG['colores']['compuestos'].items():
         for variante in variantes:
-            if variante in texto:
+            if variante in texto_sin_medidas:
                 caracteristicas['color'] = color_compuesto
                 break
         if caracteristicas['color']:
@@ -169,11 +243,11 @@ def extraer_caracteristicas(texto):
     # Si no encontró compuesto, buscar simples
     if not caracteristicas['color']:
         for color_simple in CONFIG['colores']['simples']:
-            if color_simple in texto:
+            if color_simple in texto_sin_medidas:
                 caracteristicas['color'] = color_simple
                 break
     
-    # 3. Detectar talle (desde config)
+    # 3. Detectar talle (desde config) - USAR TEXTO ORIGINAL (porque puede ser "talla l")
     for t in CONFIG['talles']:
         t_lower = t.lower()
         if re.search(r'talla\s*' + t_lower, texto) or \
@@ -182,18 +256,18 @@ def extraer_caracteristicas(texto):
             caracteristicas['talle'] = t.upper()
             break
     
-    # 4. Detectar lado
-    if 'derecha' in texto:
+    # 4. Detectar lado - USAR TEXTO SIN MEDIDAS
+    if 'derecha' in texto_sin_medidas:
         caracteristicas['lado'] = 'derecha'
-    elif 'izquierda' in texto:
+    elif 'izquierda' in texto_sin_medidas:
         caracteristicas['lado'] = 'izquierda'
     
-    # 5. Detectar tipo
-    if 'funda' in texto and 'completa' not in texto:
+    # 5. Detectar tipo - USAR TEXTO SIN MEDIDAS
+    if 'funda' in texto_sin_medidas and 'completa' not in texto_sin_medidas:
         caracteristicas['tipo'] = 'funda'
-    elif 'solo funda' in texto:
+    elif 'solo funda' in texto_sin_medidas:
         caracteristicas['tipo'] = 'funda'
-    elif 'completa' in texto:
+    elif 'completa' in texto_sin_medidas:
         caracteristicas['tipo'] = 'completa'
     
     return caracteristicas
@@ -214,10 +288,15 @@ TALLE_SIZES  = {
     "MANTA":{"U":"70x70"},
 }
 CAT_COLORS = {
-    "VERANO":("29B6F6","E1F5FE"),"ANTIESTRES":("66BB6A","E8F5E9"),
-    "INVIERNO":("FFA726","FFF3E0"),"DECO":("AB47BC","F3E5F5"),
-    "ESCALERA":("78909C","ECEFF1"),"NORDICA":("26A69A","E0F2F1"),
-    "ROPITA":("EC407A","FCE4EC"),"MANTA":("FFCA28","FFFDE7"),
+    "VERANO":("29B6F6","E1F5FE"),
+    "ANTIESTRES":("66BB6A","E8F5E9"),
+    "INVIERNO":("FFA726","FFF3E0"),
+    "DECO":("AB47BC","F3E5F5"),
+    "ESCALERA":("78909C","ECEFF1"),
+    "NORDICA":("26A69A","E0F2F1"),
+    "ROPITA":("EC407A","FCE4EC"),
+    "MANTA":("FFCA28","FFFDE7"),
+    "DISPENSER":("9C27B0","F3E5F5"),  # Morado para dispensers
 }
 
 def cargar_catalogo(texto):
@@ -253,42 +332,6 @@ def cargar_catalogo(texto):
 # RESOLVER (usa el mapa cargado desde JSON)
 # ══════════════════════════════════════════════════════════════════════════════
 
-
-def normalizar_texto(texto):
-    """
-    Normaliza un texto eliminando medidas para comparación flexible:
-    - Elimina números seguidos de cm, mm, etc.
-    - Elimina palabras como "alto", "ancho", "largo"
-    - Luego aplica la normalización normal
-    """
-    if not texto:
-        return ""
-    
-    import re
-    
-    # 1. Minúsculas
-    texto = texto.lower()
-    
-    # 2. ELIMINAR MEDIDAS (números + unidad)
-    texto = re.sub(r'\d+\s*(cm|mm|mt|m)?\s*(de\s*(alto|ancho|largo))?', ' ', texto)
-    
-    # 3. Eliminar palabras de medidas solas
-    texto = re.sub(r'\b(alto|ancho|largo|cm|mm|mt)\b', ' ', texto)
-    
-    # 4. Reemplazar paréntesis y caracteres especiales por espacios
-    texto = re.sub(r'[\(\)\[\]\{\}]', ' ', texto)
-    
-    # 5. Normalizar "cm" (ya lo eliminamos, pero por las dudas)
-    texto = re.sub(r'c\s+m', 'cm', texto)
-    
-    # 6. Eliminar espacios múltiples
-    texto = re.sub(r'\s+', ' ', texto)
-    
-    # 7. Eliminar espacios al inicio y final
-    texto = texto.strip()
-    
-    return texto
-
 def resolver(nombre):
     """
     Resuelve un nombre de producto de manera flexible buscando palabras clave
@@ -299,7 +342,7 @@ def resolver(nombre):
     
     # Normalizar el texto de entrada SIN MEDIDAS
     key_original = nombre.lower().strip()
-    key_sin_medidas = normalizar_texto(nombre)
+    key_sin_medidas = normalizar_texto_sin_medidas(nombre)
     
     print(f"\n🔍 Texto original: {key_original[:100]}...")
     print(f"🔍 Texto sin medidas: {key_sin_medidas[:100]}...")
@@ -312,7 +355,7 @@ def resolver(nombre):
     mejor_len_exacto = 0
     
     for p, info in MAPA_PRODUCTOS.items():
-        p_sin_medidas = normalizar_texto(p)
+        p_sin_medidas = normalizar_texto_sin_medidas(p)
         
         if p_sin_medidas in key_sin_medidas:
             if len(p_sin_medidas) > mejor_len_exacto:
@@ -338,7 +381,7 @@ def resolver(nombre):
         cat, modelo, color, talle = info
         
         # Normalizar también para comparación (sin medidas)
-        p_sin_medidas = normalizar_texto(p)
+        p_sin_medidas = normalizar_texto_sin_medidas(p)
         modelo_norm = modelo.lower()
         color_norm = color.lower() if color else ""
         talle_norm = talle.lower() if talle else ""
@@ -439,9 +482,9 @@ def resolver(nombre):
             mejor_puntaje = puntaje
             mejor_match = info
     
-    umbral = 10  # Aumentado de 5 a 10 para mayor precisión
+    umbral = 5
     if mejor_match and mejor_match[0] == "ROPITA":
-        umbral = 12  # También aumentado
+        umbral = 8
     
     if mejor_puntaje >= umbral:
         print(f"  ✅ Match flexible (sin medidas): {mejor_match} (puntaje: {mejor_puntaje})")
@@ -470,6 +513,7 @@ def extraer_ordenes_con_fitz(pdf_path):
     i = 0
     
     print("📄 Procesando páginas...")
+    print(f"📋 Usando {len(PALABRAS_CLAVE)} palabras clave para detectar productos")
     
     while i < len(lineas):
         linea = lineas[i].strip()
@@ -499,14 +543,8 @@ def extraer_ordenes_con_fitz(pdf_path):
                 while k < len(lineas_orden):
                     linea_actual = lineas_orden[k].strip()
                     
-                    # Detectar inicio de producto
-                    palabras_clave = ["cama", "sofa", "mini", "escalera", "manta", "gatito", 
-                                    "nordica", "pancho", "garra", "timoteo", "mantitas", 
-                                    "remeras", "buzo", "mantita", "huella", "corona", 
-                                    "hamburguesa", "ballena", "cactus", "panda", "palta",
-                                    "argentina", "boca", "river", "inter", "mami","dispenser","cepillo"]
-                    
-                    if any(linea_actual.lower().startswith(p) for p in palabras_clave):
+                    # Detectar inicio de producto usando palabras clave dinámicas
+                    if any(linea_actual.lower().startswith(p) for p in PALABRAS_CLAVE):
                         productos_en_orden += 1
                         print(f"\n  Producto #{productos_en_orden}:")
                         print(f"    L{k+1}: {linea_actual[:60]}...")
@@ -535,7 +573,7 @@ def extraer_ordenes_con_fitz(pdf_path):
                                 break
                             
                             # Si encontramos otra palabra clave, es un NUEVO producto
-                            if any(linea_m.lower().startswith(p) for p in palabras_clave):
+                            if any(linea_m.lower().startswith(p) for p in PALABRAS_CLAVE):
                                 print(f"    → Siguiente producto detectado")
                                 cantidad = 1
                                 break
@@ -803,7 +841,7 @@ def formatear_productos_orden(productos, resolver_func):
             else:
                 linea = f"Huella {talle} x{cant}"
         
-        # Caso especial: GARRA (solo cuando es realmente Garra)
+        # Caso especial: GARRA
         elif modelo == "Garra" and color == "Gris":
             if cat == "INVIERNO":
                 linea = f"Garra invierno {talle} x{cant}"
@@ -824,6 +862,10 @@ def formatear_productos_orden(productos, resolver_func):
                 linea = f"{color} {talle_num} x{cant}"
             else:
                 linea = f"{color} x{cant}"
+        
+        # Caso especial: DISPENSER
+        elif cat == "DISPENSER":
+            linea = f"Dispenser x{cant}"
         
         # Formato normal para el resto
         else:
@@ -908,8 +950,8 @@ def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3)
     margin_top_mm = 30
     margin_top_pt = margin_top_mm * 2.83465
     
-    # ESPACIO EXTRA PARA LA PRIMER COMADA DE CADA HOJA (0.5 cm)
-    primer_comanda_extra_mm = 5  # 0.5 cm
+    # ESPACIO EXTRA PARA LA PRIMER COMADA DE CADA HOJA (2 cm)
+    primer_comanda_extra_mm = 20  # 2 cm
     primer_comanda_extra_pt = primer_comanda_extra_mm * 2.83465
     
     total_paginas = len(doc)
@@ -1012,9 +1054,10 @@ def save_mapeo():
             f.write(contenido)
         
         # Recargar el mapa en memoria
-        global MAPA_PRODUCTOS, CONFIG
+        global MAPA_PRODUCTOS, CONFIG, PALABRAS_CLAVE
         MAPA_PRODUCTOS = cargar_mapeo_desde_json()
         CONFIG = cargar_configuracion_desde_mapeo()
+        PALABRAS_CLAVE = generar_palabras_clave()
         
         return jsonify({"ok": True})
     except json.JSONDecodeError:
@@ -1127,4 +1170,3 @@ if __name__ == "__main__":
     print("   Ctrl+C para detener\n")
     threading.Timer(1.2, lambda: webbrowser.open(url)).start()
     app.run(port=port, debug=False)
-
