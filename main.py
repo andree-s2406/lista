@@ -950,8 +950,8 @@ def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3)
     margin_top_mm = 30
     margin_top_pt = margin_top_mm * 2.83465
     
-    # ESPACIO EXTRA PARA LA PRIMER COMADA DE CADA HOJA (2 cm)
-    primer_comanda_extra_mm = 20  # 2 cm
+    # ESPACIO EXTRA PARA LA PRIMER COMADA DE CADA HOJA (0.5 cm)
+    primer_comanda_extra_mm = 5  # 0.5 cm
     primer_comanda_extra_pt = primer_comanda_extra_mm * 2.83465
     
     total_paginas = len(doc)
@@ -1170,3 +1170,4 @@ if __name__ == "__main__":
     print("   Ctrl+C para detener\n")
     threading.Timer(1.2, lambda: webbrowser.open(url)).start()
     app.run(port=port, debug=False)
+
