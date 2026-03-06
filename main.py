@@ -504,7 +504,7 @@ def extraer_ordenes_con_fitz(pdf_path):
                                     "nordica", "pancho", "garra", "timoteo", "mantitas", 
                                     "remeras", "buzo", "mantita", "huella", "corona", 
                                     "hamburguesa", "ballena", "cactus", "panda", "palta",
-                                    "argentina", "boca", "river", "inter", "mami"]
+                                    "argentina", "boca", "river", "inter", "mami","dispenser","cepillo"]
                     
                     if any(linea_actual.lower().startswith(p) for p in palabras_clave):
                         productos_en_orden += 1
@@ -1127,3 +1127,4 @@ if __name__ == "__main__":
     print("   Ctrl+C para detener\n")
     threading.Timer(1.2, lambda: webbrowser.open(url)).start()
     app.run(port=port, debug=False)
+
