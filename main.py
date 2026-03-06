@@ -19,12 +19,10 @@ app = Flask(__name__, static_folder=".")
 
 # ── Rutas de archivos ─────────────────────────────────────────────────────────
 BASE_DIR      = Path(__file__).parent
-DATA_DIR      = BASE_DIR / "data
 PRODUCTOS_TXT = BASE_DIR / "productos.txt"
 OUTPUT_XLSX   = BASE_DIR / "resumen_pedidos.xlsx"
 MAPEO_JSON    = BASE_DIR / "mapeo_productos.json"
 
-DATA_DIR.mkdir(exist_ok=True)
 # ══════════════════════════════════════════════════════════════════════════════
 # CARGA DE MAPEO DESDE JSON
 # ══════════════════════════════════════════════════════════════════════════════
