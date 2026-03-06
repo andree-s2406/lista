@@ -1134,5 +1134,14 @@
         "talle": "L"
       }
     ]
-  }
+  },
+  "DISPENSER": {
+  "Dispenser interactivo": [
+    {
+      "texto": "dispenser interactivo de snacks",
+      "color": "",
+      "talle": "U"
+    }
+  ]
+
 }
