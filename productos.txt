@@ -1,99 +1,103 @@
 # ══════════════════════════════════════════════════════════════════════════════
-# PULGUITAS — Catálogo de Productos
+# PULGUITAS — Catálogo de Productos (generado automáticamente)
 # ══════════════════════════════════════════════════════════════════════════════
-#
+
 # INSTRUCCIONES:
 #   • Cada línea define una fila del catálogo Excel
 #   • Formato: CATEGORÍA | Modelo | Color | Talle1,Talle2,Talle3
 #   • Las líneas que empiezan con # son comentarios y se ignoran
-#   • Líneas en blanco también se ignoran
-#
-# CATEGORÍAS DISPONIBLES:
-#   VERANO, ANTIESTRES, INVIERNO, DECO, ESCALERA, NORDICA, ROPITA, MANTA
-#
-# TALLES POR CATEGORÍA (en orden de columna):
-#   VERANO    → S, M, L
-#   ANTIESTRES→ M, L
-#   INVIERNO  → S, M, L
-#   DECO      → S, M, L   (Bahía/MiniSofá/SofáCama/Timoteo)
-#   ESCALERA  → M, L
-#   NORDICA   → M, L, XL
-#   ROPITA    → XS, SM, LXL
-#   MANTA     → U
 #
 # ══════════════════════════════════════════════════════════════════════════════
 
 # ── VERANO ───────────────────────────────────────────────────────────────────
-VERANO | Huella      | Rosa  | S,M,L
-VERANO | Corona      |       | S,M,L
-VERANO | Hamburguesa |       | S,M,L
-VERANO | Gatito      | Beige | S,M,L
-VERANO | Ballena     |       | S,M,L
+VERANO | Cactus | verde | U
+VERANO | Garra verano | Gris | M,L
+VERANO | Gatito | Beige | S,M,L
+VERANO | Huella Verano | Rosa | S,M,L
 
-# ── ANTIESTRES ───────────────────────────────────────────────────────────────
-ANTIESTRES | Garra  | Gris  | M,L
-ANTIESTRES | Huella | Beige | M,L
-ANTIESTRES | Pancho |       | M,L
+# ── ANTIESTRES ───────────────────────────────────────────────────────────────────
+ANTIESTRES | Corona antiestres |  | M,L
+ANTIESTRES | Garra antiestres | Gris | M,L
+ANTIESTRES | Huella Antiestres | Beige | M,L
+ANTIESTRES | Huella Antiestres | Beige/Rosa | M,L
+ANTIESTRES | Huella Antiestres | Rosa | M,L
+ANTIESTRES | Pancho |  | M,L
 
-# ── INVIERNO ─────────────────────────────────────────────────────────────────
-INVIERNO | Huella           | Rosa | S,M,L
-INVIERNO | Corona           |      | S,M,L
-INVIERNO | Hamburguesa      |      | S,M,L
-INVIERNO | Gatito | Beige   | S,M,L
-INVIERNO | Ballena          |      | S,M,L
-INVIERNO | Cactus           |      | S,M,L
-INVIERNO | Panda            |      | S,M,L
-INVIERNO | Negro pelo corto |      | S,M,L
-INVIERNO | Argentina        |      | S,M,L
-INVIERNO | Palta            |      | S,M,L
+# ── INVIERNO ───────────────────────────────────────────────────────────────────
+INVIERNO | Garra invierno | Gris | M,L
+INVIERNO | Gatito | Beige | S,M,L
+INVIERNO | Huella invierno | Rosa | S,M,L
 
-# ── DECO ─────────────────────────────────────────────────────────────────────
-DECO | Bahía     | Rosa        | S,M,L
-DECO | Bahía     | Salmón      | S,M,L
-DECO | Bahía     | Mostaza     | S,M,L
-DECO | Bahía     | Gris        | S,M,L
-DECO | Mini Sofá | Rosa        | S,M,L
-DECO | Mini Sofá | Gris Oscuro | S,M,L
-DECO | Mini Sofá | Gris Claro  | S,M,L
-DECO | Mini Sofá | Mostaza     | S,M,L
-DECO | Sofá Cama | Mostaza     | S,M,L
-DECO | Sofá Cama | Gris        | S,M,L
-DECO | Sofá Cama | Salmón      | S,M,L
-DECO | Sofá Cama | Rosa        | S,M,L
-DECO | Timoteo   | Mostaza     | S,M,L
-DECO | Timoteo   | Rosa        | S,M,L
-DECO | Timoteo   | Gris        | S,M,L
+# ── DECO ───────────────────────────────────────────────────────────────────
+DECO | Bahía | Gris | M,L
+DECO | Bahía | Mostaza | M,L
+DECO | Bahía | Rosa/Viejo | M,L
+DECO | Bahía | Rosa/viejo | L
+DECO | Bahía | Salmón | L
+DECO | Funda Bahia | Gris/Oscuro | M,L
+DECO | Funda Bahia | Mostaza | M,L
+DECO | Funda Bahia | Rosa/Viejo | M,L
+DECO | Funda Bahia | Salmon | M,L
+DECO | Funda Mini Sofá | Gris Claro | M,L
 DECO | Funda Mini Sofá | Gris Oscuro | M,L
-DECO | Funda Mini Sofá | Gris Claro  | M,L
-DECO | Funda Mini Sofá | Mostaza     | M,L
-DECO | Funda Mini Sofá | Rosa        | M,L
-DECO | Funda Sofá Cama | Gris   | M,L
-DECO | Funda Sofá Cama | Salmón | M,L
-DECO | Funda Sofá Cama | Mostaza| M,L
-DECO | Funda Sofá Cama | Rosa   | M,L
+DECO | Funda Mini Sofá | Mostaza | M,L
+DECO | Funda Mini Sofá | Rosa/Viejo | M,L
+DECO | Funda Sofá cama | Gris Oscuro | M,L
+DECO | Funda Sofá cama | Mostaza | M,L
+DECO | Funda Sofá cama | Rosa/Viejo | M,L
+DECO | Funda Sofá cama | Salmón | M,L
+DECO | Funda Timoteo | Gris/Claro | S,M
+DECO | Funda Timoteo | Gris/Oscuro | S,M
+DECO | Funda Timoteo | Mostaza | S,M
+DECO | Funda Timoteo | Rosa/viejo | S,M
+DECO | Funda Timoteo | Salmon | S,M
+DECO | Mini Sofá | Gris Claro | M,L
+DECO | Mini Sofá | Gris Oscuro | M,L
+DECO | Mini Sofá | Mostaza | M,L
+DECO | Mini Sofá | Rosa/Viejo | M,L
+DECO | Sofá Cama | Gris | M,L
+DECO | Sofá Cama | Gris Oscuro | M
+DECO | Sofá Cama | Mostaza | M,L
+DECO | Sofá Cama | Rosa/Viejo | M,L
+DECO | Sofá Cama | Salmón | M,L
+DECO | Timoteo | Gris | S,M
+DECO | Timoteo | Mostaza | S,M
+DECO | Timoteo | Rosa/Viejo | S,M
 
-# ── ESCALERA ─────────────────────────────────────────────────────────────────
-ESCALERA IZQUIERDA| Escalera | Gris               | M,L
-ESCALERA IZQUIERDA| Escalera | Rosa | M,L
-ESCALERA DERECHA  | Escalera | rosa | M,L   
-ESCALERA IZQUIERDA  | Escalera | rosa | M,L   
+# ── ESCALERA ───────────────────────────────────────────────────────────────────
+ESCALERA | Escalera | Gris | M,L
+ESCALERA | Escalera | Rosa/viejo | M,L
+ESCALERA | Escalera Derecha | Gris/Oscuro | M,L
+ESCALERA | Escalera Derecha | Rosa/viejo | M,L
+ESCALERA | Escalera izquierda | Gris/Oscuro | M,L
+ESCALERA | Escalera izquierda | Rosa/viejo | M,L
+ESCALERA | Funda escalera | Gris/Oscuro | M,L
+ESCALERA | Funda escalera | Mostaza | M,L
+ESCALERA | Funda escalera | Rosa/viejo | M,L
+ESCALERA | Funda escalera | Salmon | M,L
 
-
-# ── NORDICA ──────────────────────────────────────────────────────────────────
-NORDICA | Nórdica | Gris  | M,L,XL
-NORDICA | Nórdica | Beige | M,L,XL
-NORDICA | Nórdica | Negro | M,L,XL
-NORDICA | Funda Nórdica | Gris  | M,L,XL
-NORDICA | Funda Nórdica | Beige | M,L,XL
-NORDICA | Funda Nórdica | Negro | M,L,XL
+# ── NORDICA ───────────────────────────────────────────────────────────────────
+NORDICA | Funda Nordica | Beige | M,L
+NORDICA | Funda Nordica | Gris | M,L
+NORDICA | Funda Nordica | Negro | M,L
+NORDICA | Funda Nordica | Negro pelo corto | M,L
+NORDICA | Nordica | Beige | M,L,XL
+NORDICA | Nordica | Negro | M,L,XL
+NORDICA | Nordica pelo corto | Negro | M,L,XL
+NORDICA | Nórdica | Gris | M,L,XL
 
 # ── ROPITA ───────────────────────────────────────────────────────────────────
-ROPITA | Ropita | Panda     | XS,S,M,L,XL
-ROPITA | Ropita | Argentina | XS,S,M,L,XL
-ROPITA | Ropita | Boca      | XS,S,M,L,XL
-ROPITA | Ropita | River     | XS,S,M,L,XL
-ROPITA | Ropita | Inter Miami    | XS,S,M,L,XL
+ROPITA | Monito | Monito | S
+ROPITA | Ropita | Argentina | XS,S,M,L,XL,U
+ROPITA | Ropita | Boca | XS,S,M,L,XL,U
+ROPITA | Ropita | Inter Miami | XS,S,M,L,XL,U
+ROPITA | Ropita | Panda | S
+ROPITA | Ropita | Ranita | L
+ROPITA | Ropita | River | XS,S,M,L,XL,U
 
-# ── MANTA ────────────────────────────────────────────────────────────────────
+# ── MANTA ───────────────────────────────────────────────────────────────────
 MANTA | Manta Doble Faz | Beige/Blanco | U
-MANTA | Manta Doble Faz | Gris/Blanco  | U
+MANTA | Manta Doble Faz | Gris/Blanco | U
+
+# ── DISPENSER ───────────────────────────────────────────────────────────────────
+DISPENSER | Dispenser interactivo |  | U

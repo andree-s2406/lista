@@ -1,9 +1,16 @@
+﻿#!/usr/bin/env python3
+"""
+Pulguitas — Servidor local
+Ejecutá: python app.py
+Luego abrí: http://localhost:5173
+"""
+
 import os, re, json, sys, subprocess, tempfile, threading, webbrowser
 from collections import defaultdict
 from pathlib import Path
 
 # ── Auto-instalar dependencias ────────────────────────────────────────────────
-for pkg in ("pdfplumber", "openpyxl", "flask", "pymupdf"):
+for pkg in ("pdfplumber", "openpyxl", "flask", "pymupdf", "psycopg2-binary", "sqlalchemy"):
     try:
         __import__(pkg if pkg != "flask" else "flask")
     except ImportError:
@@ -15,129 +22,310 @@ import pdfplumber, openpyxl, fitz  # fitz = pymupdf
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from flask import Flask, request, jsonify, send_file, send_from_directory
 
+# ── Parche para CockroachDB ─────────────────────────────────────────────────
+from sqlalchemy.dialects.postgresql.psycopg2 import PGDialect_psycopg2
+
+# Parcheamos directamente la clase del dialecto PostgreSQL
+original_get_server_version = PGDialect_psycopg2._get_server_version_info
+
+def patched_get_server_version(self, connection):
+    try:
+        return original_get_server_version(self, connection)
+    except AssertionError:
+        # Si falla el parseo de versión (CockroachDB), devolvemos una versión fija
+        print("⚠️  Detectada versión de CockroachDB, usando versión fija (25.4.1)")
+        return (25, 4, 1)
+
+# Aplicamos el parche
+PGDialect_psycopg2._get_server_version_info = patched_get_server_version
+
+# ── Base de Datos ───────────────────────────────────────────────────────────
+from sqlalchemy import create_engine, Column, String, Integer, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
+
 app = Flask(__name__, static_folder=".")
 
 # ── Rutas de archivos ─────────────────────────────────────────────────────────
 BASE_DIR      = Path(__file__).parent
 PRODUCTOS_TXT = BASE_DIR / "productos.txt"
 OUTPUT_XLSX   = BASE_DIR / "resumen_pedidos.xlsx"
-MAPEO_JSON    = BASE_DIR / "mapeo_productos.json"
+
+# ── Configuración de Base de Datos ──────────────────────────────────────────
+DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///productos_local.db')
+
+# Detectar si es CockroachDB (solo para información)
+if DATABASE_URL and 'cockroachlabs.cloud' in DATABASE_URL:
+    print("✅ Conectando a CockroachDB (con parche de versión)")
+
+print(f"🔌 Conectando a BD...")
+
+# Crear engine con configuración especial
+engine = create_engine(
+    DATABASE_URL,
+    poolclass=NullPool,
+    connect_args={
+        "connect_timeout": 15,
+        "application_name": "pulguitas"
+    }
+)
+
+SessionLocal = sessionmaker(bind=engine)
+Base = declarative_base()
+
+class ProductoDB(Base):
+    __tablename__ = 'productos'
+    
+    id = Column(Integer, primary_key=True)
+    categoria = Column(String(50))
+    modelo = Column(String(100))
+    color = Column(String(50))
+    talle = Column(String(10))
+    texto = Column(Text, unique=True)
+
+class CategoriaDB(Base):
+    __tablename__ = 'categorias'
+    
+    id = Column(Integer, primary_key=True)
+    nombre = Column(String(50), unique=True, nullable=False)
+    color_fondo = Column(String(6), default="607D8B")
+    color_texto = Column(String(6), default="FFFFFF")
+
+# Crear tablas
+Base.metadata.create_all(engine)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# CARGA DE MAPEO DESDE JSON
+# FUNCIONES DE BASE DE DATOS
 # ══════════════════════════════════════════════════════════════════════════════
-def cargar_mapeo_desde_json():
-    """Carga el mapeo de productos desde el archivo JSON"""
-    if not MAPEO_JSON.exists():
-        print("⚠️ Archivo mapeo_productos.json no encontrado. Usando mapeo vacío.")
-        return {}
-    
+def get_all_productos():
+    """Obtiene todos los productos de la base de datos"""
+    session = SessionLocal()
+    productos = session.query(ProductoDB).all()
+    session.close()
+    return productos
+
+def guardar_productos_desde_json(contenido_json):
+    """Guarda todos los productos desde un JSON (reemplaza todo)"""
     try:
-        with open(MAPEO_JSON, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        datos = json.loads(contenido_json)
         
-        # Convertir el formato JSON al formato plano del MAPA_PRODUCTOS
-        mapa_plano = {}
-        for categoria, modelos in data.items():
+        session = SessionLocal()
+        # Limpiar tabla
+        session.query(ProductoDB).delete()
+        
+        # Insertar nuevos productos
+        for categoria, modelos in datos.items():
             for modelo, variantes in modelos.items():
                 for variante in variantes:
-                    texto = variante["texto"].lower()
-                    color = variante.get("color", "")
-                    talle = variante.get("talle", "")
-                    mapa_plano[texto] = (categoria, modelo, color, talle)
+                    producto = ProductoDB(
+                        categoria=categoria,
+                        modelo=modelo,
+                        color=variante.get("color", ""),
+                        talle=variante.get("talle", ""),
+                        texto=variante["texto"].lower()
+                    )
+                    session.add(producto)
         
-        print(f"✅ Mapeo cargado: {len(mapa_plano)} entradas")
+        session.commit()
+        session.close()
+        return True
+    except Exception as e:
+        print(f"❌ Error guardando en BD: {e}")
+        return False
+
+def cargar_mapeo_desde_bd():
+    """Carga el MAPA_PRODUCTOS desde la base de datos"""
+    try:
+        productos = get_all_productos()
+        mapa_plano = {}
+        for p in productos:
+            mapa_plano[p.texto] = (p.categoria, p.modelo, p.color, p.talle)
+        print(f"✅ Mapeo cargado desde BD: {len(mapa_plano)} entradas")
         return mapa_plano
     except Exception as e:
-        print(f"❌ Error cargando mapeo: {e}")
+        print(f"❌ Error cargando desde BD: {e}")
         return {}
 
-# Cargar el mapa al inicio
-MAPA_PRODUCTOS = cargar_mapeo_desde_json()
+def exportar_mapeo_a_json():
+    """Exporta todos los productos a formato JSON anidado (para frontend)"""
+    productos = get_all_productos()
+    
+    resultado = {}
+    for p in productos:
+        if p.categoria not in resultado:
+            resultado[p.categoria] = {}
+        if p.modelo not in resultado[p.categoria]:
+            resultado[p.categoria][p.modelo] = []
+        resultado[p.categoria][p.modelo].append({
+            "texto": p.texto,
+            "color": p.color,
+            "talle": p.talle
+        })
+    
+    return resultado
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FUNCIONES DE CATEGORÍAS
+# ══════════════════════════════════════════════════════════════════════════════
+def get_all_categorias():
+    """Obtiene todas las categorías"""
+    session = SessionLocal()
+    categorias = session.query(CategoriaDB).order_by(CategoriaDB.nombre).all()
+    session.close()
+    return categorias
+
+def guardar_categoria(nombre, color_fondo="607D8B", color_texto="FFFFFF"):
+    """Guarda una nueva categoría"""
+    session = SessionLocal()
+    try:
+        cat = CategoriaDB(
+            nombre=nombre.upper(),
+            color_fondo=color_fondo,
+            color_texto=color_texto
+        )
+        session.add(cat)
+        session.commit()
+        return True
+    except Exception as e:
+        print(f"Error guardando categoría: {e}")
+        return False
+    finally:
+        session.close()
+
+def eliminar_categoria(nombre):
+    """Elimina una categoría"""
+    session = SessionLocal()
+    try:
+        session.query(CategoriaDB).filter(CategoriaDB.nombre == nombre.upper()).delete()
+        session.commit()
+        return True
+    except Exception as e:
+        print(f"Error eliminando categoría: {e}")
+        return False
+    finally:
+        session.close()
+
+def actualizar_colores_categoria(nombre, color_fondo, color_texto):
+    """Actualiza los colores de una categoría"""
+    session = SessionLocal()
+    try:
+        cat = session.query(CategoriaDB).filter(CategoriaDB.nombre == nombre.upper()).first()
+        if cat:
+            cat.color_fondo = color_fondo
+            cat.color_texto = color_texto
+            session.commit()
+            return True
+        return False
+    except Exception as e:
+        print(f"Error actualizando colores: {e}")
+        return False
+    finally:
+        session.close()
+
+def get_colores_categorias():
+    """Obtiene los colores de todas las categorías desde la BD"""
+    session = SessionLocal()
+    try:
+        # Intentar obtener de la BD
+        categorias = session.query(CategoriaDB).all()
+        colores = {}
+        for cat in categorias:
+            colores[cat.nombre] = (cat.color_fondo, cat.color_texto)
+        
+        # Si no hay categorías, insertar las básicas
+        if not colores:
+            categorias_base = [
+                ("VERANO", "29B6F6", "E1F5FE"),
+                ("ANTIESTRES", "66BB6A", "E8F5E9"),
+                ("INVIERNO", "FFA726", "FFF3E0"),
+                ("DECO", "AB47BC", "F3E5F5"),
+                ("ESCALERA", "78909C", "ECEFF1"),
+                ("NORDICA", "26A69A", "E0F2F1"),
+                ("ROPITA", "EC407A", "FCE4EC"),
+                ("MANTA", "FFCA28", "FFFDE7"),
+                ("DISPENSER", "9C27B0", "F3E5F5"),
+            ]
+            for nombre, fondo, texto in categorias_base:
+                cat = CategoriaDB(nombre=nombre, color_fondo=fondo, color_texto=texto)
+                session.add(cat)
+            session.commit()
+            
+            # Recargar
+            categorias = session.query(CategoriaDB).all()
+            for cat in categorias:
+                colores[cat.nombre] = (cat.color_fondo, cat.color_texto)
+            print("✅ Categorías básicas insertadas en la BD")
+        
+        return colores
+    except Exception as e:
+        print(f"⚠️ Error cargando colores: {e}")
+        return {}
+    finally:
+        session.close()
+
+# Cargar el mapa al inicio desde BD
+MAPA_PRODUCTOS = cargar_mapeo_desde_bd()
+
+# Cargar colores desde la BD
+CAT_COLORS = get_colores_categorias()
+print(f"🎨 Colores cargados para {len(CAT_COLORS)} categorías")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CONFIGURACIÓN DINÁMICA DESDE MAPEO
 # ══════════════════════════════════════════════════════════════════════════════
 def cargar_configuracion_desde_mapeo():
     """
-    Extrae la configuración (modelos, colores, talles) desde el mapeo_productos.json
+    Extrae la configuración (modelos, colores, talles) desde MAPA_PRODUCTOS
     """
-    if not MAPEO_JSON.exists():
-        return {
-            "modelos": [],
-            "colores": {"simples": [], "compuestos": {}},
-            "talles": [],
-            "palabras_prohibidas": ["argentina", "boca", "river", "inter", "miami", "panda"]
-        }
+    modelos = set()
+    colores_simples = set()
+    colores_compuestos = {}
+    talles = set()
     
-    try:
-        with open(MAPEO_JSON, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+    for texto, info in MAPA_PRODUCTOS.items():
+        cat, modelo, color, talle = info
         
-        modelos = set()
-        colores_simples = set()
-        colores_compuestos = {}
-        talles = set()
+        # Agregar modelo (limpiar sufijos como " (solo funda)")
+        modelo_limpio = modelo.replace(' (solo funda)', '').lower()
+        modelos.add(modelo_limpio)
         
-        # Recorrer todas las categorías y modelos
-        for categoria, modelos_cat in data.items():
-            for modelo, variantes in modelos_cat.items():
-                # Agregar el modelo (limpiar sufijos como " (solo funda)")
-                modelo_limpio = modelo.replace(' (solo funda)', '').lower()
-                modelos.add(modelo_limpio)
-                
-                for variante in variantes:
-                    color = variante.get('color', '')
-                    talle = variante.get('talle', '')
-                    
-                    if color:
-                        # Detectar si es color compuesto (contiene /)
-                        if '/' in color:
-                            color_lower = color.lower()
-                            # Crear variantes del color compuesto
-                            variantes_color = [
-                                color_lower,
-                                color_lower.replace('/', ' '),
-                                color_lower.replace('/', '')
-                            ]
-                            colores_compuestos[color_lower] = variantes_color
-                        else:
-                            colores_simples.add(color.lower())
-                    
-                    if talle:
-                        talles.add(talle.upper())
+        # Procesar color
+        if color:
+            if '/' in color:
+                color_lower = color.lower()
+                variantes_color = [
+                    color_lower,
+                    color_lower.replace('/', ' '),
+                    color_lower.replace('/', '')
+                ]
+                colores_compuestos[color_lower] = variantes_color
+            else:
+                colores_simples.add(color.lower())
         
-        config = {
-            "modelos": sorted(list(modelos)),
-            "colores": {
-                "simples": sorted(list(colores_simples)),
-                "compuestos": colores_compuestos
-            },
-            "talles": sorted(list(talles)),
-            "palabras_prohibidas": ["argentina", "boca", "river", "inter", "miami", "panda"]
-        }
-        
-        print(f"✅ Configuración cargada desde mapeo: {len(config['modelos'])} modelos, {len(config['colores']['simples'])} colores simples, {len(config['colores']['compuestos'])} colores compuestos")
-        return config
-        
-    except Exception as e:
-        print(f"❌ Error cargando configuración desde mapeo: {e}")
-        return {
-            "modelos": [],
-            "colores": {"simples": [], "compuestos": {}},
-            "talles": [],
-            "palabras_prohibidas": ["argentina", "boca", "river", "inter", "miami", "panda"]
-        }
-
-# Cargar configuración después del MAPA_PRODUCTOS
-CONFIG = cargar_configuracion_desde_mapeo()
+        # Procesar talle
+        if talle:
+            talles.add(talle.upper())
+    
+    config = {
+        "modelos": sorted(list(modelos)),
+        "colores": {
+            "simples": sorted(list(colores_simples)),
+            "compuestos": colores_compuestos
+        },
+        "talles": sorted(list(talles)),
+        "palabras_prohibidas": ["argentina", "boca", "river", "inter", "miami", "panda"]
+    }
+    
+    print(f"✅ Configuración cargada: {len(config['modelos'])} modelos, {len(config['colores']['simples'])} colores simples, {len(config['colores']['compuestos'])} colores compuestos")
+    return config
 
 def generar_palabras_clave():
     """Genera palabras clave dinámicamente desde MAPA_PRODUCTOS"""
     palabras = set()
     for texto_entrada in MAPA_PRODUCTOS.keys():
         primera_palabra = texto_entrada.split()[0] if texto_entrada.split() else ""
-        if len(primera_palabra) > 2:  # Ignorar palabras muy cortas
+        if len(primera_palabra) > 2:
             palabras.add(primera_palabra.lower())
     
     for info in MAPA_PRODUCTOS.values():
@@ -147,7 +335,7 @@ def generar_palabras_clave():
             if len(palabra) > 2:
                 palabras.add(palabra.lower())
     
-    # Agregar también palabras de categorías importantes
+    # Agregar categorías importantes
     categorias_importantes = ["cama", "sofa", "mini", "escalera", "manta", "gatito", 
                              "nordica", "pancho", "garra", "timoteo", "remeras", "buzo", "huella"]
     for palabra in categorias_importantes:
@@ -155,83 +343,62 @@ def generar_palabras_clave():
     
     return palabras
 
-# Generar palabras clave al inicio
+# Cargar configuración
+CONFIG = cargar_configuracion_desde_mapeo()
 PALABRAS_CLAVE = generar_palabras_clave()
 print(f"📋 Palabras clave generadas: {len(PALABRAS_CLAVE)}")
 
 def normalizar_texto_sin_medidas(texto):
     """
-    Normaliza un texto eliminando medidas para comparación flexible:
-    - Elimina números seguidos de cm, mm, etc.
+    Normaliza un texto eliminando medidas y caracteres que pueden variar
+    para una comparación flexible:
+    - Elimina números seguidos de unidades (cm, mm, etc.)
     - Elimina palabras como "alto", "ancho", "largo"
-    - Luego aplica la normalización normal
+    - Elimina paréntesis, comas y otros signos de puntuación
+    - Normaliza espacios múltiples
     """
     if not texto:
         return ""
     
     import re
     
-    # 1. Minúsculas
+
     texto = texto.lower()
-    
-    # 2. ELIMINAR MEDIDAS (números + unidad)
     texto = re.sub(r'\d+\s*(cm|mm|mt|m)?\s*(de\s*(alto|ancho|largo))?', ' ', texto)
-    
-    # 3. Eliminar palabras de medidas solas
     texto = re.sub(r'\b(alto|ancho|largo|cm|mm|mt)\b', ' ', texto)
-    
-    # 4. Reemplazar paréntesis y caracteres especiales por espacios
     texto = re.sub(r'[\(\)\[\]\{\}]', ' ', texto)
-    
-    # 5. Normalizar "cm" (ya lo eliminamos, pero por las dudas)
-    texto = re.sub(r'c\s+m', 'cm', texto)
-    
-    # 6. Eliminar espacios múltiples
+    texto = re.sub(r'[,;:\.\-_]', ' ', texto)
+    texto = re.sub(r'\s*-\s*', ' ', texto)
     texto = re.sub(r'\s+', ' ', texto)
-    
-    # 7. Eliminar espacios al inicio y final
     texto = texto.strip()
     
     return texto
 
 def extraer_caracteristicas(texto):
     """
-    Extrae las características clave de un texto de producto usando la configuración del mapeo
-    Ignora medidas como "40 cm", "40cm", "alto", "ancho", etc.
+    Extrae características clave de un texto
     """
     if not texto:
         return {}
     
-    texto = texto.lower()
-    import re
-    
-    # ELIMINAR MEDIDAS del texto (para que no afecten la detección)
-    # Eliminar patrones como "40 cm", "40cm", "40 cm de alto", etc.
-    texto_sin_medidas = re.sub(r'\d+\s*(cm|mm|mt|m)?\s*(de\s*(alto|ancho|largo))?', ' ', texto)
-    # Eliminar palabras de medidas solas
-    texto_sin_medidas = re.sub(r'\b(alto|ancho|largo|cm|mm|mt)\b', ' ', texto_sin_medidas)
-    # Normalizar espacios
-    texto_sin_medidas = re.sub(r'\s+', ' ', texto_sin_medidas).strip()
-    
-    print(f"  📏 Texto original: {texto[:100]}...")
-    print(f"  📏 Texto sin medidas: {texto_sin_medidas[:100]}...")
+    texto_original = texto.lower()
+    texto_sin_medidas = normalizar_texto_sin_medidas(texto)
     
     caracteristicas = {
         'modelo': None,
         'color': None,
         'talle': None,
         'lado': None,
-        'tipo': 'completa'  # por defecto
+        'tipo': 'completa'
     }
     
-    # 1. Detectar modelo (desde config) - USAR TEXTO SIN MEDIDAS
+    # Detectar modelo
     for modelo in CONFIG['modelos']:
         if modelo in texto_sin_medidas:
             caracteristicas['modelo'] = modelo
             break
     
-    # 2. Detectar color (primero compuestos, luego simples) - USAR TEXTO SIN MEDIDAS
-    # Buscar colores compuestos
+    # Detectar color
     for color_compuesto, variantes in CONFIG['colores']['compuestos'].items():
         for variante in variantes:
             if variante in texto_sin_medidas:
@@ -240,35 +407,32 @@ def extraer_caracteristicas(texto):
         if caracteristicas['color']:
             break
     
-    # Si no encontró compuesto, buscar simples
     if not caracteristicas['color']:
         for color_simple in CONFIG['colores']['simples']:
             if color_simple in texto_sin_medidas:
                 caracteristicas['color'] = color_simple
                 break
     
-    # 3. Detectar talle (desde config) - USAR TEXTO ORIGINAL (porque puede ser "talla l")
+    # Detectar talle
     for t in CONFIG['talles']:
         t_lower = t.lower()
-        if re.search(r'talla\s*' + t_lower, texto) or \
-           re.search(r'talle\s*' + t_lower, texto) or \
-           re.search(r'\b' + t_lower + r'\b', texto):
+        if re.search(r'talla\s*' + t_lower, texto_original) or \
+           re.search(r'talle\s*' + t_lower, texto_original) or \
+           re.search(r'\b' + t_lower + r'\b', texto_original):
             caracteristicas['talle'] = t.upper()
             break
     
-    # 4. Detectar lado - USAR TEXTO SIN MEDIDAS
+    # Detectar lado
     if 'derecha' in texto_sin_medidas:
         caracteristicas['lado'] = 'derecha'
     elif 'izquierda' in texto_sin_medidas:
         caracteristicas['lado'] = 'izquierda'
     
-    # 5. Detectar tipo - USAR TEXTO SIN MEDIDAS
+    # Detectar tipo
     if 'funda' in texto_sin_medidas and 'completa' not in texto_sin_medidas:
         caracteristicas['tipo'] = 'funda'
     elif 'solo funda' in texto_sin_medidas:
         caracteristicas['tipo'] = 'funda'
-    elif 'completa' in texto_sin_medidas:
-        caracteristicas['tipo'] = 'completa'
     
     return caracteristicas
 
@@ -286,17 +450,6 @@ TALLE_SIZES  = {
     "NORDICA":{"M":"60x60","L":"80x80","XL":"90x90"},
     "ROPITA":{"XS":"XS","SM":"S/M","LXL":"L/XL"},
     "MANTA":{"U":"70x70"},
-}
-CAT_COLORS = {
-    "VERANO":("29B6F6","E1F5FE"),
-    "ANTIESTRES":("66BB6A","E8F5E9"),
-    "INVIERNO":("FFA726","FFF3E0"),
-    "DECO":("AB47BC","F3E5F5"),
-    "ESCALERA":("78909C","ECEFF1"),
-    "NORDICA":("26A69A","E0F2F1"),
-    "ROPITA":("EC407A","FCE4EC"),
-    "MANTA":("FFCA28","FFFDE7"),
-    "DISPENSER":("9C27B0","F3E5F5"),  # Morado para dispensers
 }
 
 def cargar_catalogo(texto):
@@ -329,9 +482,8 @@ def cargar_catalogo(texto):
     return catalogo
 
 # ══════════════════════════════════════════════════════════════════════════════
-# RESOLVER (usa el mapa cargado desde JSON)
+# RESOLVER (usa el mapa cargado desde BD)
 # ══════════════════════════════════════════════════════════════════════════════
-
 def resolver(nombre):
     """
     Resuelve un nombre de producto de manera flexible buscando palabras clave
@@ -657,7 +809,7 @@ def build_excel(ordenes, catalogo, out_path):
     r = 1
     for sec in catalogo:
         cat = sec["cat"]
-        hc, bc = CAT_COLORS.get(cat, ("607D8B", "ECEFF1"))
+        hc, bc = CAT_COLORS.get(cat, ("607D8B", "ECEFF1"))  # Gris si no existe
         
         # Título de categoría
         ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=NC)
@@ -931,7 +1083,7 @@ def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_path, output_path):
 def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3):
     """
     Reorganiza un PDF anotado para poner múltiples etiquetas por página horizontal
-    Con 2 cm de espacio al inicio de la PRIMER COMADA DE CADA HOJA
+    Con 0.5 cm de espacio al inicio de la PRIMER COMADA DE CADA HOJA
     """
     doc = fitz.open(pdf_anotado_path)
     output = fitz.open()
@@ -1033,37 +1185,74 @@ def save_productos():
 
 @app.route("/mapeo", methods=["GET"])
 def get_mapeo():
-    """Devuelve el contenido del archivo de mapeo"""
-    if MAPEO_JSON.exists():
-        with open(MAPEO_JSON, 'r', encoding='utf-8') as f:
-            contenido = f.read()
-        return jsonify({"contenido": contenido})
-    return jsonify({"contenido": "{}"})
+    """Devuelve todos los productos desde la BD en formato JSON anidado"""
+    datos = exportar_mapeo_a_json()
+    return jsonify({"contenido": json.dumps(datos, ensure_ascii=False)})
 
 @app.route("/mapeo", methods=["POST"])
 def save_mapeo():
-    """Guarda el archivo de mapeo"""
+    """Guarda productos en la BD"""
     data = request.get_json()
     contenido = data.get("contenido", "{}")
     
-    try:
-        # Validar que sea JSON válido
-        json.loads(contenido)
-        
-        with open(MAPEO_JSON, 'w', encoding='utf-8') as f:
-            f.write(contenido)
-        
-        # Recargar el mapa en memoria
+    if guardar_productos_desde_json(contenido):
         global MAPA_PRODUCTOS, CONFIG, PALABRAS_CLAVE
-        MAPA_PRODUCTOS = cargar_mapeo_desde_json()
+        MAPA_PRODUCTOS = cargar_mapeo_desde_bd()
         CONFIG = cargar_configuracion_desde_mapeo()
         PALABRAS_CLAVE = generar_palabras_clave()
-        
         return jsonify({"ok": True})
-    except json.JSONDecodeError:
-        return jsonify({"error": "JSON inválido"}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    else:
+        return jsonify({"error": "Error guardando en BD"}), 500
+
+# ── Rutas para categorías ───────────────────────────────────────────────────
+@app.route("/categorias", methods=["GET"])
+def get_categorias():
+    """Obtiene todas las categorías"""
+    categorias = get_all_categorias()
+    return jsonify([{
+        "nombre": c.nombre,
+        "color_fondo": c.color_fondo,
+        "color_texto": c.color_texto
+    } for c in categorias])
+
+@app.route("/categorias", methods=["POST"])
+def crear_categoria():
+    """Crea una nueva categoría"""
+    data = request.get_json()
+    nombre = data.get("nombre", "").upper()
+    color_fondo = data.get("color_fondo", "607D8B")
+    color_texto = data.get("color_texto", "FFFFFF")
+    
+    if not nombre:
+        return jsonify({"error": "Nombre requerido"}), 400
+    
+    if guardar_categoria(nombre, color_fondo, color_texto):
+        global CAT_COLORS
+        CAT_COLORS = get_colores_categorias()  # Recargar colores
+        return jsonify({"ok": True})
+    return jsonify({"error": "Error creando categoría"}), 500
+
+@app.route("/categorias/<nombre>", methods=["DELETE"])
+def eliminar_categoria_route(nombre):
+    """Elimina una categoría"""
+    if eliminar_categoria(nombre):
+        global CAT_COLORS
+        CAT_COLORS = get_colores_categorias()  # Recargar colores
+        return jsonify({"ok": True})
+    return jsonify({"error": "Error eliminando categoría"}), 500
+
+@app.route("/categorias/<nombre>/colores", methods=["PUT"])
+def actualizar_colores(nombre):
+    """Actualiza los colores de una categoría"""
+    data = request.get_json()
+    color_fondo = data.get("color_fondo", "607D8B")
+    color_texto = data.get("color_texto", "FFFFFF")
+    
+    if actualizar_colores_categoria(nombre, color_fondo, color_texto):
+        global CAT_COLORS
+        CAT_COLORS = get_colores_categorias()  # Recargar colores
+        return jsonify({"ok": True})
+    return jsonify({"error": "Error actualizando colores"}), 500
 
 @app.route("/analizar", methods=["POST"])
 def analizar():
@@ -1170,4 +1359,3 @@ if __name__ == "__main__":
     print("   Ctrl+C para detener\n")
     threading.Timer(1.2, lambda: webbrowser.open(url)).start()
     app.run(port=port, debug=False)
-

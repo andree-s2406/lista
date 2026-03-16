@@ -74,6 +74,34 @@ h1{
   color: var(--accent);
 }
 
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+}
+.btn-tab {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 8px 8px 0 0;
+}
+.btn-tab:hover {
+  color: var(--accent);
+}
+.btn-tab.active {
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+  background: rgba(181,123,238,.05);
+}
+
 /* ── Cards ── */
 .card{
   background:var(--card);border:1px solid var(--border);
@@ -129,13 +157,24 @@ tr:hover td{background:rgba(255,255,255,.018)}
   font-weight: 600;
 }
 .cat-VERANO { background: rgba(41,182,246,.18); color: #29b6f6; }
-.cat-INVIERNO { background: rgba(255,167,38,.18); color: #ffa726; }
 .cat-ANTIESTRES { background: rgba(102,187,106,.18); color: #66bb6a; }
+.cat-INVIERNO { background: rgba(255,167,38,.18); color: #ffa726; }
 .cat-DECO { background: rgba(171,71,188,.18); color: #ab47bc; }
 .cat-ESCALERA { background: rgba(120,144,156,.18); color: #78909c; }
 .cat-NORDICA { background: rgba(38,166,154,.18); color: #26a69a; }
 .cat-MANTA { background: rgba(255,202,40,.18); color: #ffca28; }
 .cat-ROPITA { background: rgba(236,64,122,.18); color: #ec407a; }
+.cat-DISPENSER { background: rgba(156,39,176,.18); color: #9C27B0; }
+
+.color-preview {
+  display: inline-block;
+  width: 30px;
+  height: 20px;
+  border-radius: 4px;
+  margin-right: 5px;
+  border: 1px solid var(--border);
+  vertical-align: middle;
+}
 
 .btn-eliminar {
   background: transparent;
@@ -238,50 +277,75 @@ tr:hover td{background:rgba(255,255,255,.018)}
 
   <header>
     <div class="tag">🐾 Pulguitas</div>
-    <h1>Administrar Productos</h1>
-    <p class="sub">Editá o eliminá los productos existentes</p>
+    <h1>Administrar Productos y Categorías</h1>
+    <p class="sub">Gestioná productos y personalizá colores de categorías</p>
     <a href="/" class="btn-volver">← Volver al inicio</a>
   </header>
 
-  <!-- Filtros -->
-  <div class="filtros">
-    <select id="filtroCategoria" class="filtro-select">
-      <option value="">Todas las categorías</option>
-      <option value="VERANO">VERANO</option>
-      <option value="INVIERNO">INVIERNO</option>
-      <option value="ANTIESTRES">ANTIESTRES</option>
-      <option value="DECO">DECO</option>
-      <option value="ESCALERA">ESCALERA</option>
-      <option value="NORDICA">NORDICA</option>
-      <option value="MANTA">MANTA</option>
-      <option value="ROPITA">ROPITA</option>
-    </select>
-    <input type="text" id="buscarProducto" class="search-box" placeholder="🔍 Buscar producto...">
-    <button class="btn-agregar" onclick="abrirAgregarProducto()">
-      <span>➕</span> Agregar Producto
-    </button>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button id="tabProductos" class="btn-tab active" onclick="mostrarTab('productos')">📦 Productos</button>
+    <button id="tabCategorias" class="btn-tab" onclick="mostrarTab('categorias')">🏷️ Categorías</button>
   </div>
 
-  <!-- Tabla de productos -->
-  <div class="tbl-wrap">
-    <table id="tablaProductos">
-      <thead>
-        <tr>
-          <th>Categoría</th>
-          <th>Modelo</th>
-          <th>Color</th>
-          <th>Talle</th>
-          <th>Texto PDF</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody id="tbodyProductos">
-        <tr><td colspan="6" style="text-align:center; padding:40px;">Cargando productos...</td></tr>
-      </tbody>
-    </table>
+  <!-- Panel de Productos -->
+  <div id="panelProductos">
+    <!-- Filtros -->
+    <div class="filtros">
+      <select id="filtroCategoria" class="filtro-select">
+        <option value="">Todas las categorías</option>
+      </select>
+      <input type="text" id="buscarProducto" class="search-box" placeholder="🔍 Buscar producto...">
+      <button class="btn-agregar" onclick="abrirModalProducto()">
+        <span>➕</span> Agregar Producto
+      </button>
+    </div>
+
+    <!-- Tabla de productos -->
+    <div class="tbl-wrap">
+      <table id="tablaProductos">
+        <thead>
+          <tr>
+            <th>Categoría</th>
+            <th>Modelo</th>
+            <th>Color</th>
+            <th>Talle</th>
+            <th>Texto PDF</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyProductos">
+          <tr><td colspan="6" style="text-align:center; padding:40px;">Cargando productos...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <!-- Modal para editar/agregar -->
+  <!-- Panel de Categorías -->
+  <div id="panelCategorias" style="display: none;">
+    <div class="filtros">
+      <input type="text" id="nuevaCategoria" placeholder="Nueva categoría (ej: JUGUETES)" style="flex:1; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
+      <button class="btn-agregar" onclick="agregarCategoria()">➕ Agregar Categoría</button>
+    </div>
+    
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Categoría</th>
+            <th>Color Fondo</th>
+            <th>Color Texto</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyCategorias">
+          <tr><td colspan="4" style="text-align:center; padding:40px;">Cargando categorías...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal para editar/agregar productos (el mismo que tenías) -->
   <div id="modalProducto" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:2000; justify-content:center; align-items:center;">
     <div style="background:var(--card); width:90%; max-width:500px; border-radius:10px; padding:25px; border:1px solid var(--border);">
       
@@ -299,14 +363,7 @@ tr:hover td{background:rgba(255,255,255,.018)}
       <div style="margin-bottom:15px;">
         <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Categoría:</label>
         <select id="campoCategoria" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
-          <option value="VERANO">VERANO</option>
-          <option value="INVIERNO">INVIERNO</option>
-          <option value="ANTIESTRES">ANTIESTRES</option>
-          <option value="DECO">DECO</option>
-          <option value="ESCALERA">ESCALERA</option>
-          <option value="NORDICA">NORDICA</option>
-          <option value="MANTA">MANTA</option>
-          <option value="ROPITA">ROPITA</option>
+          <!-- Se llena dinámicamente -->
         </select>
       </div>
 
@@ -318,7 +375,7 @@ tr:hover td{background:rgba(255,255,255,.018)}
       <div style="margin-bottom:15px;">
         <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Color(es):</label>
         <input id="campoColor" type="text" placeholder="Ej: Gris, Rosa, Beige (separados por coma)" style="width:100%; padding:10px; background:#0b0a10; border:1px solid var(--border); border-radius:5px; color:var(--text);">
-        <small style="color:var(--muted);">Si tiene varios colores, separalos por coma. Podés dejarlo vacío.</small>
+        <small style="color:var(--muted);">Si tiene varios colores, separalos por coma</small>
       </div>
 
       <div style="margin-bottom:15px;">
@@ -351,7 +408,7 @@ tr:hover td{background:rgba(255,255,255,.018)}
         <label style="color:var(--muted); font-size:12px; display:block; margin-bottom:5px;">Tipo de producto:</label>
         <div style="display:flex; gap:20px; flex-wrap:wrap;">
           <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
-            <input type="checkbox" id="tipoCompleto" value="completo" checked> 🛏️ Cama completa
+            <input type="checkbox" id="tipoCompleto" value="completo" checked> 🛏️ Producto completo
           </label>
           <label style="color:var(--text); display:flex; align-items:center; gap:5px;">
             <input type="checkbox" id="tipoFunda" value="funda"> 🧵 Solo funda
@@ -379,23 +436,64 @@ tr:hover td{background:rgba(255,255,255,.018)}
 <script>
 let productosData = [];
 let filteredData = [];
+let categoriasData = [];
 
-// Cargar productos al inicio
+// ── Funciones de utilidad ───────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function cerrarModal() {
+  document.getElementById('modalProducto').style.display = 'none';
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+function mostrarTab(tab) {
+  document.getElementById('tabProductos').classList.toggle('active', tab === 'productos');
+  document.getElementById('tabCategorias').classList.toggle('active', tab === 'categorias');
+  document.getElementById('panelProductos').style.display = tab === 'productos' ? 'block' : 'none';
+  document.getElementById('panelCategorias').style.display = tab === 'categorias' ? 'block' : 'none';
+  
+  if (tab === 'categorias') {
+    cargarCategorias();
+  }
+}
+
+// ── Cargar datos iniciales ─────────────────────────────────────────────────
+async function cargarCategoriasSelect() {
+  try {
+    const resp = await fetch('/categorias');
+    const cats = await resp.json();
+    categoriasData = cats;
+    
+    // Llenar select de categorías en el modal
+    const selectCat = document.getElementById('campoCategoria');
+    const filtroCat = document.getElementById('filtroCategoria');
+    
+    selectCat.innerHTML = '';
+    filtroCat.innerHTML = '<option value="">Todas las categorías</option>';
+    
+    cats.forEach(cat => {
+      const option = `<option value="${cat.nombre}">${cat.nombre}</option>`;
+      selectCat.innerHTML += option;
+      filtroCat.innerHTML += option;
+    });
+  } catch(e) {
+    console.error('Error cargando categorías:', e);
+  }
+}
+
+// ── Productos ─────────────────────────────────────────────────────────────
 async function cargarProductos() {
   try {
     const resp = await fetch('/mapeo');
     const data = await resp.json();
+    const mapeo = JSON.parse(data.contenido || '{}');
     
-    if (!data.contenido) {
-      productosData = [];
-      filteredData = [];
-      renderTabla();
-      return;
-    }
-    
-    const mapeo = JSON.parse(data.contenido);
     productosData = [];
-    
     for (const categoria in mapeo) {
       for (const modelo in mapeo[categoria]) {
         for (const item of mapeo[categoria][modelo]) {
@@ -411,15 +509,14 @@ async function cargarProductos() {
     }
     
     filteredData = [...productosData];
-    renderTabla();
+    renderTablaProductos();
   } catch(e) {
-    toast('❌ Error cargando productos: ' + e.message);
+    toast('❌ Error cargando productos');
     console.error(e);
   }
 }
 
-// Renderizar tabla
-function renderTabla() {
+function renderTablaProductos() {
   const tbody = document.getElementById('tbodyProductos');
   const filtroCat = document.getElementById('filtroCategoria').value;
   const busqueda = document.getElementById('buscarProducto').value.toLowerCase();
@@ -457,27 +554,21 @@ function renderTabla() {
   tbody.innerHTML = html;
 }
 
-// Abrir modal para nuevo producto
-function abrirAgregarProducto() {
+function abrirModalProducto() {
   document.getElementById('modalTitulo').innerText = '➕ Agregar Nuevo Producto';
   document.getElementById('editIndex').value = '';
-  document.getElementById('campoCategoria').value = 'VERANO';
   document.getElementById('campoModelo').value = '';
   document.getElementById('campoColor').value = '';
   document.getElementById('campoTexto').value = '';
-  
-  // Resetear checkboxes de tipo
   document.getElementById('tipoCompleto').checked = true;
   document.getElementById('tipoFunda').checked = false;
   
-  // Limpiar checkboxes de talles
   const checkboxes = document.querySelectorAll('.talle-checkbox');
   checkboxes.forEach(cb => cb.checked = false);
   
   document.getElementById('modalProducto').style.display = 'flex';
 }
 
-// Editar producto
 function editarProducto(index) {
   const p = filteredData[index];
   const realIndex = productosData.findIndex(x => 
@@ -496,31 +587,19 @@ function editarProducto(index) {
   document.getElementById('editTalleOriginal').value = p.talle;
   
   document.getElementById('campoCategoria').value = p.categoria;
-  
-  // Limpiar el modelo de posibles sufijos
-  let modeloBase = p.modelo;
-  const esFunda = p.modelo.includes('(solo funda)');
-  if (esFunda) {
-    modeloBase = p.modelo.replace(' (solo funda)', '');
-  }
-  document.getElementById('campoModelo').value = modeloBase;
-  
+  document.getElementById('campoModelo').value = p.modelo.replace(' (solo funda)', '');
   document.getElementById('campoColor').value = p.color;
   
-  // Limpiar el texto de posibles agregados automáticos
   let textoBase = p.texto;
   textoBase = textoBase.replace(` ${p.talle.toLowerCase()}`, '');
+  textoBase = textoBase.replace(` (talla ${p.talle.toLowerCase()}`, '');
   textoBase = textoBase.replace(' solo funda de repuesto', '');
-  if (p.color) {
-    textoBase = textoBase.replace(`, ${p.color}`, ',');
-    textoBase = textoBase.replace(`${p.color},`, ',');
-  }
   document.getElementById('campoTexto').value = textoBase;
   
+  const esFunda = p.modelo.includes('(solo funda)');
   document.getElementById('tipoCompleto').checked = !esFunda;
   document.getElementById('tipoFunda').checked = esFunda;
   
-  // Marcar el talle correspondiente
   const checkboxes = document.querySelectorAll('.talle-checkbox');
   checkboxes.forEach(cb => {
     cb.checked = (cb.value === p.talle);
@@ -529,7 +608,6 @@ function editarProducto(index) {
   document.getElementById('modalProducto').style.display = 'flex';
 }
 
-// Eliminar producto
 async function eliminarProducto(index) {
   if (!confirm('¿Estás seguro de eliminar este producto?')) return;
   
@@ -577,13 +655,12 @@ async function eliminarProducto(index) {
   }
 }
 
-// Guardar producto - VERSIÓN MEJORADA
-// Guardar producto - VERSIÓN CON DETECCIÓN FLEXIBLE
 async function guardarProducto() {
+  // Obtener valores del formulario
   const categoria = document.getElementById('campoCategoria').value;
   let modelo = document.getElementById('campoModelo').value.trim();
   const coloresInput = document.getElementById('campoColor').value.trim();
-  const textoBase = document.getElementById('campoTexto').value.trim().toLowerCase();
+  const textoBase = document.getElementById('campoTexto').value.trim();
   const editIndex = document.getElementById('editIndex').value;
 
   const tipoCompleto = document.getElementById('tipoCompleto').checked;
@@ -595,9 +672,21 @@ async function guardarProducto() {
     if (cb.checked) tallesSeleccionados.push(cb.value);
   });
 
-  // Si no hay colores, usar uno vacío
   const colores = coloresInput ? coloresInput.split(',').map(c => c.trim()) : [''];
 
+  // ── LOG 1: Datos ingresados ──────────────────────────────────────────────
+  console.log('%c🔍 GUARDANDO PRODUCTO', 'background: #6d28d9; color: white; padding: 2px 5px;');
+  console.log('📝 Datos del formulario:');
+  console.log('  - Categoría:', categoria);
+  console.log('  - Modelo:', modelo);
+  console.log('  - Colores:', colores);
+  console.log('  - Talles seleccionados:', tallesSeleccionados);
+  console.log('  - Tipo Completo:', tipoCompleto);
+  console.log('  - Tipo Funda:', tipoFunda);
+  console.log('  - Texto Base:', textoBase);
+  console.log('  - Edit Index:', editIndex);
+
+  // Validaciones
   if (!modelo || !textoBase) {
     toast('❌ Modelo y texto son obligatorios');
     return;
@@ -609,22 +698,49 @@ async function guardarProducto() {
   }
 
   if (!tipoCompleto && !tipoFunda) {
-    toast('❌ Seleccioná al menos un tipo (completo o funda)');
+    toast('❌ Seleccioná al menos un tipo');
     return;
   }
 
   try {
+    // ── LOG 2: Obteniendo mapeo actual ─────────────────────────────────────
+    console.log('%c📦 Obteniendo mapeo actual...', 'background: #2563eb; color: white; padding: 2px 5px;');
     const resp = await fetch('/mapeo');
     const data = await resp.json();
     let mapeo = JSON.parse(data.contenido || '{}');
+    
+    console.log('📊 Mapeo actual:');
+    console.log('  - Categorías existentes:', Object.keys(mapeo));
+    if (Object.keys(mapeo).length > 0) {
+      console.log('  - Primera categoría:', Object.keys(mapeo)[0]);
+      console.log('  - Modelos en primera categoría:', Object.keys(mapeo[Object.keys(mapeo)[0]] || {}));
+    }
 
-    // Si estamos editando, eliminar el producto viejo
+    // ── LOG 3: Verificar categoría ────────────────────────────────────────
+    console.log('%c🏷️ Verificando categoría...', 'background: #7c3aed; color: white; padding: 2px 5px;');
+    if (!mapeo[categoria]) {
+      console.log(`⚠️ Categoría "${categoria}" NO existe en el mapeo. Creándola...`);
+      mapeo[categoria] = {};
+    } else {
+      console.log(`✅ Categoría "${categoria}" YA existe en el mapeo`);
+      console.log('  - Modelos existentes en esta categoría:', Object.keys(mapeo[categoria]));
+    }
+
+    // ── LOG 4: Si es edición, eliminar producto viejo ─────────────────────
     if (editIndex !== '') {
+      console.log('%c✏️ Modo edición - eliminando producto viejo', 'background: #f59e0b; color: black; padding: 2px 5px;');
       const oldCat = document.getElementById('editCategoriaOriginal').value;
       const oldModelo = document.getElementById('editModeloOriginal').value;
       const oldColor = document.getElementById('editColorOriginal').value;
       const oldTalle = document.getElementById('editTalleOriginal').value;
-      const oldTexto = productosData[editIndex].texto;
+      const oldTexto = productosData[editIndex]?.texto;
+
+      console.log('  - Producto a eliminar:');
+      console.log('    * Categoría original:', oldCat);
+      console.log('    * Modelo original:', oldModelo);
+      console.log('    * Color original:', oldColor);
+      console.log('    * Talle original:', oldTalle);
+      console.log('    * Texto original:', oldTexto);
 
       if (mapeo[oldCat] && mapeo[oldCat][oldModelo]) {
         const items = mapeo[oldCat][oldModelo];
@@ -633,18 +749,29 @@ async function guardarProducto() {
           item.color === oldColor && 
           item.talle === oldTalle
         );
-        if (itemIndex !== -1) items.splice(itemIndex, 1);
+        
+        if (itemIndex !== -1) {
+          items.splice(itemIndex, 1);
+          console.log(`  ✅ Producto eliminado del índice ${itemIndex}`);
+        }
         
         if (mapeo[oldCat][oldModelo].length === 0) {
           delete mapeo[oldCat][oldModelo];
+          console.log(`  🗑️ Modelo "${oldModelo}" eliminado (sin variantes)`);
         }
+      } else {
+        console.log('  ⚠️ No se encontró el producto a eliminar');
       }
     }
 
+    // ── LOG 5: Procesando tipos de producto ────────────────────────────────
     let productosAgregados = 0;
     const tipos = [];
     if (tipoCompleto) tipos.push('completo');
     if (tipoFunda) tipos.push('funda');
+
+    console.log('%c🔄 Procesando tipos:', 'background: #10b981; color: white; padding: 2px 5px;');
+    console.log('  - Tipos a procesar:', tipos);
 
     for (const tipo of tipos) {
       let modeloConTipo = modelo;
@@ -652,196 +779,228 @@ async function guardarProducto() {
         modeloConTipo = `${modelo} (solo funda)`;
       }
 
+      console.log(`\n  📁 Procesando tipo "${tipo}" → modelo: "${modeloConTipo}"`);
+
+      // Asegurar que el modelo existe
       if (!mapeo[categoria][modeloConTipo]) {
+        console.log(`    ➕ Creando modelo "${modeloConTipo}" en categoría "${categoria}"`);
         mapeo[categoria][modeloConTipo] = [];
+      } else {
+        console.log(`    ✅ Modelo "${modeloConTipo}" ya existe con ${mapeo[categoria][modeloConTipo].length} variantes`);
       }
 
       for (const talle of tallesSeleccionados) {
         for (const color of colores) {
-          // ===== CONSTRUCCIÓN DEL TEXTO FLEXIBLE =====
+          console.log(`    🔄 Generando variante: talle=${talle}, color=${color || 'sin color'}`);
           
-          // Empezar con el texto base
           let textoCompleto = textoBase;
           
-          // 1. Insertar el color donde corresponde (si hay color)
+          // Insertar color
           if (color) {
-            // Buscar lugar para insertar color (después de la talla y medidas)
-            // Buscar palabras clave que indiquen dónde va el color
-            const palabrasClave = ['gris', 'oscuro', 'claro', 'mostaza', 'rosa', 'beige', 'salmon', 'negro', 'blanco'];
-            
-            // Ver si ya hay un color en el texto base
-            let tieneColor = false;
-            for (const palabra of palabrasClave) {
-              if (textoBase.includes(palabra)) {
-                tieneColor = true;
-                break;
-              }
-            }
-            
-            // Si no tiene color, insertarlo en un lugar apropiado
-            if (!tieneColor) {
-              // Buscar después de "talla" o después de la primera coma
-              if (textoBase.includes('talla')) {
-                const posTalla = textoBase.indexOf('talla') + 5;
-                // Buscar la siguiente coma después de "talla"
-                const posComa = textoBase.indexOf(',', posTalla);
-                if (posComa !== -1) {
-                  textoCompleto = textoBase.substring(0, posComa + 1) + 
-                                 ` ${color},` + 
-                                 textoBase.substring(posComa + 1);
-                } else {
-                  textoCompleto = `${textoBase}, ${color}`;
-                }
-              } else {
-                textoCompleto = `${textoBase}, ${color}`;
-              }
+            const despuesDeMedidas = textoCompleto.indexOf(',');
+            if (despuesDeMedidas !== -1) {
+              textoCompleto = textoCompleto.substring(0, despuesDeMedidas + 1) + 
+                             ` ${color},` + 
+                             textoCompleto.substring(despuesDeMedidas + 1);
+            } else {
+              textoCompleto = `${textoCompleto}, ${color}`;
             }
           }
           
-          // 2. Insertar el talle de manera flexible
+          // Insertar talle
           if (talle !== 'U') {
-            // Buscar cualquier palabra que empiece con "tall" (talla, talles, talla, tallal, etc.)
-            const patronTalla = /\btall\w*/i;
-            const match = textoCompleto.match(patronTalla);
-            
-            if (match) {
-              // Encontró una palabra como "talla", "tallal", "talles"
-              const palabraTalla = match[0];
-              const posTalla = match.index;
-              const largoPalabra = palabraTalla.length;
-              
-              // Ver qué hay después de la palabra
-              const despues = textoCompleto.substring(posTalla + largoPalabra);
-              
-              // Si después hay un espacio, insertar talle después
-              if (despues.startsWith(' ')) {
-                textoCompleto = textoCompleto.substring(0, posTalla + largoPalabra) + 
-                               ` ${talle.toLowerCase()}` + 
-                               despues;
-              } else {
-                textoCompleto = textoCompleto.substring(0, posTalla + largoPalabra) + 
-                               ` ${talle.toLowerCase()} ` + 
-                               despues;
-              }
+            const posTalla = textoCompleto.toLowerCase().indexOf('talla');
+            if (posTalla !== -1) {
+              const antes = textoCompleto.substring(0, posTalla + 5);
+              const despues = textoCompleto.substring(posTalla + 5);
+              textoCompleto = `${antes} ${talle}${despues}`;
             } else {
-              // Si no encuentra "tall", buscar medidas (cm, mm, etc.)
-              const medidas = ['cm', 'mm', 'x', 'por'];
-              let insertado = false;
-              
-              for (const medida of medidas) {
-                const posMedida = textoCompleto.indexOf(medida);
-                if (posMedida !== -1) {
-                  // Insertar talle después de la medida
-                  textoCompleto = textoCompleto.substring(0, posMedida + medida.length) + 
-                                 `, talle ${talle.toLowerCase()}` + 
-                                 textoCompleto.substring(posMedida + medida.length);
-                  insertado = true;
-                  break;
-                }
-              }
-              
-              // Si no hay medidas, agregar al final
-              if (!insertado) {
-                textoCompleto = `${textoCompleto}, talle ${talle.toLowerCase()}`;
-              }
+              textoCompleto = `${textoCompleto} (talla ${talle}`;
             }
           }
           
-          // 3. Agregar indicador de funda de manera flexible
-          if (tipo === 'funda' && !textoCompleto.includes('funda')) {
-            // Buscar palabras clave de funda
-            if (textoCompleto.includes('solo') || textoCompleto.includes('repuesto')) {
-              // Ya tiene indicadores, solo asegurar que diga "solo funda"
-              if (!textoCompleto.includes('solo funda')) {
-                textoCompleto = textoCompleto.replace(/funda/gi, 'solo funda de repuesto');
-              }
-            } else {
-              // No menciona funda, agregarlo después del color si existe
-              if (color && textoCompleto.includes(color)) {
-                const posColor = textoCompleto.lastIndexOf(color) + color.length;
-                textoCompleto = textoCompleto.substring(0, posColor) + 
-                               `, solo funda de repuesto` + 
-                               textoCompleto.substring(posColor);
-              } else {
-                textoCompleto = `${textoCompleto}, solo funda de repuesto`;
-              }
-            }
+          // Agregar indicador de funda
+          if (tipo === 'funda' && !textoCompleto.toLowerCase().includes('solo funda')) {
+            textoCompleto = `${textoCompleto}, solo funda de repuesto`;
           }
 
-          // 4. Normalizar espacios y puntuación
-          textoCompleto = textoCompleto
-            .replace(/\s+/g, ' ')                    // Espacios múltiples a uno
-            .replace(/\s*,\s*/g, ', ')                // Comas con espacios
-            .replace(/\s*\(\s*/g, ' (')               // Paréntesis
-            .replace(/\s*\)\s*/g, ')')
-            .replace(/,+\s*,+/g, ',')                  // Comas múltiples
-            .trim();
+          textoCompleto = textoCompleto.replace(/\s+/g, ' ').trim();
+          
+          console.log(`      📝 Texto generado: "${textoCompleto}"`);
 
-          // 5. Versiones alternativas (para mayor flexibilidad)
-          const versiones = [];
-          
-          // Versión principal
-          versiones.push(textoCompleto);
-          
-          // Versión sin acentos (simplificada)
-          const sinAcentos = textoCompleto
-            .replace(/á/g, 'a').replace(/é/g, 'e').replace(/í/g, 'i')
-            .replace(/ó/g, 'o').replace(/ú/g, 'u');
-          if (sinAcentos !== textoCompleto) versiones.push(sinAcentos);
-          
-          // Versión con palabras clave simplificadas
-          const simplificada = textoCompleto
-            .replace(/ortopedico/g, '')
-            .replace(/ergonomica/g, '')
-            .replace(/\s+/g, ' ')
-            .trim();
-          if (simplificada !== textoCompleto) versiones.push(simplificada);
-          
-          // Guardar todas las versiones
-          for (const version of versiones) {
-            mapeo[categoria][modeloConTipo].push({
-              texto: version,
-              color: color,
-              talle: talle
-            });
-            productosAgregados++;
-          }
+          mapeo[categoria][modeloConTipo].push({
+            texto: textoCompleto,
+            color: color,
+            talle: talle
+          });
+          productosAgregados++;
         }
       }
     }
 
-    await fetch('/mapeo', {
+    // ── LOG 6: Ver antes de guardar ────────────────────────────────────────
+    console.log('%c💾 Preparando para guardar...', 'background: #ef4444; color: white; padding: 2px 5px;');
+    console.log('  - Total productos a guardar:', productosAgregados);
+    console.log('  - Categorías finales:', Object.keys(mapeo));
+    console.log('  - Modelos en', categoria, ':', Object.keys(mapeo[categoria] || {}));
+
+    // ── LOG 7: Enviar a la BD ──────────────────────────────────────────────
+    const jsonToSend = JSON.stringify(mapeo, null, 2);
+    console.log('  - Tamaño del JSON:', jsonToSend.length, 'caracteres');
+    
+    const guardarResp = await fetch('/mapeo', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({contenido: JSON.stringify(mapeo, null, 2)})
+      body: JSON.stringify({contenido: jsonToSend})
     });
 
-    toast(`✅ ${productosAgregados} versión(es) de producto(s) guardada(s)`);
-    cerrarModal();
-    cargarProductos();
+    if (guardarResp.ok) {
+      console.log('%c✅ GUARDADO EXITOSO', 'background: #22c55e; color: white; padding: 2px 5px;');
+      toast(`✅ ${productosAgregados} producto(s) guardado(s)`);
+      cerrarModal();
+      await cargarProductos(); // Recargar productos
+      await cargarCategoriasSelect(); // Recargar categorías por si acaso
+    } else {
+      const errorData = await guardarResp.json();
+      console.error('%c❌ ERROR EN GUARDADO', 'background: #dc2626; color: white; padding: 2px 5px;');
+      console.error('  - Status:', guardarResp.status);
+      console.error('  - Error:', errorData);
+      toast('❌ Error al guardar: ' + (errorData.error || 'desconocido'));
+    }
 
+  } catch(e) {
+    console.error('%c💥 ERROR CRÍTICO', 'background: #991b1b; color: white; padding: 2px 5px;');
+    console.error('  - Mensaje:', e.message);
+    console.error('  - Stack:', e.stack);
+    toast('❌ Error: ' + e.message);
+  }
+}
+// ── Categorías ─────────────────────────────────────────────────────────────
+async function cargarCategorias() {
+  try {
+    const resp = await fetch('/categorias');
+    categoriasData = await resp.json();
+    renderTablaCategorias();
+  } catch(e) {
+    toast('❌ Error cargando categorías');
+    console.error(e);
+  }
+}
+
+function renderTablaCategorias() {
+  const tbody = document.getElementById('tbodyCategorias');
+  
+  if (categoriasData.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:40px;">No hay categorías</td></tr>';
+    return;
+  }
+  
+  let html = '';
+  categoriasData.forEach(cat => {
+    html += `<tr>
+      <td><strong>${cat.nombre}</strong></td>
+      <td>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="color-preview" style="background:#${cat.color_fondo};"></span>
+          <input type="color" id="color_${cat.nombre}" value="#${cat.color_fondo}" style="width:50px; height:30px; background:transparent; border:1px solid var(--border);">
+        </div>
+      </td>
+      <td>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="color-preview" style="background:#${cat.color_texto};"></span>
+          <input type="color" id="texto_${cat.nombre}" value="#${cat.color_texto}" style="width:50px; height:30px; background:transparent; border:1px solid var(--border);">
+        </div>
+      </td>
+      <td class="acciones">
+        <button class="btn-editar" onclick="actualizarColores('${cat.nombre}')">🎨 Actualizar</button>
+        <button class="btn-eliminar" onclick="eliminarCategoria('${cat.nombre}')">🗑️ Eliminar</button>
+      </td>
+    </tr>`;
+  });
+  tbody.innerHTML = html;
+}
+
+async function agregarCategoria() {
+  const nombre = document.getElementById('nuevaCategoria').value.trim().toUpperCase();
+  if (!nombre) {
+    toast('❌ Ingresá un nombre');
+    return;
+  }
+  
+  try {
+    const resp = await fetch('/categorias', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({nombre})
+    });
+    
+    if (resp.ok) {
+      toast('✅ Categoría agregada');
+      document.getElementById('nuevaCategoria').value = '';
+      cargarCategorias();
+      cargarCategoriasSelect(); // Recargar selects
+    } else {
+      const error = await resp.json();
+      toast('❌ ' + (error.error || 'Error al agregar'));
+    }
   } catch(e) {
     toast('❌ Error: ' + e.message);
   }
 }
 
-function cerrarModal() {
-  document.getElementById('modalProducto').style.display = 'none';
+async function actualizarColores(nombre) {
+  const colorFondo = document.getElementById(`color_${nombre}`).value.substring(1);
+  const colorTexto = document.getElementById(`texto_${nombre}`).value.substring(1);
+  
+  try {
+    const resp = await fetch(`/categorias/${nombre}/colores`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        color_fondo: colorFondo,
+        color_texto: colorTexto
+      })
+    });
+    
+    if (resp.ok) {
+      toast('✅ Colores actualizados');
+      cargarCategorias(); // Recargar para mostrar los nuevos colores
+    } else {
+      toast('❌ Error al actualizar');
+    }
+  } catch(e) {
+    toast('❌ Error: ' + e.message);
+  }
 }
 
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2400);
+async function eliminarCategoria(nombre) {
+  if (!confirm(`¿Eliminar categoría ${nombre}?`)) return;
+  
+  try {
+    const resp = await fetch(`/categorias/${nombre}`, {method: 'DELETE'});
+    if (resp.ok) {
+      toast('✅ Categoría eliminada');
+      cargarCategorias();
+      cargarCategoriasSelect(); // Recargar selects
+    } else {
+      toast('❌ Error al eliminar');
+    }
+  } catch(e) {
+    toast('❌ Error: ' + e.message);
+  }
 }
 
-// Event listeners
-document.getElementById('filtroCategoria').addEventListener('change', renderTabla);
-document.getElementById('buscarProducto').addEventListener('input', renderTabla);
+// ── Event listeners ────────────────────────────────────────────────────────
+document.getElementById('filtroCategoria').addEventListener('change', renderTablaProductos);
+document.getElementById('buscarProducto').addEventListener('input', renderTablaProductos);
 
-// Cargar al inicio
-cargarProductos();
+// ── Inicialización ─────────────────────────────────────────────────────────
+async function init() {
+  await cargarCategoriasSelect();
+  await cargarProductos();
+}
+
+init();
 </script>
 </body>
 </html>
