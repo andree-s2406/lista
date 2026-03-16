@@ -1,9 +1,3 @@
-﻿#!/usr/bin/env python3
-"""
-Pulguitas — Servidor local
-Ejecutá: python app.py
-Luego abrí: http://localhost:5173
-"""
 
 import os, re, json, sys, subprocess, tempfile, threading, webbrowser
 from collections import defaultdict
