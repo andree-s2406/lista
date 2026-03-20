@@ -104,6 +104,64 @@ h1{
 .drop-name{display:none;margin-top:8px;font-size:12px;font-weight:600;color:var(--green)}
 .drop.ok .drop-name{display:block}
 
+/* Lista de archivos */
+.lista-archivos {
+  margin-top: 10px;
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 12px;
+}
+.archivo-item {
+  padding: 4px 8px;
+  background: var(--surface);
+  margin: 2px 0;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.archivo-nombre {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.archivo-remove {
+  background: transparent;
+  border: none;
+  color: var(--red);
+  cursor: pointer;
+  font-size: 14px;
+  margin-left: 8px;
+  padding: 0 4px;
+}
+.archivo-remove:hover {
+  color: #ff4444;
+  transform: scale(1.1);
+}
+
+/* Botones de acción en panel */
+.botones-lista {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.btn-xs {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.btn-xs:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* ── Output name ── */
 .field-row{display:flex;align-items:center;gap:10px;margin-top:14px}
 .field-lbl{font-size:12px;color:var(--muted);white-space:nowrap}
@@ -228,14 +286,19 @@ tr:hover td{background:rgba(255,255,255,.018)}
 
   <!-- Top panels: 3 -->
   <div class="panels">
-    <!-- Panel 1: PDF Pedidos (para analizar) -->
+    <!-- Panel 1: PDF Pedidos (para analizar) - MÚLTIPLE -->
     <div class="card">
       <div class="card-title"><span>📄</span> 1. Pedidos (PDF)</div>
       <div class="drop" id="dzPedidos">
-        <input type="file" id="pedidosIn" accept=".pdf">
+        <input type="file" id="pedidosIn" accept=".pdf" multiple>
         <div class="drop-icon">📦</div>
-        <div class="drop-hint">PDF con órdenes <strong>(para análisis)</strong></div>
+        <div class="drop-hint">PDF con órdenes <strong>(para análisis)</strong><br>Podés seleccionar múltiples archivos</div>
         <div class="drop-name" id="dzPedidosName"></div>
+      </div>
+      <div id="listaPedidos" class="lista-archivos"></div>
+      <div class="botones-lista">
+        <button class="btn-xs" onclick="limpiarTodosPedidos()">🗑️ Limpiar todos</button>
+        <button class="btn-xs" onclick="verListaArchivos()">📋 Ver lista</button>
       </div>
       <div class="field-row">
         <span class="field-lbl">Excel:</span>
@@ -263,7 +326,7 @@ tr:hover td{background:rgba(255,255,255,.018)}
       <div>
         <div class="card-title"><span>ℹ️</span> Cómo usar</div>
         <div style="font-size:12.5px;color:var(--muted);line-height:1.9">
-          <b style="color:var(--text)">1.</b> Subí el PDF de pedidos (panel 1)<br>
+          <b style="color:var(--text)">1.</b> Subí uno o más PDFs de pedidos (panel 1)<br>
           <b style="color:var(--text)">2.</b> Subí el PDF de etiquetas (panel 2)<br>
           <b style="color:var(--text)">3.</b> Usá los botones de abajo<br><br>
           <span style="color:#6d5ea0;font-size:11px">
@@ -298,13 +361,15 @@ tr:hover td{background:rgba(255,255,255,.018)}
 
   <!-- Table (solo para análisis) -->
   <div class="tbl-wrap" id="tblWrap">
-    <table>
-      <thead><tr>
-        <th>#</th><th>Producto (texto del PDF)</th><th>Cant.</th>
-        <th>Categoría</th><th>Modelo / Color</th><th>Talle</th>
-      </tr></thead>
+     <table>
+      <thead>
+         <tr>
+          <th>#</th><th>Producto (texto del PDF)</th><th>Cant.</th>
+          <th>Categoría</th><th>Modelo / Color</th><th>Talle</th>
+         </tr>
+      </thead>
       <tbody id="tbl"></tbody>
-    </table>
+     </table>
   </div>
 
   <!-- Download Excel -->
@@ -314,44 +379,128 @@ tr:hover td{background:rgba(255,255,255,.018)}
 <div class="toast" id="toast"></div>
 
 <script>
-const API = '';  // same origin
-let pdfPedidos = null;
+const API = '';
+let pdfPedidosList = [];
 let pdfEtiquetas = null;
 
+// ── Funciones de utilidad ───────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function actualizarListaPedidos() {
+  const listaDiv = document.getElementById('listaPedidos');
+  const dz = document.getElementById('dzPedidos');
+  
+  if (pdfPedidosList.length === 0) {
+    listaDiv.innerHTML = '';
+    dz.classList.remove('ok');
+    document.getElementById('dzPedidosName').textContent = '';
+    return;
+  }
+  
+  dz.classList.add('ok');
+  document.getElementById('dzPedidosName').textContent = `✓ ${pdfPedidosList.length} archivo(s) seleccionado(s)`;
+  
+  listaDiv.innerHTML = '';
+  pdfPedidosList.forEach((file, idx) => {
+    const item = document.createElement('div');
+    item.className = 'archivo-item';
+    item.innerHTML = `
+      <span class="archivo-nombre">📄 ${file.name} (${(file.size/1024).toFixed(1)} KB)</span>
+      <button class="archivo-remove" onclick="eliminarPedido(${idx})">✖</button>
+    `;
+    listaDiv.appendChild(item);
+  });
+}
+
+function eliminarPedido(index) {
+  pdfPedidosList.splice(index, 1);
+  actualizarListaPedidos();
+  checkButtons();
+  
+  // Actualizar el input file con los archivos restantes
+  const dataTransfer = new DataTransfer();
+  pdfPedidosList.forEach(f => dataTransfer.items.add(f));
+  document.getElementById('pedidosIn').files = dataTransfer.files;
+}
+
+function limpiarTodosPedidos() {
+  if (pdfPedidosList.length > 0 && confirm('¿Eliminar todos los archivos seleccionados?')) {
+    pdfPedidosList = [];
+    actualizarListaPedidos();
+    checkButtons();
+    document.getElementById('pedidosIn').files = new DataTransfer().files;
+    toast('✅ Todos los archivos eliminados');
+  }
+}
+
+function verListaArchivos() {
+  if (pdfPedidosList.length === 0) {
+    toast('📭 No hay archivos seleccionados');
+    return;
+  }
+  let mensaje = '📁 Archivos seleccionados:\n';
+  pdfPedidosList.forEach((f, i) => {
+    mensaje += `${i+1}. ${f.name} (${(f.size/1024).toFixed(1)} KB)\n`;
+  });
+  alert(mensaje);
+}
+
 // ── File drop handlers ─────────────────────────────────────────────────────
-function setupDropZone(dzId, inputId, nameId, callback) {
+function setupDropZone(dzId, inputId, nameId, callback, multiple = false) {
   const dz = document.getElementById(dzId);
   const input = document.getElementById(inputId);
+  
   input.addEventListener('change', e => {
-    if (e.target.files[0]) callback(e.target.files[0]);
+    if (e.target.files.length > 0) {
+      if (multiple) {
+        const nuevosArchivos = Array.from(e.target.files);
+        callback(nuevosArchivos);
+      } else {
+        callback(e.target.files[0]);
+      }
+    }
   });
+  
   dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
   dz.addEventListener('dragleave', () => dz.classList.remove('over'));
   dz.addEventListener('drop', e => {
     e.preventDefault(); dz.classList.remove('over');
-    const f = e.dataTransfer.files[0];
-    if (f?.name.endsWith('.pdf')) callback(f);
-    else toast('⚠️ El archivo debe ser un PDF');
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0 && files.every(f => f.name.endsWith('.pdf'))) {
+      if (multiple) {
+        callback(files);
+      } else {
+        callback(files[0]);
+      }
+    } else {
+      toast('⚠️ Todos los archivos deben ser PDF');
+    }
   });
 }
 
-setupDropZone('dzPedidos', 'pedidosIn', 'dzPedidosName', (f) => {
-  pdfPedidos = f;
-  document.getElementById('dzPedidos').classList.add('ok');
-  document.getElementById('dzPedidosName').textContent = `✓ ${f.name} (${(f.size/1024).toFixed(1)} KB)`;
+// Setup para pedidos (múltiple) - ACUMULATIVO
+setupDropZone('dzPedidos', 'pedidosIn', 'dzPedidosName', (files) => {
+  pdfPedidosList = [...pdfPedidosList, ...files];
+  actualizarListaPedidos();
   checkButtons();
-});
+}, true);
 
+// Setup para etiquetas (único) - REEMPLAZA
 setupDropZone('dzEtiquetas', 'etiquetasIn', 'dzEtiquetasName', (f) => {
   pdfEtiquetas = f;
   document.getElementById('dzEtiquetas').classList.add('ok');
   document.getElementById('dzEtiquetasName').textContent = `✓ ${f.name} (${(f.size/1024).toFixed(1)} KB)`;
   checkButtons();
-});
+}, false);
 
 function checkButtons() {
-  document.getElementById('runBtn').disabled = !pdfPedidos;
-  document.getElementById('anotarBtn').disabled = !(pdfPedidos && pdfEtiquetas);
+  document.getElementById('runBtn').disabled = pdfPedidosList.length === 0;
+  document.getElementById('anotarBtn').disabled = !(pdfPedidosList.length > 0 && pdfEtiquetas);
 }
 
 // ── Log helpers ───────────────────────────────────────────────────────────────
@@ -368,7 +517,7 @@ function addLog(msg, cls='i') {
 
 // ── Run ANALIZAR (generar Excel) ─────────────────────────────────────────────
 async function runAnalizar() {
-  if (!pdfPedidos) return;
+  if (pdfPedidosList.length === 0) return;
   const btn = document.getElementById('runBtn');
   btn.classList.add('loading'); btn.disabled=true;
   clearLog();
@@ -376,7 +525,7 @@ async function runAnalizar() {
   document.getElementById('tblWrap').classList.remove('show');
   document.getElementById('dlBtn').classList.remove('show');
 
-  addLog('📦 Enviando PDF de pedidos para análisis...');
+  addLog(`📦 Enviando ${pdfPedidosList.length} PDF(s) de pedidos para análisis...`);
 
   // Cargar el catálogo actual desde el servidor
   let catalogoActual = '';
@@ -390,8 +539,10 @@ async function runAnalizar() {
   }
 
   const fd = new FormData();
-  fd.append('pdf', pdfPedidos);
-  fd.append('productos', catalogoActual);  // Enviar el catálogo actual
+  for (let i = 0; i < pdfPedidosList.length; i++) {
+    fd.append('pdf', pdfPedidosList[i]);
+  }
+  fd.append('productos', catalogoActual);
   fd.append('output', document.getElementById('outName').value || 'resumen_pedidos.xlsx');
 
   try {
@@ -419,7 +570,8 @@ async function runAnalizar() {
         <td><span class="pill cant">${row.cantidad}</span></td>
         <td><span class="pill ${catClass}">${row.categoria}</span></td>
         <td style="font-size:12px">${row.modelo}${row.color ? ' <span style="color:var(--muted)">/ '+row.color+'</span>' : ''}</td>
-        <td><span class="talle">${row.talle}</span></td>`;
+        <td><span class="talle">${row.talle}</span></td>
+      `;
       tb.appendChild(tr);
     });
     document.getElementById('tblWrap').classList.add('show');
@@ -435,14 +587,16 @@ async function runAnalizar() {
 
 // ── Run ANOTAR (etiquetas + reorganizar) ───────────────────────────────────
 async function runAnotar() {
-  if (!pdfPedidos || !pdfEtiquetas) return;
+  if (pdfPedidosList.length === 0 || !pdfEtiquetas) return;
   const btn = document.getElementById('anotarBtn');
   btn.classList.add('loading'); btn.disabled=true;
   clearLog();
-  addLog('📦 Enviando PDF de pedidos y etiquetas...');
+  addLog(`📦 Enviando ${pdfPedidosList.length} PDF(s) de pedidos y 1 PDF de etiquetas...`);
 
   const fd = new FormData();
-  fd.append('pedidos', pdfPedidos);
+  for (let i = 0; i < pdfPedidosList.length; i++) {
+    fd.append('pedidos', pdfPedidosList[i]);
+  }
   fd.append('etiquetas', pdfEtiquetas);
 
   try {
@@ -457,7 +611,6 @@ async function runAnotar() {
       return;
     }
 
-    // Descargar el PDF final
     const blob = await resp.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -475,13 +628,6 @@ async function runAnotar() {
     btn.classList.remove('loading'); btn.disabled=false;
     checkButtons();
   }
-}
-
-// ── Toast ─────────────────────────────────────────────────────────────────────
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2400);
 }
 </script>
 </body>
