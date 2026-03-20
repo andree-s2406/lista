@@ -1,4 +1,3 @@
-
 import os, re, json, sys, subprocess, tempfile, threading, webbrowser
 from collections import defaultdict
 from pathlib import Path
@@ -701,27 +700,49 @@ def extraer_ordenes_con_fitz(pdf_path):
                         m = k + 1
                         lineas_capturadas = 1
                         
+                        print(f"    🔍 Buscando cantidad en líneas desde m={m}...")
+                        
                         # Seguir capturando hasta encontrar la cantidad
+                        cantidad_encontrada = False
                         while m < len(lineas_orden):
                             linea_m = lineas_orden[m].strip()
+                            print(f"    L{m+1}: '{linea_m[:60]}'")
                             
                             # Si encontramos un número solo, es la cantidad
                             if linea_m.isdigit():
                                 cantidad = int(linea_m)
-                                print(f"    Cantidad encontrada: {cantidad}")
+                                print(f"    ✅ Cantidad encontrada: {cantidad}")
                                 m += 1
+                                cantidad_encontrada = True
                                 break
                             
                             # Si encontramos "Subtotal", significa que no hay número antes
                             if "Subtotal" in linea_m:
                                 cantidad = 1
-                                print(f"    Cantidad: {cantidad} (por defecto)")
+                                print(f"    📌 Cantidad: {cantidad} (por defecto - encontró Subtotal)")
+                                m += 1
+                                cantidad_encontrada = True
                                 break
+                            
+                            # Si encontramos "Cant." pero no es un número, seguir
+                            if "Cant." in linea_m:
+                                print(f"    📌 Línea 'Cant.' - continuando...")
+                                m += 1
+                                continue
+                            
+                            # 🔥 NUEVO: Si la línea empieza con "funda", siempre es parte del producto anterior
+                            if linea_m.lower().startswith("funda"):
+                                print(f"    🔄 Continuación (funda): {linea_m[:60]}...")
+                                nombre_producto += " " + linea_m
+                                lineas_capturadas += 1
+                                m += 1
+                                continue
                             
                             # Si encontramos otra palabra clave, es un NUEVO producto
                             if any(linea_m.lower().startswith(p) for p in PALABRAS_CLAVE):
-                                print(f"    → Siguiente producto detectado")
+                                print(f"    → Siguiente producto detectado (cantidad por defecto 1)")
                                 cantidad = 1
+                                cantidad_encontrada = True
                                 break
                             
                             # Si no, es parte del mismo producto
@@ -731,24 +752,25 @@ def extraer_ordenes_con_fitz(pdf_path):
                             m += 1
                         
                         # Si salimos sin cantidad, establecer 1
-                        if 'cantidad' not in locals():
+                        if not cantidad_encontrada:
                             cantidad = 1
+                            print(f"    ⚠️ No se encontró cantidad, usando 1")
                         
                         # Resolver producto
-                        print(f"    Nombre completo: {nombre_producto[:100]}...")
+                        print(f"    📝 Nombre completo: {nombre_producto[:100]}...")
                         info = resolver(nombre_producto)
                         if info:
                             cat, modelo, color, talle = info
-                            print(f"    → {modelo} {talle} {color} x{cantidad}")
+                            print(f"    ✅ → {modelo} {talle} {color} x{cantidad}")
                             ordenes[num_orden].append((info, cantidad))
                         else:
-                            print(f"    ⚠ No resuelto: {nombre_producto[:80]}...")
+                            print(f"    ❌ ⚠ No resuelto: {nombre_producto[:80]}...")
                         
                         k = m
                     else:
                         k += 1
                 
-                print(f"  Total productos en orden #{num_orden}: {productos_en_orden}")
+                print(f"  📊 Total productos en orden #{num_orden}: {productos_en_orden}")
                 i = j
             else:
                 i += 1
@@ -763,7 +785,7 @@ def extraer_ordenes_con_fitz(pdf_path):
         for info, cant in productos:
             grupos[info] += cant
         ordenes_agrupadas[num_orden] = [(info, cant) for info, cant in grupos.items()]
-        print(f"   Productos agrupados: {len(ordenes_agrupadas[num_orden])}")
+        print(f"   📦 Productos agrupados: {len(ordenes_agrupadas[num_orden])}")
         for info, cant in ordenes_agrupadas[num_orden]:
             print(f"     → {info[1]} {info[3]} {info[2]} x{cant}")
     
