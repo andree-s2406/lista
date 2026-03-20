@@ -1,6 +1,7 @@
 import os, re, json, sys, subprocess, tempfile, threading, webbrowser
 from collections import defaultdict
 from pathlib import Path
+from datetime import datetime
 
 # ── Auto-instalar dependencias ────────────────────────────────────────────────
 for pkg in ("pdfplumber", "openpyxl", "flask", "pymupdf", "psycopg2-binary", "sqlalchemy"):
@@ -636,7 +637,92 @@ def resolver(nombre):
         return mejor_match
     
     return None
-
+# ══════════════════════════════════════════════════════════════════════════════
+# Extaer los datos del envio
+# ══════════════════════════════════════════════════════════════════════════════
+def extraer_datos_envio(pdf_path):
+    """
+    Extrae de un PDF de pedidos los datos de envío por orden
+    Retorna: dict con {numero_orden: {"fecha": str, "envio": str, "tipo": str}}
+    """
+    doc = fitz.open(pdf_path)
+    texto_completo = ""
+    
+    for page_num in range(len(doc)):
+        page = doc[page_num]
+        texto_completo += page.get_text() + "\n"
+    
+    doc.close()
+    
+    lineas = texto_completo.split('\n')
+    datos_envio = {}
+    i = 0
+    
+    print("📦 Extrayendo datos de envío...")
+    
+    while i < len(lineas):
+        linea = lineas[i].strip()
+        
+        # Buscar orden
+        if linea.startswith('Orden #'):
+            match = re.search(r'Orden #(\d+)', linea)
+            if match:
+                num_orden = match.group(1)
+                print(f"  Orden #{num_orden}")
+                
+                # Buscar fecha (línea siguiente suele tener "Realizada el ...")
+                fecha = ""
+                j = i + 1
+                while j < len(lineas) and j < i + 10:
+                    if "Realizada el" in lineas[j]:
+                        fecha_match = re.search(r'Realizada el (\d{2}/\d{2}/\d{4})', lineas[j])
+                        if fecha_match:
+                            fecha = fecha_match.group(1)
+                        break
+                    j += 1
+                
+                # Buscar tipo de envío
+                envio = "Desconocido"
+                j = i + 1
+                # Buscar en las siguientes 30 líneas
+                while j < len(lineas) and j < i + 30:
+                    linea_j = lineas[j].strip()
+                    linea_j_lower = linea_j.lower()
+                    
+                    # Detectar por "Envío:"
+                    if "envío:" in linea_j_lower or "envio:" in linea_j_lower:
+                        if "andrea" in linea_j_lower:
+                            envio = "Andreani"
+                        break
+                    
+                    # Detectar por "Dirección de retiro:"
+                    if "dirección de retiro:" in linea_j_lower or "direccion de retiro:" in linea_j_lower:
+                        # Mirar las siguientes líneas para ver si es showroom o sucursal
+                        k = j + 1
+                        while k < len(lineas) and k < j + 10:
+                            linea_k = lineas[k].strip().upper()
+                            if "SHOWRROM" in linea_k or "SHOWROOM" in linea_k:
+                                envio = "Retiro en Showroom"
+                                break
+                            elif "SUCURSAL ANDREANI" in linea_k:
+                                envio = "Retiro Andreani"
+                                break
+                            k += 1
+                        break
+                    
+                    j += 1
+                
+                datos_envio[num_orden] = {
+                    "fecha": fecha if fecha else "No especificada",
+                    "envio": envio,
+                    "tipo_cliente": "MINORISTA"  # Todos minoristas
+                }
+                print(f"    Fecha: {fecha}")
+                print(f"    Envío: {envio}")
+        
+        i += 1
+    
+    return datos_envio
 # ══════════════════════════════════════════════════════════════════════════════
 # PDF EXTRACTION (usando pymupdf)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -800,9 +886,9 @@ def bd(c='BBBBBB',s='thin'): x=Side(style=s,color=c); return Border(left=x,right
 C=Alignment(horizontal='center',vertical='center',wrap_text=True)
 L=Alignment(horizontal='left',  vertical='center',wrap_text=True)
 
-def build_excel(ordenes, catalogo, out_path):
+def build_excel(ordenes, catalogo, out_path, datos_envio=None):
     """
-    Genera el Excel con catálogo y pedidos
+    Genera el Excel con catálogo, pedidos y resumen de envíos
     """
     print("\n📊 DEBUG - Productos recibidos para Excel:")
     print("-" * 50)
@@ -821,11 +907,13 @@ def build_excel(ordenes, catalogo, out_path):
     ws = wb.active
     ws.title = "Catálogo + Pedidos"
     
+    # =========================================================
     # Hoja principal: Catálogo + Pedidos
+    # =========================================================
     r = 1
     for sec in catalogo:
         cat = sec["cat"]
-        hc, bc = CAT_COLORS.get(cat, ("607D8B", "ECEFF1"))  # Gris si no existe
+        hc, bc = CAT_COLORS.get(cat, ("607D8B", "ECEFF1"))
         
         # Título de categoría
         ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=NC)
@@ -968,7 +1056,140 @@ def build_excel(ordenes, catalogo, out_path):
     cell_total_num.alignment = Alignment(horizontal='center', vertical='center')
     cell_total_num.border = bd()
     
+    if datos_envio:
+        ws_envios = wb.create_sheet("Resumen Envíos")
+        
+        # ========== ENCABEZADO ==========
+        # Título principal
+        ws_envios.merge_cells('A1:D1')
+        titulo = ws_envios.cell(row=1, column=1, value="SEGUIMIENTO COMANDAS")
+        titulo.font = Font(name='Arial', bold=True, size=14, color='FFFFFF')
+        titulo.fill = PatternFill("solid", fgColor="2C3E50")
+        titulo.alignment = Alignment(horizontal='center', vertical='center')
+        titulo.border = bd()
+        ws_envios.row_dimensions[1].height = 35
+        
+        # Fila de fecha y supervisor
+        ws_envios.merge_cells('A2:B2')
+        fecha_cell = ws_envios.cell(row=2, column=1, value=f"Fecha: {datetime.now().strftime('%d/%m/%Y')}")
+        fecha_cell.font = Font(name='Arial', bold=True, size=11)
+        fecha_cell.fill = PatternFill("solid", fgColor="E8F0F8")
+        fecha_cell.alignment = Alignment(horizontal='left', vertical='center')
+        fecha_cell.border = bd()
+        
+        ws_envios.merge_cells('C2:D2')
+        supervisor_cell = ws_envios.cell(row=2, column=3, value="Supervisa: _________________________")
+        supervisor_cell.font = Font(name='Arial', bold=True, size=11)
+        supervisor_cell.fill = PatternFill("solid", fgColor="E8F0F8")
+        supervisor_cell.alignment = Alignment(horizontal='left', vertical='center')
+        supervisor_cell.border = bd()
+        ws_envios.row_dimensions[2].height = 25
+        
+        # Espacio después del encabezado
+        ws_envios.row_dimensions[3].height = 10
+        
+        # ========== TABLA DE DATOS ==========
+        # Encabezados de tabla (fila 4)
+        headers_envios = ["Comanda", "Fecha", "Envío", "Cliente Mayorista o MINORISTA"]
+        header_fill = PatternFill("solid", fgColor="4A5568")
+        header_font = Font(name='Arial', bold=True, size=11, color='FFFFFF')
+        
+        for i, header in enumerate(headers_envios, 1):
+            cell = ws_envios.cell(row=4, column=i, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = bd()
+        ws_envios.row_dimensions[4].height = 28
+        
+        # Ancho de columnas
+        ws_envios.column_dimensions['A'].width = 12
+        ws_envios.column_dimensions['B'].width = 14
+        ws_envios.column_dimensions['C'].width = 25
+        ws_envios.column_dimensions['D'].width = 32
+        
+        # Ordenar números de comanda
+        ordenes_ordenadas = sorted(datos_envio.keys(), key=lambda x: int(x) if x.isdigit() else 0)
+        total_ordenes = len(ordenes_ordenadas)
+        
+        # Rango mínimo: hasta fila 43 (eso es 40 filas de datos desde la fila 5 a la 44)
+        # fila 4 = encabezados, fila 5 = primera comanda
+        min_fila_datos = 44  # Última fila del rango mínimo (5 a 44 son 40 filas)
+        fila_actual = 5
+        
+        # Escribir todas las comandas
+        for num_orden in ordenes_ordenadas:
+            info = datos_envio[num_orden]
+            
+            # Alternar colores de fila
+            bg_color = "F9F9F9" if fila_actual % 2 == 0 else "FFFFFF"
+            
+            # Comanda
+            cell_a = ws_envios.cell(row=fila_actual, column=1, value=num_orden)
+            cell_a.font = Font(name='Arial', size=10)
+            cell_a.alignment = Alignment(horizontal='center', vertical='center')
+            cell_a.fill = PatternFill("solid", fgColor=bg_color)
+            cell_a.border = bd()
+            
+            # Fecha
+            cell_b = ws_envios.cell(row=fila_actual, column=2, value=info["fecha"])
+            cell_b.font = Font(name='Arial', size=10)
+            cell_b.alignment = Alignment(horizontal='center', vertical='center')
+            cell_b.fill = PatternFill("solid", fgColor=bg_color)
+            cell_b.border = bd()
+            
+            # Envío
+            cell_c = ws_envios.cell(row=fila_actual, column=3, value=info["envio"])
+            cell_c.font = Font(name='Arial', size=10)
+            cell_c.alignment = Alignment(horizontal='left', vertical='center')
+            cell_c.fill = PatternFill("solid", fgColor=bg_color)
+            cell_c.border = bd()
+            
+            # Tipo de cliente
+            cell_d = ws_envios.cell(row=fila_actual, column=4, value=info["tipo_cliente"])
+            cell_d.font = Font(name='Arial', size=10)
+            cell_d.alignment = Alignment(horizontal='center', vertical='center')
+            cell_d.fill = PatternFill("solid", fgColor=bg_color)
+            cell_d.border = bd()
+            
+            fila_actual += 1
+        
+        # Si hay menos comandas que el mínimo, completar filas vacías hasta el mínimo
+        fila_total_minima = max(fila_actual, min_fila_datos + 1)  # +1 porque fila_actual ya está en la siguiente
+        
+        for fila_vacia in range(fila_actual, fila_total_minima):
+            for col in range(1, 5):
+                cell = ws_envios.cell(row=fila_vacia, column=col, value="")
+                cell.border = bd()
+                if fila_vacia % 2 == 0:
+                    cell.fill = PatternFill("solid", fgColor="F9F9F9")
+                else:
+                    cell.fill = PatternFill("solid", fgColor="FFFFFF")
+        
+        # La fila del total va después de la última fila ocupada o del mínimo
+        fila_total = max(fila_actual, min_fila_datos + 1)
+        
+        # Fila de total de órdenes
+        ws_envios.merge_cells(f'A{fila_total}:C{fila_total}')
+        cell_total = ws_envios.cell(row=fila_total, column=1, value=f"TOTAL DE COMANDAS: {total_ordenes}")
+        cell_total.font = Font(name='Arial', bold=True, size=11)
+        cell_total.alignment = Alignment(horizontal='right', vertical='center')
+        cell_total.fill = PatternFill("solid", fgColor="E8F0F8")
+        cell_total.border = bd()
+        
+        # Columna D del total queda vacía
+        cell_d_total = ws_envios.cell(row=fila_total, column=4, value="")
+        cell_d_total.border = bd()
+        cell_d_total.fill = PatternFill("solid", fgColor="E8F0F8")
+        
+        ws_envios.row_dimensions[fila_total].height = 25
+        
+        print(f"✅ Hoja 'Resumen Envíos' creada con {total_ordenes} órdenes (filas hasta {fila_total})")
+    
+    # Guardar Excel
     wb.save(out_path)
+    print(f"\n✅ Excel guardado en: {out_path}")
+    
     return {}
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1272,23 +1493,65 @@ def actualizar_colores(nombre):
 
 @app.route("/analizar", methods=["POST"])
 def analizar():
+    # Verificar que se recibieron archivos
     if "pdf" not in request.files:
         return jsonify({"error": "No se recibió PDF"}), 400
-    pdf_file = request.files["pdf"]
+    
+    pdf_files = request.files.getlist("pdf")
+    if len(pdf_files) == 0:
+        return jsonify({"error": "No se seleccionó ningún archivo"}), 400
+    
     prod_txt = request.form.get("productos", "")
-
-    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-        pdf_file.save(tmp.name)
-        tmp_path = tmp.name
-
+    
+    # Crear archivos temporales para cada PDF
+    temp_paths = []
     try:
+        for pdf_file in pdf_files:
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+                pdf_file.save(tmp.name)
+                temp_paths.append(tmp.name)
+        
+        # Diccionario para almacenar órdenes (solo la primera vez que aparecen)
+        todas_ordenes = {}
+        todos_datos_envio = {}
+        
+        # Conjunto para registrar órdenes ya procesadas
+        ordenes_procesadas = set()
+        
+        for tmp_path in temp_paths:
+            ordenes = extraer_ordenes_con_fitz(tmp_path)
+            datos_envio = extraer_datos_envio(tmp_path)
+            
+            # Combinar órdenes (SOLO si no se ha procesado antes esa orden)
+            for num_orden, productos in ordenes.items():
+                if num_orden not in ordenes_procesadas:
+                    # Primera vez que vemos esta orden
+                    todas_ordenes[num_orden] = productos
+                    ordenes_procesadas.add(num_orden)
+                    print(f"  ✅ Orden #{num_orden} agregada (primera aparición)")
+                else:
+                    print(f"  ⚠️ Orden #{num_orden} ignorada (duplicada)")
+            
+            # Combinar datos de envío (solo si no existen)
+            for num_orden, info in datos_envio.items():
+                if num_orden not in todos_datos_envio:
+                    todos_datos_envio[num_orden] = info
+        
+        # Agrupar productos por orden (ya no es necesario sumar, pero mantenemos por si acaso)
+        ordenes_agrupadas = {}
+        for num_orden, productos in todas_ordenes.items():
+            grupos = defaultdict(int)
+            for info, cant in productos:
+                grupos[info] += cant
+            ordenes_agrupadas[num_orden] = [(info, cant) for info, cant in grupos.items()]
+        
+        # Generar catálogo y Excel
         catalogo = cargar_catalogo(prod_txt)
-        ordenes = extraer_ordenes_con_fitz(tmp_path)
-        sin_mapear = build_excel(ordenes, catalogo, str(OUTPUT_XLSX))
+        sin_mapear = build_excel(ordenes_agrupadas, catalogo, str(OUTPUT_XLSX), todos_datos_envio)
         
         rows = []
         total_unidades = 0
-        for num_orden, productos in ordenes.items():
+        for num_orden, productos in ordenes_agrupadas.items():
             for info, cant in productos:
                 cat, modelo, color, talle = info
                 total_unidades += cant
@@ -1301,9 +1564,11 @@ def analizar():
                     "talle": talle,
                 })
         
+        print(f"\n📊 Resumen: {len(ordenes_agrupadas)} órdenes únicas procesadas")
+        
         return jsonify({
             "ok": True,
-            "total_tipos": len(ordenes),
+            "total_tipos": len(ordenes_agrupadas),
             "total_unidades": total_unidades,
             "sin_mapear": 0,
             "sin_mapear_list": [],
@@ -1312,7 +1577,13 @@ def analizar():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
-        os.unlink(tmp_path)
+        # Limpiar archivos temporales
+        for tmp_path in temp_paths:
+            try:
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+            except:
+                pass
 
 @app.route("/anotar", methods=["POST"])
 def anotar():
