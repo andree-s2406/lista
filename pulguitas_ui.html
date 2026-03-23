@@ -371,7 +371,30 @@ tr:hover td{background:rgba(255,255,255,.018)}
       <tbody id="tbl"></tbody>
      </table>
   </div>
+<div class="tbl-wrap" id="tblWrap">
+  <table>
+    <thead>
+      <tr>
+        <th>#</th><th>Producto (texto del PDF)</th><th>Cant.</th>
+        <th>Categoría</th><th>Modelo / Color</th><th>Talle</th>
+      </tr>
+    </thead>
+    <tbody id="tbl"></tbody>
+  </table>
+</div>
 
+<!-- Nueva sección: Órdenes sin productos -->
+<div id="sinProductosSection" style="display:none; margin-top: 20px;">
+  <div class="card" style="background: rgba(248,113,113,0.1); border-color: var(--red);">
+    <div class="card-title">
+      <span>⚠️</span> Órdenes sin productos detectados
+      <span id="sinProductosCount" style="margin-left: 10px; background: var(--red); padding: 2px 8px; border-radius: 20px; font-size: 11px;"></span>
+    </div>
+    <div style="max-height: 200px; overflow-y: auto;">
+      <div id="sinProductosLista" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;"></div>
+    </div>
+  </div>
+</div>
   <!-- Download Excel -->
   <a class="dl" id="dlBtn" href="/descargar" download>⬇️ Descargar Excel generado</a>
 
@@ -516,6 +539,7 @@ function addLog(msg, cls='i') {
 }
 
 // ── Run ANALIZAR (generar Excel) ─────────────────────────────────────────────
+// ── Run ANALIZAR (generar Excel) ─────────────────────────────────────────────
 async function runAnalizar() {
   if (pdfPedidosList.length === 0) return;
   const btn = document.getElementById('runBtn');
@@ -524,6 +548,7 @@ async function runAnalizar() {
   document.getElementById('stats').classList.remove('show');
   document.getElementById('tblWrap').classList.remove('show');
   document.getElementById('dlBtn').classList.remove('show');
+  document.getElementById('sinProductosSection').style.display = 'none';
 
   addLog(`📦 Enviando ${pdfPedidosList.length} PDF(s) de pedidos para análisis...`);
 
@@ -556,9 +581,10 @@ async function runAnalizar() {
     
     document.getElementById('sTipos').textContent = data.total_tipos;
     document.getElementById('sUnid').textContent  = data.total_unidades;
-    document.getElementById('sSin').textContent   = data.sin_mapear === 0 ? '✓ 0' : data.sin_mapear;
+    document.getElementById('sSin').textContent   = data.sin_mapear;
     document.getElementById('stats').classList.add('show');
 
+    // Mostrar tabla de productos
     const tb = document.getElementById('tbl');
     tb.innerHTML = '';
     data.rows.forEach((row, i) => {
@@ -575,6 +601,23 @@ async function runAnalizar() {
       tb.appendChild(tr);
     });
     document.getElementById('tblWrap').classList.add('show');
+    
+    // Mostrar órdenes sin productos
+    if (data.ordenes_sin_productos && data.ordenes_sin_productos.length > 0) {
+      const sinProductosLista = document.getElementById('sinProductosLista');
+      sinProductosLista.innerHTML = '';
+      data.ordenes_sin_productos.forEach(orden => {
+        const badge = document.createElement('span');
+        badge.style.cssText = 'background: rgba(248,113,113,0.2); padding: 5px 12px; border-radius: 20px; font-size: 12px; border: 1px solid var(--red);';
+        badge.innerHTML = `🔸 Orden #${orden}`;
+        sinProductosLista.appendChild(badge);
+      });
+      document.getElementById('sinProductosCount').textContent = `(${data.ordenes_sin_productos.length})`;
+      document.getElementById('sinProductosSection').style.display = 'block';
+    } else {
+      document.getElementById('sinProductosSection').style.display = 'none';
+    }
+    
     document.getElementById('dlBtn').classList.add('show');
     addLog('✅ Excel generado y listo para descargar');
   } catch(e) {
