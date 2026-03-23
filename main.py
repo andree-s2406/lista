@@ -1511,33 +1511,30 @@ def analizar():
                 pdf_file.save(tmp.name)
                 temp_paths.append(tmp.name)
         
-        # Diccionario para almacenar órdenes (solo la primera vez que aparecen)
+        # Combinar todos los pedidos de todos los PDFs
         todas_ordenes = {}
         todos_datos_envio = {}
-        
-        # Conjunto para registrar órdenes ya procesadas
-        ordenes_procesadas = set()
+        ordenes_sin_productos = set()  # Conjunto para órdenes sin productos
         
         for tmp_path in temp_paths:
             ordenes = extraer_ordenes_con_fitz(tmp_path)
             datos_envio = extraer_datos_envio(tmp_path)
             
-            # Combinar órdenes (SOLO si no se ha procesado antes esa orden)
+            # Combinar órdenes
             for num_orden, productos in ordenes.items():
-                if num_orden not in ordenes_procesadas:
-                    # Primera vez que vemos esta orden
-                    todas_ordenes[num_orden] = productos
-                    ordenes_procesadas.add(num_orden)
-                    print(f"  ✅ Orden #{num_orden} agregada (primera aparición)")
-                else:
-                    print(f"  ⚠️ Orden #{num_orden} ignorada (duplicada)")
+                if num_orden not in todas_ordenes:
+                    todas_ordenes[num_orden] = []
+                todas_ordenes[num_orden].extend(productos)
             
-            # Combinar datos de envío (solo si no existen)
-            for num_orden, info in datos_envio.items():
-                if num_orden not in todos_datos_envio:
-                    todos_datos_envio[num_orden] = info
+            # Combinar datos de envío
+            todos_datos_envio.update(datos_envio)
         
-        # Agrupar productos por orden (ya no es necesario sumar, pero mantenemos por si acaso)
+        # Identificar órdenes sin productos (existen en datos_envio pero no en ordenes)
+        for num_orden in todos_datos_envio.keys():
+            if num_orden not in todas_ordenes or len(todas_ordenes[num_orden]) == 0:
+                ordenes_sin_productos.add(num_orden)
+        
+        # Agrupar productos por orden (sumar cantidades)
         ordenes_agrupadas = {}
         for num_orden, productos in todas_ordenes.items():
             grupos = defaultdict(int)
@@ -1564,20 +1561,18 @@ def analizar():
                     "talle": talle,
                 })
         
-        print(f"\n📊 Resumen: {len(ordenes_agrupadas)} órdenes únicas procesadas")
-        
         return jsonify({
             "ok": True,
             "total_tipos": len(ordenes_agrupadas),
             "total_unidades": total_unidades,
-            "sin_mapear": 0,
+            "sin_mapear": len(ordenes_sin_productos),
             "sin_mapear_list": [],
+            "ordenes_sin_productos": sorted(list(ordenes_sin_productos), key=lambda x: int(x) if x.isdigit() else 0),
             "rows": rows,
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     finally:
-        # Limpiar archivos temporales
         for tmp_path in temp_paths:
             try:
                 if os.path.exists(tmp_path):
