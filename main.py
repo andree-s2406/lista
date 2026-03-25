@@ -1329,7 +1329,7 @@ def formatear_productos_orden(productos, resolver_func):
             else:
                 linea = f"Huella {talle} x{cant}"
         
-        # Caso especial: GARRA
+        # Caso especial: GARRA (solo cuando es realmente Garra)
         elif modelo == "Garra" and color == "Gris":
             if cat == "INVIERNO":
                 linea = f"Garra invierno {talle} x{cant}"
@@ -1351,11 +1351,6 @@ def formatear_productos_orden(productos, resolver_func):
             else:
                 linea = f"{color} x{cant}"
         
-        # Caso especial: DISPENSER
-        elif cat == "DISPENSER":
-            linea = f"Dispenser x{cant}"
-        
-        # Formato normal para el resto
         else:
             if color and color.strip():
                 linea = f"{modelo} {talle} {color} x{cant}"
