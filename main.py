@@ -1361,10 +1361,29 @@ def formatear_productos_orden(productos, resolver_func):
     
     return lineas
 
-def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_path, output_path):
-    """Añade texto con productos justo debajo del último número de seguimiento"""
-    # Extraer órdenes del PDF de pedidos
-    ordenes = extraer_ordenes_con_fitz(pdf_pedidos_path)
+def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_paths, output_path):
+    """
+    Añade texto con productos justo debajo del último número de seguimiento
+    Recibe una lista de paths de PDFs de pedidos
+    """
+    # Extraer órdenes de TODOS los PDFs de pedidos
+    todas_ordenes = {}
+    
+    for pedido_path in pdf_pedidos_paths:
+        ordenes = extraer_ordenes_con_fitz(pedido_path)
+        # Combinar órdenes (si hay duplicados, se suman)
+        for num_orden, productos in ordenes.items():
+            if num_orden not in todas_ordenes:
+                todas_ordenes[num_orden] = []
+            todas_ordenes[num_orden].extend(productos)
+    
+    # Agrupar productos por orden (sumar cantidades)
+    ordenes_agrupadas = {}
+    for num_orden, productos in todas_ordenes.items():
+        grupos = defaultdict(int)
+        for info, cant in productos:
+            grupos[info] += cant
+        ordenes_agrupadas[num_orden] = [(info, cant) for info, cant in grupos.items()]
     
     # Abrir PDF de etiquetas
     doc = fitz.open(pdf_etiquetas_path)
@@ -1377,8 +1396,8 @@ def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_path, output_path):
         match = re.search(r"#(\d+)", text)
         if match:
             orden = match.group(1)
-            if orden in ordenes:
-                productos = ordenes[orden]
+            if orden in ordenes_agrupadas:
+                productos = ordenes_agrupadas[orden]
                 lineas = formatear_productos_orden(productos, resolver)
                 
                 # Buscar el ÚLTIMO número de seguimiento
@@ -1409,7 +1428,7 @@ def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_path, output_path):
     
     doc.save(output_path)
     doc.close()
-    return ordenes
+    return ordenes_agrupadas
 
 def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3):
     """
@@ -1676,16 +1695,18 @@ def analizar():
 
 @app.route("/anotar", methods=["POST"])
 def anotar():
-    """Recibe PDF de pedidos y PDF de etiquetas, anota y reorganiza automáticamente"""
+    """Recibe múltiples PDFs de pedidos y un PDF de etiquetas, anota y reorganiza automáticamente"""
     if "pedidos" not in request.files or "etiquetas" not in request.files:
         return jsonify({"error": "Se requieren dos archivos: pedidos PDF y etiquetas PDF"}), 400
     
-    pedidos_file = request.files["pedidos"]
+    pedidos_files = request.files.getlist("pedidos")  # Obtener TODOS los archivos de pedidos
     etiquetas_file = request.files["etiquetas"]
     
-    with tempfile.NamedTemporaryFile(suffix="_pedidos.pdf", delete=False) as tmp_pedidos:
-        pedidos_file.save(tmp_pedidos.name)
-        tmp_pedidos_path = tmp_pedidos.name
+    tmp_pedidos_paths = []
+    for pedidos_file in pedidos_files:
+        with tempfile.NamedTemporaryFile(suffix="_pedidos.pdf", delete=False) as tmp_pedidos:
+            pedidos_file.save(tmp_pedidos.name)
+            tmp_pedidos_paths.append(tmp_pedidos.name)
     
     with tempfile.NamedTemporaryFile(suffix="_etiquetas.pdf", delete=False) as tmp_etiquetas:
         etiquetas_file.save(tmp_etiquetas.name)
@@ -1695,8 +1716,8 @@ def anotar():
     final_path = tmp_etiquetas_path.replace("_etiquetas", "_final")
     
     try:
-        print("📝 PASO 1: Anotando PDF con productos...")
-        anotar_pdf_con_productos(tmp_etiquetas_path, tmp_pedidos_path, anotado_path)
+        print(f"📝 PASO 1: Anotando PDF con productos (usando {len(tmp_pedidos_paths)} archivos de pedidos)...")
+        anotar_pdf_con_productos(tmp_etiquetas_path, tmp_pedidos_paths, anotado_path)
         
         print("📐 PASO 2: Reorganizando PDF (3 etiquetas por página)...")
         reorganizar_etiquetas(anotado_path, final_path, etiquetas_por_pagina=3)
@@ -1709,7 +1730,13 @@ def anotar():
         print(f"❌ Error: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
-        for p in [tmp_pedidos_path, tmp_etiquetas_path, anotado_path, final_path]:
+        for p in tmp_pedidos_paths:
+            try:
+                if os.path.exists(p):
+                    os.unlink(p)
+            except:
+                pass
+        for p in [tmp_etiquetas_path, anotado_path, final_path]:
             try:
                 if os.path.exists(p):
                     os.unlink(p)
