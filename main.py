@@ -499,20 +499,76 @@ def resolver(nombre):
     # 1. Primero intentar con coincidencia exacta del texto sin medidas
     mejor_match_exacto = None
     mejor_len_exacto = 0
+    matches_exactos_con_funda = []
+    matches_exactos_sin_funda = []
     
+    print("\n🔎 Buscando matches exactos...")
     for p, info in MAPA_PRODUCTOS.items():
         p_sin_medidas = normalizar_texto_sin_medidas(p)
         
-        if p_sin_medidas in key_sin_medidas:
-            if len(p_sin_medidas) > mejor_len_exacto:
-                mejor_len_exacto = len(p_sin_medidas)
+        # Crear una versión del texto del PDF sin "solo funda de repuesto" para comparar
+        key_sin_funda = key_sin_medidas.replace("solo funda de repuesto", "").strip()
+        key_sin_funda = key_sin_funda.replace("solo funda", "").strip()
+        key_sin_funda = key_sin_funda.replace("funda de repuesto", "").strip()
+        key_sin_funda = key_sin_funda.replace("funda", "").strip()
+        
+        # Limpiar espacios múltiples que puedan quedar
+        key_sin_funda = re.sub(r'\s+', ' ', key_sin_funda).strip()
+        
+        # Verificar si el texto del mapa está en el texto del PDF (con o sin funda)
+        if p_sin_medidas in key_sin_medidas or p_sin_medidas in key_sin_funda:
+            # Verificar si este producto es funda o no
+            es_funda_mapa = "(solo funda)" in info[1].lower() or "funda" in p.lower()
+            texto_habla_de_funda = "funda" in key_sin_medidas or "repuesto" in key_sin_medidas or "solo funda" in key_sin_medidas
+            
+            print(f"\n  🔍 Match exacto candidato: '{p_sin_medidas}'")
+            print(f"    - Producto: {info[1]} {info[3]} {info[2]}")
+            print(f"    - ¿Producto es funda? {es_funda_mapa}")
+            print(f"    - ¿Texto habla de funda? {texto_habla_de_funda}")
+            print(f"    - Longitud base: {len(p_sin_medidas)}")
+            
+            # Calcular un puntaje base (longitud del match)
+            puntaje_match = len(p_sin_medidas)
+            
+            # Si el texto habla de funda y el producto ES funda, dar PRIORIDAD MÁXIMA
+            if texto_habla_de_funda and es_funda_mapa:
+                puntaje_match += 1000
+                print(f"    🏆 PRIORIDAD FUNDA: +1000")
+            
+            # Si hay consistencia (ambos funda o ambos no funda), dar bonus
+            if es_funda_mapa == texto_habla_de_funda:
+                puntaje_match += 100
+                print(f"    ✅ CONSISTENTE: +100")
+            else:
+                # Inconsistencia, guardar como alternativa pero no considerar ahora
+                matches_exactos_con_funda.append((puntaje_match, info))
+                print(f"    ⚠️ INCONSISTENTE: guardado como alternativa")
+                continue
+            
+            # Bonus adicional si el match es EXACTAMENTE igual (con funda incluida)
+            if texto_habla_de_funda and p_sin_medidas in key_sin_medidas:
+                puntaje_match += 50
+                print(f"    📌 MATCH EXACTO CON FUNDA: +50")
+            
+            if puntaje_match > mejor_len_exacto:
+                mejor_len_exacto = puntaje_match
                 mejor_match_exacto = info
-                print(f"  ✅ Match exacto (sin medidas): '{p_sin_medidas}' en '{key_sin_medidas}'")
-    
+                print(f"    ➡️ NUEVO MEJOR MATCH (puntaje: {puntaje_match})")
+
+    # Si encontramos un match exacto consistente, lo usamos
     if mejor_match_exacto:
+        print(f"\n  ✅ Match exacto CONSISTENTE seleccionado: {mejor_match_exacto}")
         return mejor_match_exacto
+
+    # Si no hay match consistente, pero hay matches inconsistentes
+    if matches_exactos_con_funda:
+        # Ordenar por puntaje (el más alto primero)
+        matches_exactos_con_funda.sort(key=lambda x: -x[0])
+        print(f"\n  ⚠️ Usando match exacto INCONSISTENTE como fallback: {matches_exactos_con_funda[0][1]}")
+        return matches_exactos_con_funda[0][1]
     
-    # 2. Si no, buscar por palabras clave con pesos
+    # 2. Si no hay matches exactos, buscar por palabras clave con pesos
+    print("\n🔎 No hay matches exactos, usando sistema de puntajes...")
     mejor_match = None
     mejor_puntaje = 0
     
@@ -532,9 +588,13 @@ def resolver(nombre):
         color_norm = color.lower() if color else ""
         talle_norm = talle.lower() if talle else ""
         
+        # Verificar si el modelo contiene el sufijo (solo funda)
+        es_funda_modelo = "(solo funda)" in modelo.lower()
+        
         # --- VERIFICACIÓN DE MODELO (MUCHO MÁS ESTRICTA) ---
-        # Extraer la palabra principal del modelo
-        palabras_modelo = modelo_norm.split()
+        # Extraer la palabra principal del modelo (sin el sufijo de funda)
+        modelo_para_verificar = modelo_norm.replace('(solo funda)', '').strip()
+        palabras_modelo = modelo_para_verificar.split()
         modelo_principal = palabras_modelo[0] if palabras_modelo else ""
         
         # Verificar si la palabra principal del modelo está en el texto
@@ -586,28 +646,66 @@ def resolver(nombre):
             elif "doble faz" in key_sin_medidas:
                 puntaje += 3
         
-        # FUNDA - Solo si realmente es una funda
-        if "funda" in key_sin_medidas or "solo funda" in key_sin_medidas or "repuesto" in key_sin_medidas:
-            # Si el texto dice "cama completa" pero habla de funda, no debería matchear con funda
-            if "completa" in key_sin_medidas and "funda" in modelo_norm:
-                puntaje -= 15  # Penalización fuerte si dice completa pero el producto es funda
-            elif "funda" in modelo_norm:
-                puntaje += 8
-        elif "completa" in key_sin_medidas and "completa" in modelo_norm:
-            puntaje += 5
+        # FUNDA - DETECCIÓN MEJORADA
+        texto_habla_de_funda = ("funda" in key_sin_medidas or 
+                               "solo funda" in key_sin_medidas or 
+                               "repuesto" in key_sin_medidas)
+        
+        if texto_habla_de_funda:
+            if es_funda_modelo:
+                puntaje += 20
+            else:
+                puntaje -= 40
+        else:
+            if es_funda_modelo:
+                puntaje -= 30
+            elif "completa" in key_sin_medidas:
+                puntaje += 5
         
         # BONUS POR MODELO COMPLETO
-        if modelo_norm in key_sin_medidas:
-            puntaje += 10  # Aumentado a 10 para darle mucho peso
+        if modelo_para_verificar in key_sin_medidas:
+            puntaje += 10
         
         # BONUS POR COLOR
         if color_norm and color_norm in key_sin_medidas:
             puntaje += 4
         
-        # BONUS POR TALLE
+        # ========== BONUS POR TALLE - MUCHO MÁS PESO ==========
         if talle_norm:
-            if talle_norm in key_original or re.search(r'talla\s*' + talle_norm, key_original):
-                puntaje += 2
+            talle_match = False
+            
+            # Buscar talle exacto como palabra independiente
+            if re.search(r'\b' + talle_norm + r'\b', key_original):
+                puntaje += 15
+                talle_match = True
+                print(f"    ✓ Talle exacto '{talle_norm}' encontrado: +15")
+            
+            # Buscar "talla X"
+            elif re.search(r'talla\s*' + talle_norm, key_original):
+                puntaje += 20
+                talle_match = True
+                print(f"    ✓ 'talla {talle_norm}' encontrado: +20")
+            
+            # Buscar talle entre paréntesis como (l)
+            elif re.search(r'\(' + talle_norm + r'\)', key_original):
+                puntaje += 18
+                talle_match = True
+                print(f"    ✓ '({talle_norm})' encontrado: +18")
+            
+            # Buscar talle con guión como "-l"
+            elif re.search(r'-' + talle_norm + r'\b', key_original):
+                puntaje += 16
+                talle_match = True
+                print(f"    ✓ '-{talle_norm}' encontrado: +16")
+            
+            # Penalizar si no hay match de talle y el texto tiene algún talle
+            if not talle_match:
+                # Buscar cualquier talle en el texto
+                talles_en_texto = re.findall(r'\b(xs|s|m|l|xl|u)\b', key_original, re.IGNORECASE)
+                if talles_en_texto:
+                    # Penalización fuerte por talle incorrecto
+                    puntaje -= 30
+                    print(f"    ✗ Talle incorrecto: texto dice '{talles_en_texto[0]}', producto es '{talle_norm}' (-30)")
         
         # CASTIGO por palabras prohibidas
         for prohibida in palabras_prohibidas:
@@ -621,12 +719,13 @@ def resolver(nombre):
                 puntaje += 3
         
         # CASTIGO si el texto es demasiado corto y no coincide con el modelo
-        if len(key_sin_medidas.split()) < 3 and modelo_norm not in key_sin_medidas:
+        if len(key_sin_medidas.split()) < 3 and modelo_para_verificar not in key_sin_medidas:
             puntaje -= 20
         
         if puntaje > mejor_puntaje:
             mejor_puntaje = puntaje
             mejor_match = info
+            print(f"    📊 Puntaje actual: {puntaje} ({info[1]} {info[3]} {info[2]})")
     
     umbral = 5
     if mejor_match and mejor_match[0] == "ROPITA":
