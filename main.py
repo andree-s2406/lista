@@ -345,19 +345,15 @@ print(f"📋 Palabras clave generadas: {len(PALABRAS_CLAVE)}")
 def normalizar_texto_sin_medidas(texto):
     """
     Normaliza un texto eliminando medidas y caracteres que pueden variar
-    para una comparación flexible:
-    - Elimina números seguidos de unidades (cm, mm, etc.)
-    - Elimina palabras como "alto", "ancho", "largo"
-    - Elimina paréntesis, comas y otros signos de puntuación
-    - Normaliza espacios múltiples
     """
     if not texto:
         return ""
     
     import re
     
-
     texto = texto.lower()
+    
+    # Eliminar medidas
     texto = re.sub(r'\d+\s*(cm|mm|mt|m)?\s*(de\s*(alto|ancho|largo))?', ' ', texto)
     texto = re.sub(r'\b(alto|ancho|largo|cm|mm|mt)\b', ' ', texto)
     texto = re.sub(r'[\(\)\[\]\{\}]', ' ', texto)
@@ -365,6 +361,12 @@ def normalizar_texto_sin_medidas(texto):
     texto = re.sub(r'\s*-\s*', ' ', texto)
     texto = re.sub(r'\s+', ' ', texto)
     texto = texto.strip()
+    
+    # 🔥 Después de normalizar, agregar "talla" antes de los talles sueltos
+    # Pero solo si no hay "talla" ya presente
+    if 'talla' not in texto:
+        # Buscar talles sueltos (s, m, l, xl, xs) como palabras independientes
+        texto = re.sub(r'\b(xs|s|m|l|xl)\b', r'talla \1', texto)
     
     return texto
 
