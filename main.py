@@ -925,9 +925,13 @@ def extraer_ordenes_con_fitz(pdf_path):
                                 m += 1
                                 continue
                             
-                            # Si encontramos otra palabra clave, es un NUEVO producto
-                            if any(linea_m.lower().startswith(p) for p in PALABRAS_CLAVE):
-                                print(f"    → Siguiente producto detectado (cantidad por defecto 1)")
+                            es_nuevo = any(linea_m.lower().startswith(p) for p in PALABRAS_CLAVE)
+
+                            palabras_continuacion = ["completa", "relleno", "funda", "espuma", "textura"]
+                            es_continuacion = any(p in linea_m.lower() for p in palabras_continuacion)
+
+                            if es_nuevo and not es_continuacion:
+                                print(f"    → Siguiente producto detectado")
                                 cantidad = 1
                                 cantidad_encontrada = True
                                 break
