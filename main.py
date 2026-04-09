@@ -1372,18 +1372,20 @@ def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_paths, output_path)
     Añade texto con productos justo debajo del último número de seguimiento
     Recibe una lista de paths de PDFs de pedidos
     """
-    # Extraer órdenes de TODOS los PDFs de pedidos
+    # Extraer órdenes de TODOS los PDFs de pedidos (SIN DUPLICADOS)
     todas_ordenes = {}
+    ordenes_procesadas = set()
     
     for pedido_path in pdf_pedidos_paths:
         ordenes = extraer_ordenes_con_fitz(pedido_path)
-        # Combinar órdenes (si hay duplicados, se suman)
+        # Combinar órdenes (solo si no se procesó antes)
         for num_orden, productos in ordenes.items():
-            if num_orden not in todas_ordenes:
-                todas_ordenes[num_orden] = []
-            todas_ordenes[num_orden].extend(productos)
+            if num_orden not in ordenes_procesadas:
+                ordenes_procesadas.add(num_orden)
+                todas_ordenes[num_orden] = productos
+            # Si ya existe, ignoramos (no sumamos)
     
-    # Agrupar productos por orden (sumar cantidades)
+    # Agrupar productos por orden (sumar cantidades dentro de la misma orden)
     ordenes_agrupadas = {}
     for num_orden, productos in todas_ordenes.items():
         grupos = defaultdict(int)
@@ -1713,6 +1715,7 @@ def anotar():
     pedidos_files = request.files.getlist("pedidos")  # Obtener TODOS los archivos de pedidos
     etiquetas_file = request.files["etiquetas"]
     
+    # Crear archivos temporales para cada PDF de pedidos
     tmp_pedidos_paths = []
     for pedidos_file in pedidos_files:
         with tempfile.NamedTemporaryFile(suffix="_pedidos.pdf", delete=False) as tmp_pedidos:
@@ -1741,6 +1744,7 @@ def anotar():
         print(f"❌ Error: {e}")
         return jsonify({"error": str(e)}), 500
     finally:
+        # Limpiar archivos temporales
         for p in tmp_pedidos_paths:
             try:
                 if os.path.exists(p):
