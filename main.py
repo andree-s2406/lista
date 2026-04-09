@@ -1630,30 +1630,35 @@ def analizar():
                 pdf_file.save(tmp.name)
                 temp_paths.append(tmp.name)
         
-        # Combinar todos los pedidos de todos los PDFs
+        # Combinar todos los pedidos de todos los PDFs (SIN DUPLICADOS)
         todas_ordenes = {}
         todos_datos_envio = {}
-        ordenes_sin_productos = set()  # Conjunto para órdenes sin productos
+        ordenes_procesadas = set()  # Set para controlar qué órdenes ya se procesaron
         
         for tmp_path in temp_paths:
             ordenes = extraer_ordenes_con_fitz(tmp_path)
             datos_envio = extraer_datos_envio(tmp_path)
             
-            # Combinar órdenes
+            # Combinar órdenes (solo si no se procesó antes)
             for num_orden, productos in ordenes.items():
-                if num_orden not in todas_ordenes:
-                    todas_ordenes[num_orden] = []
-                todas_ordenes[num_orden].extend(productos)
+                if num_orden not in ordenes_procesadas:
+                    ordenes_procesadas.add(num_orden)
+                    todas_ordenes[num_orden] = productos
+                # Si ya existe, ignoramos (no sumamos)
             
-            # Combinar datos de envío
-            todos_datos_envio.update(datos_envio)
+            # Combinar datos de envío (solo si no existe)
+            for num_orden, info in datos_envio.items():
+                if num_orden not in todos_datos_envio:
+                    todos_datos_envio[num_orden] = info
         
         # Identificar órdenes sin productos (existen en datos_envio pero no en ordenes)
+        ordenes_sin_productos = set()
         for num_orden in todos_datos_envio.keys():
             if num_orden not in todas_ordenes or len(todas_ordenes[num_orden]) == 0:
                 ordenes_sin_productos.add(num_orden)
         
-        # Agrupar productos por orden (sumar cantidades)
+        # Agrupar productos por orden (sumar cantidades dentro de la misma orden)
+        # Esto es necesario porque dentro de un mismo PDF puede haber productos duplicados
         ordenes_agrupadas = {}
         for num_orden, productos in todas_ordenes.items():
             grupos = defaultdict(int)
