@@ -353,6 +353,10 @@ def normalizar_texto_sin_medidas(texto):
     
     texto = texto.lower()
     
+    # 🔥 NUEVO: Eliminar acentos
+    texto = texto.replace('á', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
+    texto = texto.replace('ñ', 'n')
+    
     # Eliminar medidas
     texto = re.sub(r'\d+\s*(cm|mm|mt|m)?\s*(de\s*(alto|ancho|largo))?', ' ', texto)
     texto = re.sub(r'\b(alto|ancho|largo|cm|mm|mt)\b', ' ', texto)
@@ -362,10 +366,8 @@ def normalizar_texto_sin_medidas(texto):
     texto = re.sub(r'\s+', ' ', texto)
     texto = texto.strip()
     
-    # 🔥 Después de normalizar, agregar "talla" antes de los talles sueltos
-    # Pero solo si no hay "talla" ya presente
+    # Agregar "talla" antes de los talles sueltos
     if 'talla' not in texto:
-        # Buscar talles sueltos (s, m, l, xl, xs) como palabras independientes
         texto = re.sub(r'\b(xs|s|m|l|xl)\b', r'talla \1', texto)
     
     return texto
@@ -593,6 +595,10 @@ def resolver(nombre):
         # Verificar si el modelo contiene el sufijo (solo funda)
         es_funda_modelo = "(solo funda)" in modelo.lower()
         
+        # Debug para Bahía
+        if "bahia" in modelo_norm:
+            print(f"    🟢 Comparando con Bahía: {modelo_norm} {color_norm} {talle_norm}")
+        
         # --- VERIFICACIÓN DE MODELO (MUCHO MÁS ESTRICTA) ---
         # Extraer la palabra principal del modelo (sin el sufijo de funda)
         modelo_para_verificar = modelo_norm.replace('(solo funda)', '').strip()
@@ -601,7 +607,6 @@ def resolver(nombre):
         
         # Verificar si la palabra principal del modelo está en el texto
         if modelo_principal and modelo_principal not in key_sin_medidas:
-            # Si no está la palabra principal, descartar completamente
             continue
         
         # Verificar si hay al menos una palabra completa del modelo
@@ -612,7 +617,6 @@ def resolver(nombre):
                 break
         
         if not modelo_encontrado and palabras_modelo:
-            # Si ninguna palabra significativa del modelo aparece, descartar
             continue
         
         # Palabras clave del producto (sin medidas)
@@ -648,7 +652,7 @@ def resolver(nombre):
             elif "doble faz" in key_sin_medidas:
                 puntaje += 3
         
-        # FUNDA - DETECCIÓN MEJORADA
+        # FUNDA - DETECCIÓN MEJORADA (con prioridad a productos completos)
         texto_habla_de_funda = ("funda" in key_sin_medidas or 
                                "solo funda" in key_sin_medidas or 
                                "repuesto" in key_sin_medidas)
@@ -662,7 +666,7 @@ def resolver(nombre):
             if es_funda_modelo:
                 puntaje -= 30
             elif "completa" in key_sin_medidas:
-                puntaje += 5
+                puntaje += 15  # Aumentado de 5 a 15 para priorizar completas
         
         # BONUS POR MODELO COMPLETO
         if modelo_para_verificar in key_sin_medidas:
@@ -672,7 +676,7 @@ def resolver(nombre):
         if color_norm and color_norm in key_sin_medidas:
             puntaje += 4
         
-        # ========== BONUS POR TALLE - MUCHO MÁS PESO ==========
+        # ========== BONUS POR TALLE ==========
         if talle_norm:
             talle_match = False
             
@@ -702,10 +706,8 @@ def resolver(nombre):
             
             # Penalizar si no hay match de talle y el texto tiene algún talle
             if not talle_match:
-                # Buscar cualquier talle en el texto
                 talles_en_texto = re.findall(r'\b(xs|s|m|l|xl|u)\b', key_original, re.IGNORECASE)
                 if talles_en_texto:
-                    # Penalización fuerte por talle incorrecto
                     puntaje -= 30
                     print(f"    ✗ Talle incorrecto: texto dice '{talles_en_texto[0]}', producto es '{talle_norm}' (-30)")
         
