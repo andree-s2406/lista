@@ -437,7 +437,7 @@ def extraer_caracteristicas(texto):
 # ══════════════════════════════════════════════════════════════════════════════
 # CATÁLOGO
 # ══════════════════════════════════════════════════════════════════════════════
-TALLE_LABELS = {"S":"Talle S","M":"Talle M","L":"Talle L","XL":"Talle XL",
+TALLE_LABELS = {"S":"Talle S","M":"Talle M","L":"Talle L","XL":"Talle XL","XXL":"Talle XXL",
                 "XS":"Talle XS","SM":"Talle S/M","LXL":"Talle L/XL","U":"Talle Único"}
 TALLE_SIZES  = {
     "VERANO":{"S":"50x50","M":"70x70","L":"90x90"},
@@ -446,7 +446,7 @@ TALLE_SIZES  = {
     "DECO":{"S":"S/M","M":"M/L","L":"L/XL"},
     "ESCALERA":{"M":"30x38","L":"40x38"},
     "NORDICA":{"M":"60x60","L":"80x80","XL":"90x90"},
-    "ROPITA":{"XS":"XS","SM":"S/M","LXL":"L/XL"},
+    "ROPITA":{"XS":"XS","SM":"S/M","LXL":"L/XL","XXL":"XXL"},
     "MANTA":{"U":"70x70"},
 }
 
@@ -1351,7 +1351,7 @@ def formatear_productos_orden(productos, resolver_func):
         # Caso especial: ROPITA
         elif cat == "ROPITA" and modelo == "Ropita":
             talle_num = {
-                "XS": "N°1", "S": "N°2", "M": "N°3", "L": "N°4", "XL": "N°5", "U": ""
+                "XS": "N°1", "S": "N°2", "M": "N°3", "L": "N°4", "XL": "N°5", "XXL": "N°6", "U": ""
             }.get(talle, talle)
             
             if talle_num:
