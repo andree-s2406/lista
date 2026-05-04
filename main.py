@@ -1086,8 +1086,8 @@ def build_excel(ordenes, catalogo, out_path, datos_envio=None):
     # =========================================================
     ws_resumen = wb.create_sheet("Resumen Productos")
     
-    # Encabezados
-    headers_resumen = ["Producto", "Modelo", "Color", "Talle", "Cantidad Total"]
+    # Encabezados (solo Producto y Cantidad)
+    headers_resumen = ["Producto", "Cantidad Total"]
     for i, header in enumerate(headers_resumen, 1):
         cell = ws_resumen.cell(row=1, column=i, value=header)
         cell.font = Font(name='Arial', bold=True, size=11, color='FFFFFF')
@@ -1096,68 +1096,52 @@ def build_excel(ordenes, catalogo, out_path, datos_envio=None):
         cell.border = bd()
     
     # Ancho de columnas
-    ws_resumen.column_dimensions['A'].width = 40
-    ws_resumen.column_dimensions['B'].width = 20
-    ws_resumen.column_dimensions['C'].width = 20
-    ws_resumen.column_dimensions['D'].width = 15
-    ws_resumen.column_dimensions['E'].width = 15
+    ws_resumen.column_dimensions['A'].width = 50  # Producto
+    ws_resumen.column_dimensions['B'].width = 15  # Cantidad
     
     # Agrupar todos los productos de todas las órdenes
     resumen = defaultdict(int)
-    productos_detalle = []
     
     for num_orden, productos in ordenes.items():
         for info, cant in productos:
             cat, modelo, color, talle = info
-            clave = (modelo, color, talle)
-            resumen[clave] += cant
-            if clave not in [p[0] for p in productos_detalle]:
-                nombre_producto = f"{modelo} {color} {talle}".strip()
-                productos_detalle.append((clave, modelo, color, talle, nombre_producto))
+            # Crear nombre del producto en formato legible
+            if color and color.strip():
+                nombre_producto = f"{modelo} {talle} {color}"
+            else:
+                nombre_producto = f"{modelo} {talle}"
+            resumen[nombre_producto] += cant
     
-    # Ordenar por cantidad
-    productos_ordenados = sorted(
-        [(clave, modelo, color, talle, nombre, resumen[clave]) 
-         for (clave, modelo, color, talle, nombre) in productos_detalle],
-        key=lambda x: -x[5]
-    )
+    # Ordenar por cantidad (de mayor a menor)
+    productos_ordenados = sorted(resumen.items(), key=lambda x: -x[1])
     
     # Escribir datos
-    for row, (clave, modelo, color, talle, nombre, cantidad) in enumerate(productos_ordenados, 2):
-        cell_a = ws_resumen.cell(row=row, column=1, value=nombre)
+    for row, (nombre_producto, cantidad) in enumerate(productos_ordenados, 2):
+        # Columna A: Producto
+        cell_a = ws_resumen.cell(row=row, column=1, value=nombre_producto)
         cell_a.font = Font(name='Arial', size=10)
         cell_a.alignment = Alignment(horizontal='left', vertical='center')
         cell_a.border = bd()
         
-        cell_b = ws_resumen.cell(row=row, column=2, value=modelo)
-        cell_b.font = Font(name='Arial', size=10)
-        cell_b.alignment = Alignment(horizontal='left', vertical='center')
+        # Columna B: Cantidad
+        cell_b = ws_resumen.cell(row=row, column=2, value=cantidad)
+        cell_b.font = Font(name='Arial', bold=True, size=11)
+        cell_b.fill = PatternFill("solid", fgColor="E9F0FA")
+        cell_b.alignment = Alignment(horizontal='center', vertical='center')
         cell_b.border = bd()
         
-        cell_c = ws_resumen.cell(row=row, column=3, value=color)
-        cell_c.font = Font(name='Arial', size=10)
-        cell_c.alignment = Alignment(horizontal='left', vertical='center')
-        cell_c.border = bd()
-        
-        cell_d = ws_resumen.cell(row=row, column=4, value=talle)
-        cell_d.font = Font(name='Arial', size=10)
-        cell_d.alignment = Alignment(horizontal='center', vertical='center')
-        cell_d.border = bd()
-        
-        cell_e = ws_resumen.cell(row=row, column=5, value=cantidad)
-        cell_e.font = Font(name='Arial', bold=True, size=11)
-        cell_e.fill = PatternFill("solid", fgColor="E9F0FA")
-        cell_e.alignment = Alignment(horizontal='center', vertical='center')
-        cell_e.border = bd()
+        # Color de fondo alternado para mejor legibilidad
+        if row % 2 == 0:
+            cell_a.fill = PatternFill("solid", fgColor="F9F9F9")
     
     # Fila de total
     total_row = len(productos_ordenados) + 2
-    cell_total = ws_resumen.cell(row=total_row, column=4, value="TOTAL:")
+    cell_total = ws_resumen.cell(row=total_row, column=1, value="TOTAL:")
     cell_total.font = Font(name='Arial', bold=True, size=11)
     cell_total.alignment = Alignment(horizontal='right', vertical='center')
     cell_total.border = bd()
     
-    cell_total_num = ws_resumen.cell(row=total_row, column=5, value=f"=SUM(E2:E{total_row-1})")
+    cell_total_num = ws_resumen.cell(row=total_row, column=2, value=f"=SUM(B2:B{total_row-1})")
     cell_total_num.font = Font(name='Arial', bold=True, size=11)
     cell_total_num.fill = PatternFill("solid", fgColor="E2E8F0")
     cell_total_num.alignment = Alignment(horizontal='center', vertical='center')
