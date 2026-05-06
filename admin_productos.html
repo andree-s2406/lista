@@ -270,6 +270,14 @@ tr:hover td{background:rgba(255,255,255,.018)}
   transition:all .25s;pointer-events:none;
 }
 .toast.show{opacity:1;transform:translateY(0)}
+#modalProducto button {
+  height: 42px;
+  font-size: 14px;
+  line-height: 1;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 </style>
 </head>
 <body>
@@ -428,8 +436,7 @@ tr:hover td{background:rgba(255,255,255,.018)}
 
       <div style="display:flex; gap:10px; justify-content:flex-end;">
         <button class="btn-volver" onclick="cerrarModal()" style="padding:10px 20px;">Cancelar</button>
-        <button class="btn-agregar" onclick="guardarProducto()" style="padding:10px 25px;">✅ Guardar</button>
-      </div>
+        <button class="btn-agregar" onclick="guardarProducto()" style="padding:10px 20px;">✅ Guardar</button>  
     </div>
   </div>
 
@@ -593,11 +600,8 @@ function editarProducto(index) {
   document.getElementById('campoModelo').value = p.modelo.replace(' (solo funda)', '');
   document.getElementById('campoColor').value = p.color;
   
-  let textoBase = p.texto;
-  textoBase = textoBase.replace(` ${p.talle.toLowerCase()}`, '');
-  textoBase = textoBase.replace(` (talla ${p.talle.toLowerCase()}`, '');
-  textoBase = textoBase.replace(' solo funda de repuesto', '');
-  document.getElementById('campoTexto').value = textoBase;
+  // NO LIMPIAR NADA - Mostrar el texto tal cual está
+  document.getElementById('campoTexto').value = p.texto;
   
   const esFunda = p.modelo.includes('(solo funda)');
   document.getElementById('tipoCompleto').checked = !esFunda;
@@ -714,10 +718,6 @@ async function guardarProducto() {
     
     console.log('📊 Mapeo actual:');
     console.log('  - Categorías existentes:', Object.keys(mapeo));
-    if (Object.keys(mapeo).length > 0) {
-      console.log('  - Primera categoría:', Object.keys(mapeo)[0]);
-      console.log('  - Modelos en primera categoría:', Object.keys(mapeo[Object.keys(mapeo)[0]] || {}));
-    }
 
     // ── LOG 3: Verificar categoría ────────────────────────────────────────
     console.log('%c🏷️ Verificando categoría...', 'background: #7c3aed; color: white; padding: 2px 5px;');
@@ -726,7 +726,6 @@ async function guardarProducto() {
       mapeo[categoria] = {};
     } else {
       console.log(`✅ Categoría "${categoria}" YA existe en el mapeo`);
-      console.log('  - Modelos existentes en esta categoría:', Object.keys(mapeo[categoria]));
     }
 
     // ── LOG 4: Si es edición, eliminar producto viejo ─────────────────────
@@ -761,6 +760,12 @@ async function guardarProducto() {
         if (mapeo[oldCat][oldModelo].length === 0) {
           delete mapeo[oldCat][oldModelo];
           console.log(`  🗑️ Modelo "${oldModelo}" eliminado (sin variantes)`);
+        }
+        
+        // Si la categoría original quedó vacía, eliminarla
+        if (Object.keys(mapeo[oldCat]).length === 0) {
+          delete mapeo[oldCat];
+          console.log(`  🗑️ Categoría "${oldCat}" eliminada (vacía)`);
         }
       } else {
         console.log('  ⚠️ No se encontró el producto a eliminar');
@@ -798,54 +803,103 @@ async function guardarProducto() {
           
           let textoCompleto = textoBase;
           
-          // Insertar color
+          // Insertar color después de la primera coma
           if (color) {
-            const despuesDeMedidas = textoCompleto.indexOf(',');
-            if (despuesDeMedidas !== -1) {
-              textoCompleto = textoCompleto.substring(0, despuesDeMedidas + 1) + 
-                             ` ${color},` + 
-                             textoCompleto.substring(despuesDeMedidas + 1);
+            const posPrimeraComa = textoCompleto.indexOf(',');
+            if (posPrimeraComa !== -1) {
+              // Verificar si el color ya está presente después de la coma
+              const despuesDeComa = textoCompleto.substring(posPrimeraComa + 1).trim();
+              const colorYaExiste = despuesDeComa.toLowerCase().startsWith(color.toLowerCase());
+              
+              if (!colorYaExiste) {
+                textoCompleto = textoCompleto.substring(0, posPrimeraComa + 1) + 
+                               ` ${color},` + 
+                               textoCompleto.substring(posPrimeraComa + 1);
+              }
             } else {
-              textoCompleto = `${textoCompleto}, ${color}`;
+              // No hay coma, verificar si el color ya está en el texto
+              if (!textoCompleto.toLowerCase().includes(color.toLowerCase())) {
+                textoCompleto = `${textoCompleto}, ${color}`;
+              }
             }
           }
           
-          // Insertar talle
+          // Insertar talle - SOLO si no existe ya el talle correcto
           if (talle !== 'U') {
-            const posTalla = textoCompleto.toLowerCase().indexOf('talla');
-            if (posTalla !== -1) {
-              const antes = textoCompleto.substring(0, posTalla + 5);
-              const despues = textoCompleto.substring(posTalla + 5);
-              textoCompleto = `${antes} ${talle}${despues}`;
-            } else {
-              textoCompleto = `${textoCompleto} (talla ${talle}`;
+            // Verificar si ya existe "talla X" (con el talle correcto) en el texto
+            const tieneTalleCorrecto = new RegExp(`talla\\s+${talle}`, 'i').test(textoCompleto);
+            
+            if (!tieneTalleCorrecto) {
+              // Buscar si hay alguna "talla" sin el talle correcto
+              const posTalla = textoCompleto.toLowerCase().indexOf('talla');
+              
+              if (posTalla !== -1) {
+                // Ya hay una palabra "talla" - ver si tiene un talle después
+                const antesTalla = textoCompleto.substring(0, posTalla + 5);
+                const despuesTalla = textoCompleto.substring(posTalla + 5);
+                const talleExistente = despuesTalla.trim().match(/^[a-zA-Z0-9]+/);
+                
+                if (talleExistente) {
+                  // Reemplazar el talle existente
+                  textoCompleto = antesTalla + despuesTalla.replace(/^[a-zA-Z0-9]+/, talle);
+                } else {
+                  // Hay "talla" pero sin talle, agregarlo
+                  textoCompleto = antesTalla + ` ${talle}` + despuesTalla;
+                }
+              } else {
+                // No existe "talla" en el texto, agregarlo
+                textoCompleto = `${textoCompleto} (talla ${talle}`;
+              }
             }
           }
           
-          // Agregar indicador de funda
+          // Agregar indicador de funda si corresponde
           if (tipo === 'funda' && !textoCompleto.toLowerCase().includes('solo funda')) {
-            textoCompleto = `${textoCompleto}, solo funda de repuesto`;
+            if (!textoCompleto.toLowerCase().includes('funda de repuesto')) {
+              textoCompleto = `${textoCompleto}, solo funda de repuesto`;
+            }
           }
 
+          // Limpiar espacios múltiples
           textoCompleto = textoCompleto.replace(/\s+/g, ' ').trim();
           
           console.log(`      📝 Texto generado: "${textoCompleto}"`);
 
-          mapeo[categoria][modeloConTipo].push({
-            texto: textoCompleto,
-            color: color,
-            talle: talle
-          });
-          productosAgregados++;
+          // Verificar si ya existe este producto exacto
+          const existe = mapeo[categoria][modeloConTipo].some(item => 
+            item.texto === textoCompleto && 
+            item.color === color && 
+            item.talle === talle
+          );
+          
+          if (!existe) {
+            mapeo[categoria][modeloConTipo].push({
+              texto: textoCompleto,
+              color: color,
+              talle: talle
+            });
+            productosAgregados++;
+          } else {
+            console.log(`      ⚠️ Producto ya existe, no se agrega`);
+          }
         }
       }
+      
+      // Si el modelo quedó sin items, eliminarlo
+      if (mapeo[categoria][modeloConTipo].length === 0) {
+        delete mapeo[categoria][modeloConTipo];
+      }
+    }
+    
+    // Si la categoría quedó vacía, eliminarla
+    if (Object.keys(mapeo[categoria]).length === 0) {
+      delete mapeo[categoria];
     }
 
     // ── LOG 6: Ver antes de guardar ────────────────────────────────────────
     console.log('%c💾 Preparando para guardar...', 'background: #ef4444; color: white; padding: 2px 5px;');
     console.log('  - Total productos a guardar:', productosAgregados);
     console.log('  - Categorías finales:', Object.keys(mapeo));
-    console.log('  - Modelos en', categoria, ':', Object.keys(mapeo[categoria] || {}));
 
     // ── LOG 7: Enviar a la BD ──────────────────────────────────────────────
     const jsonToSend = JSON.stringify(mapeo, null, 2);
@@ -861,8 +915,8 @@ async function guardarProducto() {
       console.log('%c✅ GUARDADO EXITOSO', 'background: #22c55e; color: white; padding: 2px 5px;');
       toast(`✅ ${productosAgregados} producto(s) guardado(s)`);
       cerrarModal();
-      await cargarProductos(); // Recargar productos
-      await cargarCategoriasSelect(); // Recargar categorías por si acaso
+      await cargarProductos();
+      await cargarCategoriasSelect();
     } else {
       const errorData = await guardarResp.json();
       console.error('%c❌ ERROR EN GUARDADO', 'background: #dc2626; color: white; padding: 2px 5px;');
@@ -878,6 +932,7 @@ async function guardarProducto() {
     toast('❌ Error: ' + e.message);
   }
 }
+
 // ── Categorías ─────────────────────────────────────────────────────────────
 async function cargarCategorias() {
   try {
