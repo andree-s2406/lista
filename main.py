@@ -2,9 +2,17 @@ import os, re, json, sys, subprocess, tempfile, threading, webbrowser
 from collections import defaultdict
 from pathlib import Path
 from datetime import datetime
-
+import time
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.keys import Keys
 # ── Auto-instalar dependencias ────────────────────────────────────────────────
-for pkg in ("pdfplumber", "openpyxl", "flask", "pymupdf", "psycopg2-binary", "sqlalchemy"):
+for pkg in ("pdfplumber", "openpyxl", "flask", "pymupdf", "psycopg2-binary", "sqlalchemy", "selenium", "webdriver-manager"):
     try:
         __import__(pkg if pkg != "flask" else "flask")
     except ImportError:
@@ -1353,25 +1361,42 @@ def formatear_productos_orden(productos, resolver_func):
     
     return lineas
 
+def detectar_tipo_pdf(texto_pagina):
+    texto_lower = texto_pagina.lower()
+    
+    # Detectar si tiene "seguimiento"
+    tiene_seguimiento = "seguimiento" in texto_lower
+    
+    # Detectar si tiene "id: #" (con o sin espacio, mayúscula o minúscula)
+    tiene_id = "id:" in texto_lower and "#" in texto_lower
+    
+    # Contar números de orden
+    matches = re.findall(r'#(\d+)', texto_pagina)
+    
+    print(f"  🔍 DEBUG: tiene_seguimiento={tiene_seguimiento}, tiene_id={tiene_id}, matches={len(matches)}")
+    
+    if tiene_seguimiento and not tiene_id:
+        return "ANDREANI_VIEJO"
+    elif tiene_seguimiento and tiene_id:
+        return "ANDREANI_NUEVO"
+    elif len(matches) >= 2 and not tiene_seguimiento:
+        return "EPICK"
+    else:
+        return "DEFAULT"
+
 def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_paths, output_path):
-    """
-    Añade texto con productos justo debajo del último número de seguimiento
-    Recibe una lista de paths de PDFs de pedidos
-    """
-    # Extraer órdenes de TODOS los PDFs de pedidos (SIN DUPLICADOS)
+    # Extraer órdenes
     todas_ordenes = {}
     ordenes_procesadas = set()
     
     for pedido_path in pdf_pedidos_paths:
         ordenes = extraer_ordenes_con_fitz(pedido_path)
-        # Combinar órdenes (solo si no se procesó antes)
         for num_orden, productos in ordenes.items():
             if num_orden not in ordenes_procesadas:
                 ordenes_procesadas.add(num_orden)
                 todas_ordenes[num_orden] = productos
-            # Si ya existe, ignoramos (no sumamos)
     
-    # Agrupar productos por orden (sumar cantidades dentro de la misma orden)
+    # Agrupar productos
     ordenes_agrupadas = {}
     for num_orden, productos in todas_ordenes.items():
         grupos = defaultdict(int)
@@ -1379,82 +1404,73 @@ def anotar_pdf_con_productos(pdf_etiquetas_path, pdf_pedidos_paths, output_path)
             grupos[info] += cant
         ordenes_agrupadas[num_orden] = [(info, cant) for info, cant in grupos.items()]
     
-    # Abrir PDF de etiquetas
     doc = fitz.open(pdf_etiquetas_path)
-    
-    # 1 cm en puntos
     UN_CM = 28.35
     
     for pagina in doc:
-        text = pagina.get_text()
-        match = re.search(r"#(\d+)", text)
-        if match:
-            orden = match.group(1)
-            if orden in ordenes_agrupadas:
-                productos = ordenes_agrupadas[orden]
-                lineas = formatear_productos_orden(productos, resolver)
-                
-                # Buscar el ÚLTIMO número de seguimiento
+        texto_pagina = pagina.get_text()
+        tipo = detectar_tipo_pdf(texto_pagina)
+        
+        match = re.search(r'#(\d+)', texto_pagina)
+        if not match:
+            continue
+        orden = match.group(1)
+        
+        if orden in ordenes_agrupadas:
+            productos = ordenes_agrupadas[orden]
+            lineas = formatear_productos_orden(productos, resolver)
+            
+            if tipo == "ANDREANI":
                 palabras = pagina.get_text("words")
                 seguimientos = [w for w in palabras if "seguimiento" in w[4].lower()]
                 seguimientos.sort(key=lambda w: w[3])
-                
-                y_pos = None
-                
                 if len(seguimientos) >= 2:
-                    segundo_seguimiento = seguimientos[1]
-                    y_pos = segundo_seguimiento[3] + UN_CM
-                elif len(seguimientos) == 1:
-                    importantes = [w for w in palabras if "importante" in w[4].lower()]
-                    if importantes:
-                        importantes.sort(key=lambda w: w[3])
-                        y_pos = importantes[-1][3] + UN_CM + 50
-                
-                if y_pos is None:
+                    y_pos = seguimientos[1][3] + UN_CM
+                else:
                     y_pos = pagina.rect.height - 80
-                
-                # Escribir texto
                 tam_fuente = 16
-                for i, linea in enumerate(lineas):
-                    punto = fitz.Point(20, y_pos + (i * 18))
-                    pagina.insert_text(punto, linea, fontsize=tam_fuente,
-                                     fontname="helv", color=(0,0,0))
+                espaciado = 18
+                margen = 20
+            else:  # DEFAULT (EPICK se maneja en anotar_pdf_reorganizado)
+                y_pos = pagina.rect.height - 60
+                tam_fuente = 10
+                espaciado = 12
+                margen = 20
+            
+            for i, linea in enumerate(lineas):
+                punto = fitz.Point(margen, y_pos + (i * espaciado))
+                pagina.insert_text(punto, linea, fontsize=tam_fuente, fontname="helv", color=(0,0,0))
     
     doc.save(output_path)
     doc.close()
     return ordenes_agrupadas
 
 def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3):
-    """
-    Reorganiza un PDF anotado para poner múltiples etiquetas por página horizontal
-    Con 0.5 cm de espacio al inicio de la PRIMER COMADA DE CADA HOJA
-    """
     doc = fitz.open(pdf_anotado_path)
     output = fitz.open()
     
-    # Configuración de página horizontal (A4 landscape)
     page_width_mm = 297
     page_height_mm = 210
     page_width_pt = page_width_mm * 2.83465
     page_height_pt = page_height_mm * 2.83465
     
-    # Separación entre etiquetas
-    spacing_mm = 5
-    spacing_pt = spacing_mm * 2.83465
-    
-    # Margen superior para TODAS las etiquetas
     margin_top_mm = 30
     margin_top_pt = margin_top_mm * 2.83465
     
-    # ESPACIO EXTRA PARA LA PRIMER COMADA DE CADA HOJA (0.5 cm)
-    primer_comanda_extra_mm = 5  # 0.5 cm
-    primer_comanda_extra_pt = primer_comanda_extra_mm * 2.83465
+    separacion_mm = 4
+    separacion_pt = separacion_mm * 2.83465 
     
     total_paginas = len(doc)
     paginas_necesarias = (total_paginas + etiquetas_por_pagina - 1) // etiquetas_por_pagina
     
     print(f"\n📄 Reorganizando {total_paginas} etiquetas en {paginas_necesarias} páginas...")
-    print(f"   📏 Cada primera comanda de cada hoja con +{primer_comanda_extra_mm} mm de margen izquierdo")
+    print(f"   {etiquetas_por_pagina} etiquetas por página")
+    print(f"   Separación: {separacion_pt}pt (~{separacion_pt/2.83:.1f}mm)")
+    
+    # Calcular ancho con separación
+    margen_total = 40
+    ancho_total_etiquetas = page_width_pt - margen_total - (separacion_pt * (etiquetas_por_pagina - 1))
+    ancho_etiqueta_pt = ancho_total_etiquetas / etiquetas_por_pagina
     
     for out_page_idx in range(paginas_necesarias):
         page = output.new_page(width=page_width_pt, height=page_height_pt)
@@ -1462,17 +1478,10 @@ def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3)
         start_idx = out_page_idx * etiquetas_por_pagina
         end_idx = min(start_idx + etiquetas_por_pagina, total_paginas)
         
-        current_x_pt = 0
-        
-        # EN CADA HOJA, la PRIMER COMADA tiene espacio extra
-        current_x_pt += primer_comanda_extra_pt
-        print(f"   📌 Página {out_page_idx + 1}: primera comanda con +{primer_comanda_extra_mm} mm de margen izquierdo")
-        
         for i in range(start_idx, end_idx):
             src_page = doc[i]
             src_rect = src_page.rect
             
-            # Obtener el contenido real
             text_dict = src_page.get_text("dict")
             blocks = text_dict.get("blocks", [])
             
@@ -1488,27 +1497,99 @@ def reorganizar_etiquetas(pdf_anotado_path, output_path, etiquetas_por_pagina=3)
             if content_rect is None or content_rect.is_empty:
                 content_rect = src_rect
             
-            # Escala 1:1
-            scaled_width_pt = content_rect.width
-            scaled_height_pt = content_rect.height
+            escala = ancho_etiqueta_pt / content_rect.width
+            scaled_width_pt = content_rect.width * escala
+            scaled_height_pt = content_rect.height * escala
+            
+            col_idx = i - start_idx
+            # Posición X con separación
+            x_pos = 20 + (col_idx * (ancho_etiqueta_pt + separacion_pt))
             
             target_rect = fitz.Rect(
-                current_x_pt,
+                x_pos,
                 margin_top_pt,
-                current_x_pt + scaled_width_pt,
+                x_pos + scaled_width_pt,
                 margin_top_pt + scaled_height_pt
             )
             
             page.show_pdf_page(target_rect, doc, i, clip=content_rect)
-            
-            # Actualizar posición para la siguiente comanda
-            current_x_pt += scaled_width_pt + spacing_pt
     
     output.save(output_path)
     output.close()
     doc.close()
+    print(f"✅ PDF reorganizado guardado en: {output_path}")
     return output_path
 
+def agrandar_y_anotar_universal(pdf_path, output_path, pdf_pedidos_paths):
+    """
+    Agranda cada página del PDF, anota los productos en el espacio nuevo
+    """
+    # Extraer órdenes de los pedidos
+    todas_ordenes = {}
+    ordenes_procesadas = set()
+    
+    for pedido_path in pdf_pedidos_paths:
+        ordenes = extraer_ordenes_con_fitz(pedido_path)
+        for num_orden, productos in ordenes.items():
+            if num_orden not in ordenes_procesadas:
+                ordenes_procesadas.add(num_orden)
+                todas_ordenes[num_orden] = productos
+    
+    # Agrupar productos
+    ordenes_agrupadas = {}
+    for num_orden, productos in todas_ordenes.items():
+        grupos = defaultdict(int)
+        for info, cant in productos:
+            grupos[info] += cant
+        ordenes_agrupadas[num_orden] = [(info, cant) for info, cant in grupos.items()]
+    
+    print(f"📋 Órdenes a anotar: {list(ordenes_agrupadas.keys())}")
+    
+    # Abrir PDF original
+    doc = fitz.open(pdf_path)
+    output_doc = fitz.open()
+    
+    ESPACIO_EXTRA = 120  # 120pt de espacio extra abajo (~4.2cm)
+    
+    for pagina_idx, pagina in enumerate(doc):
+        print(f"  Procesando página {pagina_idx+1}...")
+        
+        # Crear página nueva más alta
+        rect_original = pagina.rect
+        nueva_altura = rect_original.height + ESPACIO_EXTRA
+        nueva_pagina = output_doc.new_page(width=rect_original.width, height=nueva_altura)
+        
+        # Copiar el contenido original en la parte superior
+        nueva_pagina.show_pdf_page(rect_original, doc, pagina.number)
+        
+        # Extraer número de orden
+        texto = pagina.get_text()
+        
+        # Buscar número de orden en diferentes formatos
+        match = re.search(r'#(\d+)', texto)
+        if match:
+            orden = match.group(1)
+            if orden in ordenes_agrupadas:
+                lineas = formatear_productos_orden(ordenes_agrupadas[orden], resolver)
+                
+                # Posición: abajo del todo
+                y_start = rect_original.height + 1
+                
+                print(f"    Orden #{orden}: {len(lineas)} productos")
+                
+                for i, linea in enumerate(lineas):
+                    punto = fitz.Point(20, y_start + (i * 12))
+                    nueva_pagina.insert_text(punto, linea, fontsize=14, fontname="helv", color=(0,0,0))
+            else:
+                print(f"    ⚠️ Orden #{orden} no encontrada en pedidos")
+        else:
+            print(f"    ⚠️ No se encontró número de orden en página {pagina_idx+1}")
+    
+    output_doc.save(output_path)
+    output_doc.close()
+    doc.close()
+    print(f"✅ PDF agrandado y anotado guardado en: {output_path}")
+    return ordenes_agrupadas
 # ══════════════════════════════════════════════════════════════════════════════
 # FLASK ROUTES
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1698,36 +1779,61 @@ def anotar():
     if "pedidos" not in request.files or "etiquetas" not in request.files:
         return jsonify({"error": "Se requieren dos archivos: pedidos PDF y etiquetas PDF"}), 400
     
-    pedidos_files = request.files.getlist("pedidos")  # Obtener TODOS los archivos de pedidos
+    pedidos_files = request.files.getlist("pedidos")
     etiquetas_file = request.files["etiquetas"]
     
-    # Crear archivos temporales para cada PDF de pedidos
+    # Crear archivos temporales para pedidos
     tmp_pedidos_paths = []
     for pedidos_file in pedidos_files:
         with tempfile.NamedTemporaryFile(suffix="_pedidos.pdf", delete=False) as tmp_pedidos:
             pedidos_file.save(tmp_pedidos.name)
             tmp_pedidos_paths.append(tmp_pedidos.name)
     
+    # Archivo temporal para etiquetas
     with tempfile.NamedTemporaryFile(suffix="_etiquetas.pdf", delete=False) as tmp_etiquetas:
         etiquetas_file.save(tmp_etiquetas.name)
         tmp_etiquetas_path = tmp_etiquetas.name
     
-    anotado_path = tmp_etiquetas_path.replace("_etiquetas", "_anotado")
+    # Archivos temporales para procesos
+    with tempfile.NamedTemporaryFile(suffix="_anotado.pdf", delete=False) as tmp_anotado:
+        tmp_anotado_path = tmp_anotado.name
+    
     final_path = tmp_etiquetas_path.replace("_etiquetas", "_final")
     
     try:
-        print(f"📝 PASO 1: Anotando PDF con productos (usando {len(tmp_pedidos_paths)} archivos de pedidos)...")
-        anotar_pdf_con_productos(tmp_etiquetas_path, tmp_pedidos_paths, anotado_path)
+        # Verificar qué tipo de PDF es
+        doc_test = fitz.open(tmp_etiquetas_path)
+        texto_test = doc_test[0].get_text()
+        doc_test.close()
         
-        print("📐 PASO 2: Reorganizando PDF (3 etiquetas por página)...")
-        reorganizar_etiquetas(anotado_path, final_path, etiquetas_por_pagina=3)
+        tipo = detectar_tipo_pdf(texto_test)
+        print(f"📌 Tipo de PDF detectado: {tipo}")
+        
+        if tipo == "ANDREANI_VIEJO":
+            # Andreani viejo: anotar normal, luego reorganizar
+            print("📝 PASO 1: Anotando PDF con productos...")
+            anotar_pdf_con_productos(tmp_etiquetas_path, tmp_pedidos_paths, final_path)
+            
+            print("📐 PASO 2: Reorganizando PDF (3 etiquetas por página)...")
+            reorganizar_etiquetas(final_path, final_path, etiquetas_por_pagina=3)
+            
+        else:
+            # ANDREANI_NUEVO o EPICK: agrandar, anotar, reorganizar
+            print("📏 PASO 1: Agrandando etiquetas y anotando productos...")
+            agrandar_y_anotar_universal(tmp_etiquetas_path, tmp_anotado_path, tmp_pedidos_paths)
+            
+            print("📐 PASO 2: Reorganizando PDF (3 etiquetas por página)...")
+            reorganizar_etiquetas(tmp_anotado_path, final_path, etiquetas_por_pagina=3)
         
         print("✅ Proceso completado. Enviando PDF final...")
         return send_file(final_path, as_attachment=True, 
                         download_name=f"final_{etiquetas_file.filename}",
                         mimetype="application/pdf")
+                        
     except Exception as e:
         print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     finally:
         # Limpiar archivos temporales
@@ -1737,13 +1843,12 @@ def anotar():
                     os.unlink(p)
             except:
                 pass
-        for p in [tmp_etiquetas_path, anotado_path, final_path]:
+        for p in [tmp_etiquetas_path, tmp_anotado_path, final_path]:
             try:
                 if os.path.exists(p):
                     os.unlink(p)
             except:
                 pass
-
 @app.route("/descargar")
 def descargar():
     if not OUTPUT_XLSX.exists():
@@ -1756,6 +1861,261 @@ def descargar():
 def admin_productos():
     return send_from_directory(BASE_DIR, "admin_productos.html")
 
+
+def extraer_ordenes_desde_etiquetas(pdf_path):
+    """Extrae los números de orden del PDF de etiquetas"""
+    doc = fitz.open(pdf_path)
+    ordenes = set()
+    
+    for pagina in doc:
+        text = pagina.get_text()
+        matches = re.findall(r'#(\d+)', text)
+        for match in matches:
+            ordenes.add(match)
+    
+    doc.close()
+    return sorted(list(ordenes))
+
+def obtener_productos_tienda_nube(ordenes):
+    TIENDA_URL = os.getenv('TIENDA_NUBE_URL', '')
+    TIENDA_EMAIL = os.getenv('TIENDA_NUBE_EMAIL', '')
+    TIENDA_PASSWORD = os.getenv('TIENDA_NUBE_PASSWORD', '')
+    
+    if not TIENDA_URL or not TIENDA_EMAIL or not TIENDA_PASSWORD:
+        raise Exception("Faltan variables de entorno")
+    
+    chrome_options = Options()
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--window-size=1920,1080')
+    
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()),
+        options=chrome_options
+    )
+    
+    try:
+        print("🔐 Abriendo Tienda Nube...")
+        driver.get(f"{TIENDA_URL}/admin/login")
+        time.sleep(5)
+        
+        # PASO 1: Clic en "Ingresar con e-mail"
+        print("👆 Clic en 'Ingresar con e-mail'...")
+        try:
+            elemento = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Ingresar con e-mail')]"))
+            )
+            elemento.click()
+            print("✅ Clic hecho")
+            time.sleep(5)
+        except Exception as e:
+            print(f"⚠️ Error clic: {e}")
+            driver.save_screenshot("debug_clic.png")
+        
+        # PASO 2: Buscar TODOS los inputs y mostrar info
+        print("🔍 Buscando inputs...")
+        time.sleep(3)
+        
+        inputs = driver.find_elements(By.TAG_NAME, "input")
+        print(f"   Inputs encontrados: {len(inputs)}")
+        for i, inp in enumerate(inputs):
+            tipo = inp.get_attribute('type') or 'text'
+            nombre = inp.get_attribute('name') or ''
+            placeholder = inp.get_attribute('placeholder') or ''
+            print(f"   [{i}] type={tipo}, name={nombre}, placeholder={placeholder}")
+        
+        # PASO 3: Ingresar email (USANDO JAVASCRIPT para evitar problemas)
+        print("📧 Ingresando email...")
+        email_input = None
+        for inp in inputs:
+            tipo = inp.get_attribute('type') or ''
+            if tipo == 'email' or 'email' in tipo:
+                email_input = inp
+                break
+        
+        if not email_input:
+            # Si no encuentra por tipo, buscar por placeholder
+            for inp in inputs:
+                placeholder = (inp.get_attribute('placeholder') or '').lower()
+                if 'mail' in placeholder or 'e-mail' in placeholder:
+                    email_input = inp
+                    break
+        
+        if email_input:
+            # Usar JavaScript para setear el valor (más confiable)
+            driver.execute_script("arguments[0].value = arguments[1]", email_input, TIENDA_EMAIL)
+            print("✅ Email ingresado vía JS")
+        else:
+            raise Exception("No se encontró campo de email")
+        
+        time.sleep(2)
+        
+        # PASO 4: Ingresar contraseña
+        print("🔑 Ingresando contraseña...")
+        password_input = None
+        for inp in inputs:
+            tipo = inp.get_attribute('type') or ''
+            if tipo == 'password':
+                password_input = inp
+                break
+        
+        if password_input:
+            driver.execute_script("arguments[0].value = arguments[1]", password_input, TIENDA_PASSWORD)
+            print("✅ Contraseña ingresada vía JS")
+        else:
+            raise Exception("No se encontró campo de contraseña")
+        
+        time.sleep(2)
+        
+        # PASO 5: Clic en Ingresar
+        print("🔘 Buscando botón Ingresar...")
+        botones = driver.find_elements(By.TAG_NAME, "button")
+        for btn in botones:
+            if "ingresar" in btn.text.lower():
+                btn.click()
+                print(f"✅ Clic en: '{btn.text}'")
+                time.sleep(5)
+                break
+        else:
+            # Si no encuentra, ENTER en password
+            password_input.send_keys(Keys.RETURN)
+            print("✅ ENTER enviado")
+            time.sleep(5)
+        
+        print("✅ Login completado")
+        
+        # 2. Buscar cada orden
+        resultado = {}
+        total = len(ordenes)
+        
+        for idx, num_orden in enumerate(ordenes, 1):
+            print(f"🔍 Orden #{num_orden} ({idx}/{total})")
+            
+            try:
+                driver.get(f"{TIENDA_URL}/admin/orders/{num_orden}")
+                time.sleep(3)
+                
+                productos_texto = []
+                
+                tablas = driver.find_elements(By.TAG_NAME, "table")
+                for tabla in tablas:
+                    filas = tabla.find_elements(By.TAG_NAME, "tr")
+                    for fila in filas:
+                        celdas = fila.find_elements(By.TAG_NAME, "td")
+                        textos = [c.text.strip() for c in celdas if c.text.strip()]
+                        if len(textos) >= 2:
+                            nombre = textos[0]
+                            cant = textos[1]
+                            if nombre and nombre not in ["Producto", "Nombre", "SKU", ""]:
+                                productos_texto.append(f"{nombre} x{cant}")
+                
+                if not productos_texto:
+                    productos_texto.append(f"Orden #{num_orden}")
+                
+                resultado[num_orden] = productos_texto
+                print(f"  ✅ {len(productos_texto)} productos")
+                
+            except Exception as e:
+                print(f"  ⚠️ Error: {e}")
+                resultado[num_orden] = [f"Orden #{num_orden}"]
+        
+        return resultado
+        
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        driver.save_screenshot("debug_error.png")
+        raise
+    finally:
+        driver.quit()
+        print("🖥️ Navegador cerrado")
+
+@app.route("/anotar_auto", methods=["POST"])
+def anotar_auto():
+    """Endpoint automático: solo recibe etiquetas, busca en Tienda Nube"""
+    if "etiquetas" not in request.files:
+        return jsonify({"error": "Se requiere PDF de etiquetas"}), 400
+    
+    etiquetas_file = request.files["etiquetas"]
+    
+    with tempfile.NamedTemporaryFile(suffix="_etiquetas.pdf", delete=False) as tmp:
+        etiquetas_file.save(tmp.name)
+        tmp_etiquetas_path = tmp.name
+    
+    anotado_path = tmp_etiquetas_path.replace("_etiquetas", "_anotado")
+    final_path = tmp_etiquetas_path.replace("_etiquetas", "_final")
+    
+    try:
+        # 1. Extraer números de orden del PDF
+        print("📄 Extrayendo números de orden del PDF...")
+        ordenes = extraer_ordenes_desde_etiquetas(tmp_etiquetas_path)
+        print(f"  ✅ {len(ordenes)} órdenes encontradas: {ordenes}")
+        
+        if not ordenes:
+            return jsonify({"error": "No se encontraron números de orden en el PDF"}), 400
+        
+        # 2. Obtener productos de Tienda Nube
+        print("🔍 Obteniendo productos de Tienda Nube...")
+        productos_por_orden = obtener_productos_tienda_nube(ordenes)
+        
+        # 3. Anotar PDF
+        print("📝 Anotando PDF...")
+        doc = fitz.open(tmp_etiquetas_path)
+        UN_CM = 28.35
+        
+        for pagina in doc:
+            text = pagina.get_text()
+            match = re.search(r"#(\d+)", text)
+            if match:
+                orden = match.group(1)
+                if orden in productos_por_orden:
+                    lineas = productos_por_orden[orden]
+                    
+                    palabras = pagina.get_text("words")
+                    seguimientos = [w for w in palabras if "seguimiento" in w[4].lower()]
+                    seguimientos.sort(key=lambda w: w[3])
+                    
+                    y_pos = None
+                    if len(seguimientos) >= 2:
+                        y_pos = seguimientos[1][3] + UN_CM
+                    elif len(seguimientos) == 1:
+                        importantes = [w for w in palabras if "importante" in w[4].lower()]
+                        if importantes:
+                            importantes.sort(key=lambda w: w[3])
+                            y_pos = importantes[-1][3] + UN_CM + 50
+                    
+                    if y_pos is None:
+                        y_pos = pagina.rect.height - 80
+                    
+                    tam_fuente = 16
+                    for i, linea in enumerate(lineas):
+                        punto = fitz.Point(20, y_pos + (i * 18))
+                        pagina.insert_text(punto, linea, fontsize=tam_fuente,
+                                         fontname="helv", color=(0,0,0))
+        
+        doc.save(anotado_path)
+        doc.close()
+        
+        # 4. Reorganizar
+        print("📐 Reorganizando PDF...")
+        reorganizar_etiquetas(anotado_path, final_path, etiquetas_por_pagina=3)
+        
+        # 5. Enviar
+        return send_file(final_path, as_attachment=True,
+                        download_name=f"etiquetas_final.pdf",
+                        mimetype="application/pdf")
+        
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        for p in [tmp_etiquetas_path, anotado_path, final_path]:
+            try:
+                if os.path.exists(p):
+                    os.unlink(p)
+            except:
+                pass
 if __name__ == "__main__":
     port = 5173
     url  = f"http://localhost:{port}"
