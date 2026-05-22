@@ -3,16 +3,8 @@ from collections import defaultdict
 from pathlib import Path
 from datetime import datetime
 import time
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.keys import Keys
 # ── Auto-instalar dependencias ────────────────────────────────────────────────
-for pkg in ("pdfplumber", "openpyxl", "flask", "pymupdf", "psycopg2-binary", "sqlalchemy", "selenium", "webdriver-manager"):
+for pkg in ("pdfplumber", "openpyxl", "flask", "pymupdf", "psycopg2-binary", "sqlalchemy"):
     try:
         __import__(pkg if pkg != "flask" else "flask")
     except ImportError:
