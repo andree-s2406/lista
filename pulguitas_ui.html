@@ -270,6 +270,91 @@ tr:hover td{background:rgba(255,255,255,.018)}
 
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-thumb{background:#2e2b38;border-radius:3px}
+
+/* ── Panel para anotar solo con etiquetas ── */
+.panel-unico {
+  grid-column: 1 / -1;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* ── Modal de progreso ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.92);
+  z-index: 2000;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal-progreso {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 30px;
+  width: 90%;
+  max-width: 500px;
+  text-align: center;
+}
+
+.modal-progreso h3 {
+  color: var(--text);
+  margin-bottom: 10px;
+  font-size: 18px;
+}
+
+.modal-progreso .progreso-status {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+
+.modal-progreso .progreso-orden {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.modal-progreso .spinner-grande {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(181,123,238,.2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.modal-progreso .btn-cancelar-auto {
+  background: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 15px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.modal-progreso .btn-cancelar-auto:hover {
+  background: rgba(248,113,113,.1);
+}
 </style>
 </head>
 <body>
@@ -284,58 +369,56 @@ tr:hover td{background:rgba(255,255,255,.018)}
     </a>
   </header>
 
-  <!-- Top panels: 3 -->
   <div class="panels">
-    <!-- Panel 1: PDF Pedidos (para analizar) - MÚLTIPLE -->
-    <div class="card">
-      <div class="card-title"><span>📄</span> 1. Pedidos (PDF)</div>
-      <div class="drop" id="dzPedidos">
-        <input type="file" id="pedidosIn" accept=".pdf" multiple>
-        <div class="drop-icon">📦</div>
-        <div class="drop-hint">PDF con órdenes <strong>(para análisis)</strong><br>Podés seleccionar múltiples archivos</div>
-        <div class="drop-name" id="dzPedidosName"></div>
-      </div>
-      <div id="listaPedidos" class="lista-archivos"></div>
-      <div class="botones-lista">
-        <button class="btn-xs" onclick="limpiarTodosPedidos()">🗑️ Limpiar todos</button>
-        <button class="btn-xs" onclick="verListaArchivos()">📋 Ver lista</button>
-      </div>
-      <div class="field-row">
-        <span class="field-lbl">Excel:</span>
-        <input class="field-in" id="outName" type="text" value="resumen_pedidos.xlsx">
-      </div>
+  <!-- Panel 1: PDF Pedidos (para analizar) - MÚLTIPLE -->
+  <div class="card">
+    <div class="card-title"><span>📄</span> 1. Pedidos (PDF)</div>
+    <div class="drop" id="dzPedidos">
+      <input type="file" id="pedidosIn" accept=".pdf" multiple>
+      <div class="drop-icon">📦</div>
+      <div class="drop-hint">PDF con órdenes <strong>(para análisis)</strong><br>Podés seleccionar múltiples archivos</div>
+      <div class="drop-name" id="dzPedidosName"></div>
     </div>
-
-    <!-- Panel 2: PDF Etiquetas (para anotar) -->
-    <div class="card">
-      <div class="card-title"><span>🏷️</span> 2. Etiquetas (PDF)</div>
-      <div class="drop" id="dzEtiquetas">
-        <input type="file" id="etiquetasIn" accept=".pdf">
-        <div class="drop-icon">📬</div>
-        <div class="drop-hint">PDF con etiquetas <strong>(para anotar)</strong></div>
-        <div class="drop-name" id="dzEtiquetasName"></div>
-      </div>
-      <div class="field-row">
-        <span class="field-lbl">Se anotará:</span>
-        <input class="field-in" id="outputName" type="text" value="etiquetas_anotadas.pdf" readonly style="background:#1a1722">
-      </div>
+    <div id="listaPedidos" class="lista-archivos"></div>
+    <div class="botones-lista">
+      <button class="btn-xs" onclick="limpiarTodosPedidos()">🗑️ Limpiar todos</button>
+      <button class="btn-xs" onclick="verListaArchivos()">📋 Ver lista</button>
     </div>
+    <div class="field-row">
+      <span class="field-lbl">Excel:</span>
+      <input class="field-in" id="outName" type="text" value="resumen_pedidos.xlsx">
+    </div>
+  </div>
 
-    <!-- Panel 3: Info rápida -->
-    <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;">
-      <div>
-        <div class="card-title"><span>ℹ️</span> Cómo usar</div>
-        <div style="font-size:12.5px;color:var(--muted);line-height:1.9">
-          <b style="color:var(--text)">1.</b> Subí uno o más PDFs de pedidos (panel 1)<br>
-          <b style="color:var(--text)">2.</b> Subí el PDF de etiquetas (panel 2)<br>
-          <b style="color:var(--text)">3.</b> Usá los botones de abajo<br><br>
-          <span style="color:#6d5ea0;font-size:11px">
-            💡 Para agregar o editar productos usá el enlace <b>⚙️ Administrar Productos</b> arriba
-          </span>
-        </div>
+  <!-- Panel 2: PDF Etiquetas -->
+  <div class="card">
+    <div class="card-title"><span>🏷️</span> 2. Etiquetas (PDF)</div>
+    <div class="drop" id="dzEtiquetas">
+      <input type="file" id="etiquetasIn" accept=".pdf">
+      <div class="drop-icon">📬</div>
+      <div class="drop-hint">PDF con etiquetas <strong>(para anotar)</strong></div>
+      <div class="drop-name" id="dzEtiquetasName"></div>
+    </div>
+    <div class="field-row">
+      <span class="field-lbl">Se anotará:</span>
+      <input class="field-in" id="outputName" type="text" value="etiquetas_anotadas.pdf" readonly style="background:#1a1722">
+    </div>
+  </div>
+
+  <!-- Panel 3: Cómo funciona -->
+  <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;">
+    <div>
+      <div class="card-title"><span>🤖</span> 3. Cómo funciona</div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.9">
+        <b style="color:var(--green)">Flujo de dos PDFs</b><br><br>
+        1️⃣ Sube los <b>PDFs de pedidos</b> (múltiples).<br>
+        2️⃣ Sube el <b>PDF de etiquetas</b>.<br>
+        3️⃣ Genera Excel para ver análisis completo.<br>
+        4️⃣ Reorganiza y anota (3 productos por hoja).
       </div>
     </div>
   </div>
+</div>
 
   <!-- Action Buttons -->
   <div class="actions">
@@ -397,7 +480,16 @@ tr:hover td{background:rgba(255,255,255,.018)}
 </div>
   <!-- Download Excel -->
   <a class="dl" id="dlBtn" href="/descargar" download>⬇️ Descargar Excel generado</a>
-
+  <!-- Modal de progreso automático -->
+<div class="modal-overlay" id="modalProgreso">
+  <div class="modal-progreso">
+    <h3>🤖 Anotando automáticamente</h3>
+    <div class="spinner-grande"></div>
+    <div class="progreso-status" id="progresoStatus">Conectando con Tienda Nube...</div>
+    <div class="progreso-orden" id="progresoOrden"></div>
+    <button class="btn-cancelar-auto" onclick="cancelarAutomatico()">Cancelar</button>
+  </div>
+</div>
 </div>
 <div class="toast" id="toast"></div>
 
