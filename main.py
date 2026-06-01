@@ -1421,7 +1421,10 @@ def formatear_productos_orden(productos, resolver_func):
         # Caso especial: MANTA
         if cat == "MANTA":
             color_simple = color.split('/')[0].lower()
-            linea = f"Manta {color_simple} x{cant}"
+            if talle and talle != "U":
+                linea = f"Manta {color_simple} {talle} x{cant}"
+            else:
+                linea = f"Manta {color_simple} x{cant}"
         
         # Caso especial: GATITO
         elif modelo == "Gatito":
