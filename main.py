@@ -1798,97 +1798,110 @@ def actualizar_colores(nombre):
 
 @app.route("/analizar", methods=["POST"])
 def analizar():
-    # Verificar que se recibieron archivos
-    if "pdf" not in request.files:
-        return jsonify({"error": "No se recibió PDF"}), 400
-    
-    pdf_files = request.files.getlist("pdf")
-    if len(pdf_files) == 0:
-        return jsonify({"error": "No se seleccionó ningún archivo"}), 400
-    
-    prod_txt = request.form.get("productos", "")
-    
-    # Crear archivos temporales para cada PDF
-    temp_paths = []
+    import traceback
     try:
-        for pdf_file in pdf_files:
-            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-                pdf_file.save(tmp.name)
-                temp_paths.append(tmp.name)
+        if "pdf" not in request.files:
+            return jsonify({"error": "No se recibió PDF"}), 400
         
-        # Combinar todos los pedidos de todos los PDFs (SIN DUPLICADOS)
-        todas_ordenes = {}
-        todos_datos_envio = {}
-        ordenes_procesadas = set()  # Set para controlar qué órdenes ya se procesaron
+        pdf_files = request.files.getlist("pdf")
+        if len(pdf_files) == 0:
+            return jsonify({"error": "No se seleccionó ningún archivo"}), 400
         
-        for tmp_path in temp_paths:
-            ordenes = extraer_ordenes_con_fitz(tmp_path)
-            datos_envio = extraer_datos_envio(tmp_path)
+        prod_txt = request.form.get("productos", "")
+        print(f"📄 Procesando {len(pdf_files)} archivo(s) PDF")
+        
+        temp_paths = []
+        try:
+            # Guardar archivos temporales
+            for pdf_file in pdf_files:
+                with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+                    pdf_file.save(tmp.name)
+                    temp_paths.append(tmp.name)
+                    print(f"   ✓ Guardado: {tmp.name}")
             
-            # Combinar órdenes (solo si no se procesó antes)
-            for num_orden, productos in ordenes.items():
-                if num_orden not in ordenes_procesadas:
-                    ordenes_procesadas.add(num_orden)
-                    todas_ordenes[num_orden] = productos
-                # Si ya existe, ignoramos (no sumamos)
+            # Procesar cada PDF
+            todas_ordenes = {}
+            todos_datos_envio = {}
+            ordenes_procesadas = set()
             
-            # Combinar datos de envío (solo si no existe)
-            for num_orden, info in datos_envio.items():
-                if num_orden not in todos_datos_envio:
-                    todos_datos_envio[num_orden] = info
-        
-        # Identificar órdenes sin productos (existen en datos_envio pero no en ordenes)
-        ordenes_sin_productos = set()
-        for num_orden in todos_datos_envio.keys():
-            if num_orden not in todas_ordenes or len(todas_ordenes[num_orden]) == 0:
-                ordenes_sin_productos.add(num_orden)
-        
-        # Agrupar productos por orden (sumar cantidades dentro de la misma orden)
-        # Esto es necesario porque dentro de un mismo PDF puede haber productos duplicados
-        ordenes_agrupadas = {}
-        for num_orden, productos in todas_ordenes.items():
-            grupos = defaultdict(int)
-            for info, cant in productos:
-                grupos[info] += cant
-            ordenes_agrupadas[num_orden] = [(info, cant) for info, cant in grupos.items()]
-        
-        # Generar catálogo y Excel
-        catalogo = cargar_catalogo(prod_txt)
-        sin_mapear = build_excel(ordenes_agrupadas, catalogo, str(OUTPUT_XLSX), todos_datos_envio)
-        
-        rows = []
-        total_unidades = 0
-        for num_orden, productos in ordenes_agrupadas.items():
-            for info, cant in productos:
-                cat, modelo, color, talle = info
-                total_unidades += cant
-                rows.append({
-                    "producto": f"Orden #{num_orden}",
-                    "cantidad": cant,
-                    "categoria": cat,
-                    "modelo": modelo,
-                    "color": color,
-                    "talle": talle,
-                })
-        
-        return jsonify({
-            "ok": True,
-            "total_tipos": len(ordenes_agrupadas),
-            "total_unidades": total_unidades,
-            "sin_mapear": len(ordenes_sin_productos),
-            "sin_mapear_list": [],
-            "ordenes_sin_productos": sorted(list(ordenes_sin_productos), key=lambda x: int(x) if x.isdigit() else 0),
-            "rows": rows,
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        for tmp_path in temp_paths:
+            for idx, tmp_path in enumerate(temp_paths):
+                print(f"\n📄 Procesando PDF {idx+1}: {tmp_path}")
+                try:
+                    ordenes = extraer_ordenes_con_fitz(tmp_path)
+                    datos_envio = extraer_datos_envio(tmp_path)
+                    print(f"   ✅ Órdenes encontradas: {len(ordenes)}")
+                except Exception as e:
+                    print(f"   ❌ Error al procesar: {e}")
+                    traceback.print_exc()
+                    return jsonify({"error": f"Error procesando PDF {idx+1}: {str(e)}"}), 500
+                
+                for num_orden, productos in ordenes.items():
+                    if num_orden not in ordenes_procesadas:
+                        ordenes_procesadas.add(num_orden)
+                        todas_ordenes[num_orden] = productos
+                for num_orden, info in datos_envio.items():
+                    if num_orden not in todos_datos_envio:
+                        todos_datos_envio[num_orden] = info
+            
+            # Identificar órdenes sin productos
+            ordenes_sin_productos = set()
+            for num_orden in todos_datos_envio.keys():
+                if num_orden not in todas_ordenes or len(todas_ordenes[num_orden]) == 0:
+                    ordenes_sin_productos.add(num_orden)
+            
+            # Agrupar productos
+            ordenes_agrupadas = {}
+            for num_orden, productos in todas_ordenes.items():
+                grupos = defaultdict(int)
+                for info, cant in productos:
+                    grupos[info] += cant
+                ordenes_agrupadas[num_orden] = [(info, cant) for info, cant in grupos.items()]
+            
+            print(f"\n📊 Generando catálogo y Excel...")
             try:
-                if os.path.exists(tmp_path):
-                    os.unlink(tmp_path)
-            except:
-                pass
+                catalogo = cargar_catalogo(prod_txt)
+                sin_mapear = build_excel(ordenes_agrupadas, catalogo, str(OUTPUT_XLSX), todos_datos_envio)
+                print(f"   ✅ Excel generado correctamente")
+            except Exception as e:
+                print(f"   ❌ Error en build_excel: {e}")
+                traceback.print_exc()
+                return jsonify({"error": f"Error generando Excel: {str(e)}"}), 500
+            
+            rows = []
+            total_unidades = 0
+            for num_orden, productos in ordenes_agrupadas.items():
+                for info, cant in productos:
+                    cat, modelo, color, talle = info
+                    total_unidades += cant
+                    rows.append({
+                        "producto": f"Orden #{num_orden}",
+                        "cantidad": cant,
+                        "categoria": cat,
+                        "modelo": modelo,
+                        "color": color,
+                        "talle": talle,
+                    })
+            
+            return jsonify({
+                "ok": True,
+                "total_tipos": len(ordenes_agrupadas),
+                "total_unidades": total_unidades,
+                "sin_mapear": len(ordenes_sin_productos),
+                "sin_mapear_list": [],
+                "ordenes_sin_productos": sorted(list(ordenes_sin_productos), key=lambda x: int(x) if x.isdigit() else 0),
+                "rows": rows,
+            })
+        finally:
+            for tmp_path in temp_paths:
+                try:
+                    if os.path.exists(tmp_path):
+                        os.unlink(tmp_path)
+                except:
+                    pass
+    except Exception as e:
+        print(f"❌ Error inesperado en /analizar: {e}")
+        traceback.print_exc()
+        return jsonify({"error": f"Error interno: {str(e)}"}), 500
 
 @app.route("/anotar", methods=["POST"])
 def anotar():
