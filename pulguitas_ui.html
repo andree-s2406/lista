@@ -278,6 +278,8 @@ tr:hover td{background:rgba(255,255,255,.018)}
   margin: 0 auto;
 }
 
+
+
 /* ── Modal de progreso ── */
 .modal-overlay {
   display: none;
@@ -398,6 +400,13 @@ tr:hover td{background:rgba(255,255,255,.018)}
       <div class="drop-icon">📬</div>
       <div class="drop-hint">PDF con etiquetas <strong>(para anotar)</strong></div>
       <div class="drop-name" id="dzEtiquetasName"></div>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+      <span class="field-lbl">Organización:</span>
+      <select id="modoOrganizacion" style="background:#0b0a10; border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:6px;">
+        <option value="3">3 etiquetas por hoja (horizontal)</option>
+        <option value="1">1 etiqueta por hoja (sin reorganizar)</option>
+      </select>
     </div>
     <div class="field-row">
       <span class="field-lbl">Se anotará:</span>
@@ -726,26 +735,23 @@ async function runAnotar() {
   const btn = document.getElementById('anotarBtn');
   btn.classList.add('loading'); btn.disabled=true;
   clearLog();
-  addLog(`📦 Enviando ${pdfPedidosList.length} PDF(s) de pedidos y 1 PDF de etiquetas...`);
+  const modo = document.getElementById('modoOrganizacion').value;
+  addLog(`📦 Enviando ${pdfPedidosList.length} PDF(s) de pedidos y 1 PDF de etiquetas. Modo: ${modo === '3' ? '3x1' : '1x1'}`);
 
   const fd = new FormData();
   for (let i = 0; i < pdfPedidosList.length; i++) {
     fd.append('pedidos', pdfPedidosList[i]);
   }
   fd.append('etiquetas', pdfEtiquetas);
+  fd.append('modo', modo); // nuevo campo
 
   try {
-    addLog('📝 PASO 1: Anotando etiquetas con productos...');
-    addLog('📐 PASO 2: Reorganizando (3 etiquetas por hoja)...');
-    
     const resp = await fetch(API + '/anotar', { method:'POST', body:fd });
-    
     if (!resp.ok) {
       const err = await resp.json();
       addLog(`❌ ${err.error || 'Error desconocido'}`, 'err');
       return;
     }
-
     const blob = await resp.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -755,7 +761,6 @@ async function runAnotar() {
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-    
     addLog(`✅ Proceso completado. PDF descargado.`, 'ok');
   } catch(e) {
     addLog(`❌ Error de conexión: ${e.message}`, 'err');
