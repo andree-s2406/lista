@@ -1905,80 +1905,60 @@ def analizar():
 
 @app.route("/anotar", methods=["POST"])
 def anotar():
-    """Recibe múltiples PDFs de pedidos y un PDF de etiquetas, anota y reorganiza automáticamente"""
     if "pedidos" not in request.files or "etiquetas" not in request.files:
         return jsonify({"error": "Se requieren dos archivos: pedidos PDF y etiquetas PDF"}), 400
     
     pedidos_files = request.files.getlist("pedidos")
     etiquetas_file = request.files["etiquetas"]
+    modo = request.form.get("modo", "3")  # "3" o "1"
     
-    # Crear archivos temporales para pedidos
     tmp_pedidos_paths = []
-    for pedidos_file in pedidos_files:
-        with tempfile.NamedTemporaryFile(suffix="_pedidos.pdf", delete=False) as tmp_pedidos:
-            pedidos_file.save(tmp_pedidos.name)
-            tmp_pedidos_paths.append(tmp_pedidos.name)
+    for pf in pedidos_files:
+        with tempfile.NamedTemporaryFile(suffix="_pedidos.pdf", delete=False) as tmp:
+            pf.save(tmp.name)
+            tmp_pedidos_paths.append(tmp.name)
     
-    # Archivo temporal para etiquetas
     with tempfile.NamedTemporaryFile(suffix="_etiquetas.pdf", delete=False) as tmp_etiquetas:
         etiquetas_file.save(tmp_etiquetas.name)
         tmp_etiquetas_path = tmp_etiquetas.name
     
-    # Archivos temporales para procesos
+    # Archivo temporal para proceso intermedio
     with tempfile.NamedTemporaryFile(suffix="_anotado.pdf", delete=False) as tmp_anotado:
         tmp_anotado_path = tmp_anotado.name
     
     final_path = tmp_etiquetas_path.replace("_etiquetas", "_final")
     
     try:
-        # Verificar qué tipo de PDF es
-        doc_test = fitz.open(tmp_etiquetas_path)
-        texto_test = doc_test[0].get_text()
-        doc_test.close()
-        
-        tipo = detectar_tipo_pdf(texto_test)
+        tipo = detectar_tipo_pdf(fitz.open(tmp_etiquetas_path)[0].get_text())
         print(f"📌 Tipo de PDF detectado: {tipo}")
         
         if tipo == "ANDREANI_VIEJO":
-            # Andreani viejo: anotar normal, luego reorganizar
-            print("📝 PASO 1: Anotando PDF con productos...")
+            # Andreani viejo: anotar normal
             anotar_pdf_con_productos(tmp_etiquetas_path, tmp_pedidos_paths, final_path)
-            
-            print("📐 PASO 2: Reorganizando PDF (3 etiquetas por página)...")
-            reorganizar_etiquetas(final_path, final_path, etiquetas_por_pagina=3)
-            
+            if modo == "3":
+                reorganizar_etiquetas(final_path, final_path, 3)
         else:
-            # ANDREANI_NUEVO o EPICK: agrandar, anotar, reorganizar
-            print("📏 PASO 1: Agrandando etiquetas y anotando productos...")
+            # Andreani nuevo o EPICK: agrandar, anotar, luego posible reorganizar
             agrandar_y_anotar_universal(tmp_etiquetas_path, tmp_anotado_path, tmp_pedidos_paths)
-            
-            print("📐 PASO 2: Reorganizando PDF (3 etiquetas por página)...")
-            reorganizar_etiquetas(tmp_anotado_path, final_path, etiquetas_por_pagina=3)
+            if modo == "3":
+                reorganizar_etiquetas(tmp_anotado_path, final_path, 3)
+            else:
+                # Modo 1x1: simplemente copiar el anotado sin reorganizar
+                import shutil
+                shutil.copy(tmp_anotado_path, final_path)
         
-        print("✅ Proceso completado. Enviando PDF final...")
-        return send_file(final_path, as_attachment=True, 
-                        download_name=f"final_{etiquetas_file.filename}",
-                        mimetype="application/pdf")
-                        
+        return send_file(final_path, as_attachment=True,
+                         download_name=f"final_{etiquetas_file.filename}",
+                         mimetype="application/pdf")
     except Exception as e:
         print(f"❌ Error: {e}")
-        import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
     finally:
-        # Limpiar archivos temporales
-        for p in tmp_pedidos_paths:
+        for p in tmp_pedidos_paths + [tmp_etiquetas_path, tmp_anotado_path, final_path]:
             try:
-                if os.path.exists(p):
-                    os.unlink(p)
-            except:
-                pass
-        for p in [tmp_etiquetas_path, tmp_anotado_path, final_path]:
-            try:
-                if os.path.exists(p):
-                    os.unlink(p)
-            except:
-                pass
+                if os.path.exists(p): os.unlink(p)
+            except: pass
 @app.route("/descargar")
 def descargar():
     if not OUTPUT_XLSX.exists():
